@@ -87,6 +87,7 @@ namespace GP_Connect.Controllers
         {
             try
             {
+                // checking
                 var nhsNumber = "";
                 if(identifier.Contains('|'))
                 {
