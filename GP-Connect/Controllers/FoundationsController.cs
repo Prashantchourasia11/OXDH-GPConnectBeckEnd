@@ -25,14 +25,14 @@ using System.Xml.Linq;
 
 namespace GP_Connect.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("W7M0I/STU3/1/gpconnect")]
     [ApiController]
     public class FoundationsController : ControllerBase
     {
         #region Properties
 
         ServiceFoundation serviceFoundation = new ServiceFoundation();
-        ServiceAccessDocument serviceDocument = new ServiceAccessDocument();    
+        ServiceAccessDocument serviceDocument = new ServiceAccessDocument();
 
         #endregion
 
@@ -57,7 +57,6 @@ namespace GP_Connect.Controllers
         {
             try
             {
-                //checking
                 var result = serviceFoundation.FoundationMetaData();
                 return new JsonResult(result)
                 {
@@ -77,7 +76,7 @@ namespace GP_Connect.Controllers
         [HttpGet]
         [Route("Patient")]
         [PatientValidateIdentifierFilter]
-        public ActionResult Patient(  
+        public ActionResult Patient(
       [FromHeader(Name = "Ssp-TraceID")][Required] string SspTraceId = "09a01679-2564-0fb4-5129-aecc81ea2706",
       [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
       [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
@@ -87,9 +86,9 @@ namespace GP_Connect.Controllers
         {
             try
             {
-                // checking 123
+                // checking
                 var nhsNumber = "";
-                if(identifier.Contains('|'))
+                if (identifier.Contains('|'))
                 {
                     nhsNumber = identifier.Split('|')[1];
                 }
@@ -98,10 +97,10 @@ namespace GP_Connect.Controllers
                 var queryParams = QueryHelpers.ParseQuery(Request.QueryString.Value);
                 int identifierCount = queryParams.ContainsKey("identifier") ? queryParams["identifier"].Count : 0;
 
-                var result = serviceFoundation.FindAPatient(nhsNumber, "", identifier , identifierCount, fullUrl);
+                var result = serviceFoundation.FindAPatient(nhsNumber, "", identifier, identifierCount, fullUrl);
 
                 Response.Headers.Add("Cache-Control", "no-store");
-              
+
                 if (result[2] == "InvalidIdentifier" || result[2] == "InvalidParameter")
                 {
                     return new JsonResult(result[0])
@@ -156,7 +155,7 @@ namespace GP_Connect.Controllers
         {
             try
             {
-                var result = serviceFoundation.ReadAPatient(id.ToString(), SspInterctionId,"External");
+                var result = serviceFoundation.ReadAPatient(id.ToString(), SspInterctionId, "External");
 
                 Response.Headers.Add("Cache-Control", "no-store");
 
@@ -218,11 +217,11 @@ namespace GP_Connect.Controllers
 
 
                 var sdsId = "";
-                if(identifier.Contains('|'))
+                if (identifier.Contains('|'))
                 {
                     sdsId = identifier.Split('|')[1];
                 }
-                var result = serviceFoundation.FindAPractioner(sdsId,identifier, SspInterctionId, identifierCount, fullUrl);
+                var result = serviceFoundation.FindAPractioner(sdsId, identifier, SspInterctionId, identifierCount, fullUrl);
                 Response.Headers.Add("Cache-Control", "no-store");
                 if (result[2] == "NotFound")
                 {
@@ -248,7 +247,7 @@ namespace GP_Connect.Controllers
                         StatusCode = 400
                     };
                 }
-              
+
                 try { Response.Headers.Add("ETag", "W/\"" + result[1] + "\""); } catch (Exception) { }
 
                 return new JsonResult(result[0])
@@ -368,7 +367,7 @@ namespace GP_Connect.Controllers
         {
             try
             {
-                var result = serviceFoundation.ReadAPractioner(id.ToString(),SspInterctionId,"External");
+                var result = serviceFoundation.ReadAPractioner(id.ToString(), SspInterctionId, "External");
                 Response.Headers.Add("Cache-Control", "no-store");
                 if (result[2] == "NotFound")
                 {
@@ -497,8 +496,8 @@ namespace GP_Connect.Controllers
         [OrganizationValidateIdentifierFilter]
 
         public ActionResult Organization(
-             [FromHeader(Name = "Ssp-TraceID")] [Required] string SspTraceId = "09a01679-2564-0fb4-5129-aecc81ea2706",
-             [FromHeader(Name = "Ssp-From")][Required]  string SspFrom = "200000000359",
+             [FromHeader(Name = "Ssp-TraceID")][Required] string SspTraceId = "09a01679-2564-0fb4-5129-aecc81ea2706",
+             [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
              [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
              [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:search:organization-1",
              [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM",
@@ -509,7 +508,7 @@ namespace GP_Connect.Controllers
             {
 
                 var odsCode = "";
-                if(identifier.Contains('|'))
+                if (identifier.Contains('|'))
                 {
                     odsCode = identifier.Split('|')[1];
                 }
@@ -539,7 +538,7 @@ namespace GP_Connect.Controllers
                 {
                     ContentType = "application/fhir+json"
                 };
-               
+
             }
             catch (Exception ex)
             {
@@ -560,14 +559,14 @@ namespace GP_Connect.Controllers
              [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
              [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1",
              [FromHeader(Name = "Authorizations")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
-          
+
             )
         {
             try
             {
                 var result = serviceFoundation.ReadAOrganization(id, SspInterctionId, "External");
                 Response.Headers.Add("Cache-Control", "no-store");
-              
+
 
                 if (result[2] == "NotFound")
                 {
@@ -612,7 +611,7 @@ namespace GP_Connect.Controllers
              [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
              [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1",
              [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
-             
+
             )
         {
             try
@@ -623,7 +622,7 @@ namespace GP_Connect.Controllers
                 if (result[2] == "NotFound")
                 {
                     return NotFound();
-                    
+
                 }
                 if (result[2] == "InvalidInteractionId")
                 {
@@ -634,9 +633,9 @@ namespace GP_Connect.Controllers
                     };
                 }
 
-                try {Response.Headers.Add("ETag", "W/\"" + result[1] + "\"");} catch(Exception){ }
+                try { Response.Headers.Add("ETag", "W/\"" + result[1] + "\""); } catch (Exception) { }
 
-                
+
 
                 return new JsonResult(result[0])
                 {
@@ -660,19 +659,19 @@ namespace GP_Connect.Controllers
              [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
              [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
              [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:operation:gpc.registerpatient-1",
-             [FromHeader(Name = "Authorizations")][Required] string Authorization = "Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJpc3MiOiJodHRwczovL0NvbnN1bWVyU3lzdGVtVVJMIiwic3ViIjoiMSIsImF1ZCI6Imh0dHBzOi8vYXV0aG9yaXplLmZoaXIubmhzLm5ldC90b2tlbiIsImV4cCI6MTcyMjg2NTIyNSwiaWF0IjoxNzIyODY0OTI1LCJyZWFzb25fZm9yX3JlcXVlc3QiOiJkaXJlY3RjYXJlIiwicmVxdWVzdGluZ19kZXZpY2UiOnsicmVzb3VyY2VUeXBlIjoiRGV2aWNlIiwiaWRlbnRpZmllciI6W3sic3lzdGVtIjoiR1BDb25uZWN0VGVzdFN5c3RlbSIsInZhbHVlIjoiQ2xpZW50In1dLCJtb2RlbCI6InYxIiwidmVyc2lvbiI6IjEuMSJ9LCJyZXF1ZXN0aW5nX29yZ2FuaXphdGlvbiI6eyJyZXNvdXJjZVR5cGUiOiJPcmdhbml6YXRpb24iLCJpZGVudGlmaWVyIjpbeyJzeXN0ZW0iOiJodHRwczovL2ZoaXIubmhzLnVrL0lkL29kcy1vcmdhbml6YXRpb24tY29kZSIsInZhbHVlIjoiR1BDQTAwMDEifV0sIm5hbWUiOiJHUCBDb25uZWN0IEFzc3VyYW5jZSJ9LCJyZXF1ZXN0aW5nX3ByYWN0aXRpb25lciI6eyJyZXNvdXJjZVR5cGUiOiJQcmFjdGl0aW9uZXIiLCJpZCI6IjEiLCJpZGVudGlmaWVyIjpbeyJzeXN0ZW0iOiJodHRwczovL2ZoaXIubmhzLnVrL0lkL3Nkcy11c2VyLWlkIiwidmFsdWUiOiJHQ0FTRFMwMDAxIn0seyJzeXN0ZW0iOiJodHRwczovL2ZoaXIubmhzLnVrL0lkL3Nkcy1yb2xlLXByb2ZpbGUtaWQiLCJ2YWx1ZSI6IjExMjIzMzQ0NTU2NiJ9LHsic3lzdGVtIjoiaHR0cHM6Ly9jb25zdW1lcnN1cHBsaWVyLmNvbS9JZC91c2VyLWd1aWQiLCJ2YWx1ZSI6Ijk4ZWQ0Zjc4LTgxNGQtNDI2Ni04ZDViLWNkZTc0MmYzMDkzYyJ9XSwibmFtZSI6W3siZmFtaWx5IjoiQXNzdXJhbmNlUHJhY3RpdGlvbmVyIiwiZ2l2ZW4iOlsiQXNzdXJhbmNlVGVzdCJdLCJwcmVmaXgiOlsiTXIiXX1dfSwicmVxdWVzdGVkX3Njb3BlIjoicGF0aWVudC8qLndyaXRlIn0.",
+             [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJpc3MiOiJodHRwczovL0NvbnN1bWVyU3lzdGVtVVJMIiwic3ViIjoiMSIsImF1ZCI6Imh0dHBzOi8vYXV0aG9yaXplLmZoaXIubmhzLm5ldC90b2tlbiIsImV4cCI6MTcyMjg2NTIyNSwiaWF0IjoxNzIyODY0OTI1LCJyZWFzb25fZm9yX3JlcXVlc3QiOiJkaXJlY3RjYXJlIiwicmVxdWVzdGluZ19kZXZpY2UiOnsicmVzb3VyY2VUeXBlIjoiRGV2aWNlIiwiaWRlbnRpZmllciI6W3sic3lzdGVtIjoiR1BDb25uZWN0VGVzdFN5c3RlbSIsInZhbHVlIjoiQ2xpZW50In1dLCJtb2RlbCI6InYxIiwidmVyc2lvbiI6IjEuMSJ9LCJyZXF1ZXN0aW5nX29yZ2FuaXphdGlvbiI6eyJyZXNvdXJjZVR5cGUiOiJPcmdhbml6YXRpb24iLCJpZGVudGlmaWVyIjpbeyJzeXN0ZW0iOiJodHRwczovL2ZoaXIubmhzLnVrL0lkL29kcy1vcmdhbml6YXRpb24tY29kZSIsInZhbHVlIjoiR1BDQTAwMDEifV0sIm5hbWUiOiJHUCBDb25uZWN0IEFzc3VyYW5jZSJ9LCJyZXF1ZXN0aW5nX3ByYWN0aXRpb25lciI6eyJyZXNvdXJjZVR5cGUiOiJQcmFjdGl0aW9uZXIiLCJpZCI6IjEiLCJpZGVudGlmaWVyIjpbeyJzeXN0ZW0iOiJodHRwczovL2ZoaXIubmhzLnVrL0lkL3Nkcy11c2VyLWlkIiwidmFsdWUiOiJHQ0FTRFMwMDAxIn0seyJzeXN0ZW0iOiJodHRwczovL2ZoaXIubmhzLnVrL0lkL3Nkcy1yb2xlLXByb2ZpbGUtaWQiLCJ2YWx1ZSI6IjExMjIzMzQ0NTU2NiJ9LHsic3lzdGVtIjoiaHR0cHM6Ly9jb25zdW1lcnN1cHBsaWVyLmNvbS9JZC91c2VyLWd1aWQiLCJ2YWx1ZSI6Ijk4ZWQ0Zjc4LTgxNGQtNDI2Ni04ZDViLWNkZTc0MmYzMDkzYyJ9XSwibmFtZSI6W3siZmFtaWx5IjoiQXNzdXJhbmNlUHJhY3RpdGlvbmVyIiwiZ2l2ZW4iOlsiQXNzdXJhbmNlVGVzdCJdLCJwcmVmaXgiOlsiTXIiXX1dfSwicmVxdWVzdGVkX3Njb3BlIjoicGF0aWVudC8qLndyaXRlIn0.",
              [FromBody] dynamic RegisterPatientDTO = null)
-         {
+        {
             try
             {
                 var xx = RegisterPatientDTO.ToString();
 
                 var patientDetails = JsonConvert.DeserializeObject<RegisterPatientDTO>(RegisterPatientDTO.ToString());
 
-                var result = serviceFoundation.CreatePatientRecord(patientDetails, RegisterPatientDTO.ToString(),Authorization);
+                var result = serviceFoundation.CreatePatientRecord(patientDetails, RegisterPatientDTO.ToString(), Authorization);
                 Response.Headers.Add("Cache-Control", "no-store");
 
-                if(result[2] == "InvalidNHSNumber" || result[2] == "DuplicateField" || result[2] == "InvalidDemographic" || result[2] == "NoFamilyName" || result[2] == "NoDobSupplied" || result[2] == "NoOfficialSupplied" || result[2] == "MoreThanOneResourcesFound" || result[2] == "NotPassingValueOrSystem" || result[2] == "JWTClaimIssue")
+                if (result[2] == "InvalidNHSNumber" || result[2] == "DuplicateField" || result[2] == "InvalidDemographic" || result[2] == "NoFamilyName" || result[2] == "NoDobSupplied" || result[2] == "NoOfficialSupplied" || result[2] == "MoreThanOneResourcesFound" || result[2] == "NotPassingValueOrSystem" || result[2] == "JWTClaimIssue")
                 {
                     return new JsonResult(result[0])
                     {
@@ -681,7 +680,7 @@ namespace GP_Connect.Controllers
                     };
                 }
 
-                if (result[2] == "DuplicateAddressUse" || result[2] == "OldAddress" || result[2] == "WorkAddress" || result[2] == "PropertiesInvalid" || result[2] == "MultipleSameExtensionFound" )
+                if (result[2] == "DuplicateAddressUse" || result[2] == "OldAddress" || result[2] == "WorkAddress" || result[2] == "PropertiesInvalid" || result[2] == "MultipleSameExtensionFound")
                 {
                     return new JsonResult(result[0])
                     {
@@ -768,7 +767,7 @@ namespace GP_Connect.Controllers
              [FromQuery(Name = "_include")][Required] string _includes = "DocumentReference:subject:Patient",
              [FromQuery(Name = "_revinclude:recurse")][Required] string _revincluderecurse = "PractitionerRole:practitioner",
              [FromQuery(Name = "Created-start")] string Createdstart = "ge2024-01-05",
-              [FromQuery(Name = "Created-end")]string CreatedEnd = "ge2024-10-05",
+              [FromQuery(Name = "Created-end")] string CreatedEnd = "ge2024-10-05",
                [FromQuery(Name = "author")] string author = "docs",
                 [FromQuery(Name = "description")] string description = "docs"
              )
@@ -869,24 +868,24 @@ namespace GP_Connect.Controllers
             if (context.ActionArguments.ContainsKey("SspInterctionId"))
             {
                 var sspInteractionId = context.ActionArguments["SspInterctionId"] as string;
-                if(sspInteractionId != "urn:nhs:names:services:gpconnect:fhir:rest:search:organization-1")
+                if (sspInteractionId != "urn:nhs:names:services:gpconnect:fhir:rest:search:organization-1")
                 {
 
 
-                    
+
                     context.Result = new JsonResult(operationOutcome1)
-                        {
-                            ContentType = "application/fhir+json",
-                            StatusCode = 400,
-                           
-                        };
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 400,
+
+                    };
                     context.HttpContext.Response.Headers.Add("Cache-Control", "no-store");
                     errorOccur = true;
                 }
- 
+
             }
-          
-            if(errorOccur == false)
+
+            if (errorOccur == false)
             {
                 if (!context.ActionArguments.ContainsKey("identifier") || string.IsNullOrEmpty(context.ActionArguments["identifier"] as string))
                 {
@@ -898,7 +897,7 @@ namespace GP_Connect.Controllers
                     };
                 }
             }
-               
+
             base.OnActionExecuting(context);
         }
     }
