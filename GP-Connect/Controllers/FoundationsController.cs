@@ -57,6 +57,7 @@ namespace GP_Connect.Controllers
         {
             try
             {
+                //checking
                 var result = serviceFoundation.FoundationMetaData();
                 return new JsonResult(result)
                 {
