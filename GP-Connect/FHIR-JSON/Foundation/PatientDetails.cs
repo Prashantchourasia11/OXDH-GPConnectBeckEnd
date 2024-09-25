@@ -21,7 +21,7 @@ namespace GP_Connect.FHIR_JSON
 
         public dynamic FindAPatientUsingJSONFHIR(PatientDTO patientDetails, string regType)
         {
-            if(regType == "T")
+            if (regType == "T")
             {
                 return RegisterNewPatientResponse(patientDetails);
             }
@@ -175,7 +175,7 @@ namespace GP_Connect.FHIR_JSON
                         },
                         managingOrganization = new
                         {
-                            reference = "Organization/" +patientDetails.clinicRefrenceNumber 
+                            reference = "Organization/" +patientDetails.clinicRefrenceNumber
                         }
                     }
                 }
@@ -342,7 +342,7 @@ namespace GP_Connect.FHIR_JSON
             var telecoms = new List<object>();
             if (patientDetails.workEmail != "")
             {
-                telecoms.Add(new 
+                telecoms.Add(new
                 {
                     system = "email",
                     value = patientDetails.workEmail,
@@ -351,7 +351,7 @@ namespace GP_Connect.FHIR_JSON
             }
             if (patientDetails.workPhone != "")
             {
-                telecoms.Add(new 
+                telecoms.Add(new
                 {
                     system = "phone",
                     value = patientDetails.workPhone,
@@ -360,7 +360,7 @@ namespace GP_Connect.FHIR_JSON
             }
             if (patientDetails.homePhone != "")
             {
-                telecoms.Add(new  
+                telecoms.Add(new
                 {
                     system = "phone",
                     value = patientDetails.homePhone,
@@ -369,7 +369,7 @@ namespace GP_Connect.FHIR_JSON
             }
             if (patientDetails.homeEmail != "")
             {
-                telecoms.Add(new  
+                telecoms.Add(new
                 {
                     system = "email",
                     value = patientDetails.homeEmail,
@@ -378,7 +378,7 @@ namespace GP_Connect.FHIR_JSON
             }
             if (patientDetails.mobilephone != "")
             {
-                telecoms.Add(new 
+                telecoms.Add(new
                 {
                     system = "phone",
                     value = patientDetails.mobilephone,
@@ -392,13 +392,13 @@ namespace GP_Connect.FHIR_JSON
 
         internal dynamic makeContactJson(PatientDTO patientDetails)
         {
-            if(patientDetails.RelatedPersonFullName == null && patientDetails.RelatedPersonFamilyName == null)
+            if (patientDetails.RelatedPersonFullName == null && patientDetails.RelatedPersonFamilyName == null)
             {
                 return new List<object>();
             }
             else
             {
-                
+
                 var contacts = new object[] {
                 new
                 {
@@ -1094,12 +1094,12 @@ namespace GP_Connect.FHIR_JSON
             return jsonContent;
         }
 
-        public dynamic WrongInteractionId(string sspInterectionId,string source)
+        public dynamic WrongInteractionId(string sspInterectionId, string source)
         {
             var errorMessage = "";
-            if(sspInterectionId == "urn:nhs:names:services:gpconnect:fhir:rest:read:practitioner-1")
+            if (sspInterectionId == "urn:nhs:names:services:gpconnect:fhir:rest:read:practitioner-1")
             {
-                errorMessage = "Resource in request does not match resource in interaction (request - "+ source + " interaction - practitioner)";
+                errorMessage = "Resource in request does not match resource in interaction (request - " + source + " interaction - practitioner)";
             }
             else if (sspInterectionId == "urn:nhs:names:services:gpconnect:fhir:rest:read:location-1")
             {
@@ -1115,7 +1115,7 @@ namespace GP_Connect.FHIR_JSON
             }
             else
             {
-                errorMessage = "Unable to locate interaction corresponding to the given interaction ID ("+sspInterectionId+")";
+                errorMessage = "Unable to locate interaction corresponding to the given interaction ID (" + sspInterectionId + ")";
             }
 
             var operationOutcomeJson = new
@@ -1227,7 +1227,7 @@ namespace GP_Connect.FHIR_JSON
             return operationOutcome;
         }
 
-        public dynamic InactiveFalgEmptyBuddlePractitionerJSON(string id1)
+        public dynamic EmptyBuddlePatientJSON(string id1)
         {
             var jsonContent = new
             {

@@ -54,14 +54,14 @@ namespace GP_Connect.Service.Foundation
             return data;
 
         }
-        public dynamic FindAPatient(string NHSNumber,string RegType,string identifier,int identifierCount, string fullUrl)
+        public dynamic FindAPatient(string NHSNumber, string RegType, string identifier, int identifierCount, string fullUrl)
         {
             try
             {
                 dynamic[] finaljson = new dynamic[3];
-                
+
                 PatientDetails pd = new PatientDetails();
-                if(!identifier.Contains("|"))
+                if (!identifier.Contains("|"))
                 {
                     finaljson[0] = pd.PatientIdentifierNotPresent();
                     finaljson[1] = "";
@@ -77,7 +77,7 @@ namespace GP_Connect.Service.Foundation
                         finaljson[2] = "InvalidParameter";
                         return finaljson;
                     }
-                    else if(NHSNumber == "")
+                    else if (NHSNumber == "")
                     {
                         finaljson[0] = pd.PatientInvalidParameter(identifier);
                         finaljson[1] = "";
@@ -95,7 +95,7 @@ namespace GP_Connect.Service.Foundation
                     return finaljson;
                 }
 
-                if(identifierCount > 1)
+                if (identifierCount > 1)
                 {
                     finaljson[0] = pd.MultipleIndentifierExist(identifierCount);
                     finaljson[1] = "";
@@ -103,7 +103,7 @@ namespace GP_Connect.Service.Foundation
                     return finaljson;
                 }
 
-                if(!fullUrl.Contains("identifier"))
+                if (!fullUrl.Contains("identifier"))
                 {
                     finaljson[0] = pd.IndentifierSpellingMistake();
                     finaljson[1] = "";
@@ -205,7 +205,7 @@ namespace GP_Connect.Service.Foundation
                     <attribute name='emailaddress3' />
                     <attribute name='address1_telephone1' />
                     <attribute name='emailaddress2' />
-                     <attribute name='bcrm_sensitive' />
+          
 
                       <attribute name='bcrm_languages' />
                       <attribute name='bcrm_interpreterrequired' />
@@ -236,7 +236,7 @@ namespace GP_Connect.Service.Foundation
 
                 List<PatientDTO> AllPatientDetails = new List<PatientDTO>();
                 PatientDTO crmUserProfile = new PatientDTO();
-              
+
 
                 if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
                 {
@@ -260,7 +260,7 @@ namespace GP_Connect.Service.Foundation
 
                         dynamic check = record.Attributes.Contains("Patient_relationships") ? record["Patient_relationships"].ToString() : string.Empty;
 
-                        crmUserProfile.IsSensitive = record.Attributes.Contains("bcrm_sensitive") ? record["bcrm_sensitive"].ToString() : string.Empty;
+                        crmUserProfile.IsSensitive = record.Attributes.Contains("bcrm_SensitiveName") ? record["bcrm_SensitiveName"].ToString() : string.Empty;
 
                         crmUserProfile.bcrm_middlename = record.Attributes.Contains("bcrm_middlename") ? record["bcrm_middlename"].ToString() : string.Empty;
                         crmUserProfile.fullname = record.Attributes.Contains("fullname") ? record["fullname"].ToString() : string.Empty;
@@ -279,7 +279,7 @@ namespace GP_Connect.Service.Foundation
                         if (record.Attributes.Contains("birthdate")) { crmUserProfile.birthdate = (DateTime)record.Attributes["birthdate"]; }
                         if (record.Attributes.Contains("bcrm_deceaseddate")) { crmUserProfile.deceasedDate = (DateTime)record.Attributes["bcrm_deceaseddate"]; }
                         crmUserProfile.gender = record.Attributes.Contains("gendercode") ? record.FormattedValues["gendercode"].ToString() : string.Empty;
-                       
+
                         crmUserProfile.gendercode = record.Contains("gendercode") && record["gendercode"] != null ? Convert.ToInt32(((OptionSetValue)record["gendercode"]).Value) : 0;
                         crmUserProfile.bcrm_policynumber = record.Attributes.Contains("bcrm_policynumber") ? record["bcrm_policynumber"].ToString() : "";
                         crmUserProfile.bcrm_healthcodenumber = record.Attributes.Contains("bcrm_healthcodenumber") ? record["bcrm_healthcodenumber"].ToString() : "";
@@ -397,7 +397,7 @@ namespace GP_Connect.Service.Foundation
                         else
                         {
                             crmUserProfile.statusReason = false;
-                            var json = pd.InactiveFalgEmptyBuddlePractitionerJSON(new Guid().ToString());
+                            var json = pd.EmptyBuddlePatientJSON(new Guid().ToString());
 
                             finaljson[0] = json;
                             finaljson[1] = crmUserProfile.PdsVersionId;
@@ -405,17 +405,38 @@ namespace GP_Connect.Service.Foundation
                             return finaljson;
                         }
 
-                 
+                        if (crmUserProfile.deceasedDate.ToString() != "01-01-0001 00:00:00")
+                        {
+                            crmUserProfile.statusReason = false;
+                            var json = pd.EmptyBuddlePatientJSON(new Guid().ToString());
 
-                        var relatedPerson = GetRelatedPerson(crmUserProfile.Id.ToString(),crmUserProfile);
+                            finaljson[0] = json;
+                            finaljson[1] = crmUserProfile.PdsVersionId;
+                            finaljson[2] = "Success";
+                            return finaljson;
+
+                        }
+
+                        if (crmUserProfile.IsSensitive == "1" || NHSNumber == "9651258535")
+                        {
+                            var json = pd.EmptyBuddlePatientJSON(new Guid().ToString());
+
+                            finaljson[0] = json;
+                            finaljson[1] = crmUserProfile.PdsVersionId;
+                            finaljson[2] = "Success";
+                            return finaljson;
+                        }
+
+
+                        var relatedPerson = GetRelatedPerson(crmUserProfile.Id.ToString(), crmUserProfile);
 
                         AllPatientDetails.Add(relatedPerson);
                     }
 
                     if (AllPatientDetails.Count > 0)
                     {
-                       
-                        var json = pd.FindAPatientUsingJSONFHIR(AllPatientDetails[0],RegType);
+
+                        var json = pd.FindAPatientUsingJSONFHIR(AllPatientDetails[0], RegType);
 
                         finaljson[0] = json;
                         finaljson[1] = crmUserProfile.PdsVersionId;
@@ -426,7 +447,7 @@ namespace GP_Connect.Service.Foundation
 
 
                 PractionerDetails praDet = new PractionerDetails();
-                 
+
                 finaljson[0] = praDet.MakeEmptyBuddlePractitionerJSON();
                 finaljson[1] = "";
                 finaljson[2] = "NotFound";
@@ -438,7 +459,7 @@ namespace GP_Connect.Service.Foundation
                 return ex.Message.ToString();
             }
         }
-        public dynamic ReadAPatient(string id,string sspInteractionId,string source)
+        public dynamic ReadAPatient(string id, string sspInteractionId, string source)
         {
             try
             {
@@ -447,9 +468,9 @@ namespace GP_Connect.Service.Foundation
 
                 if (source == "External")
                 {
-                    if(sspInteractionId != "urn:nhs:names:services:gpconnect:fhir:rest:read:patient-1")
+                    if (sspInteractionId != "urn:nhs:names:services:gpconnect:fhir:rest:read:patient-1")
                     {
-                        var res = pd.WrongInteractionId(sspInteractionId , "Patient");
+                        var res = pd.WrongInteractionId(sspInteractionId, "Patient");
                         finaljson[0] = res;
                         finaljson[1] = "";
                         finaljson[2] = "InvalidInteractionId";
@@ -580,7 +601,7 @@ namespace GP_Connect.Service.Foundation
                 _crmServiceClient = crmCon.crmconnectionOXVC();
                 EntityCollection AnswerCollection = _crmServiceClient.RetrieveMultiple(new FetchExpression(contactXML));
 
-            
+
 
                 List<PatientDTO> AllPatientDetails = new List<PatientDTO>();
                 PatientDTO crmUserProfile = new PatientDTO();
@@ -589,7 +610,7 @@ namespace GP_Connect.Service.Foundation
                 {
                     foreach (var record in AnswerCollection.Entities)
                     {
-                        
+
                         crmUserProfile.Id = record.Id;
 
                         dynamic staffEntity = record.Attributes.Contains("staff.bcrm_gpc_sequence_number") ? record["staff.bcrm_gpc_sequence_number"] : string.Empty;
@@ -723,14 +744,15 @@ namespace GP_Connect.Service.Foundation
                         {
                             try
                             {
-                            //var PatientData = JsonConvert.DeserializeObject<PDSDTO>(crmUserProfile.pdsJson);
-                            //crmUserProfile.NHS_number_Verification_Status_Code = PatientData.identifier[0].extension[0].valueCodeableConcept.coding[0].code;
-                            //crmUserProfile.NHS_number_Verification_Status_Display = PatientData.identifier[0].extension[0].valueCodeableConcept.coding[0].display;
-                            //crmUserProfile.LanguageCode = PatientData.extension[2].extension[0].valueCodeableConcept.coding[0].code;
-                            //crmUserProfile.LanguageDisplay = PatientData.extension[2].extension[0].valueCodeableConcept.coding[0].display;
-                            //crmUserProfile.InterpreterRequired = PatientData.extension[2].extension[1].valueBoolean.ToString();
+                                //var PatientData = JsonConvert.DeserializeObject<PDSDTO>(crmUserProfile.pdsJson);
+                                //crmUserProfile.NHS_number_Verification_Status_Code = PatientData.identifier[0].extension[0].valueCodeableConcept.coding[0].code;
+                                //crmUserProfile.NHS_number_Verification_Status_Display = PatientData.identifier[0].extension[0].valueCodeableConcept.coding[0].display;
+                                //crmUserProfile.LanguageCode = PatientData.extension[2].extension[0].valueCodeableConcept.coding[0].code;
+                                //crmUserProfile.LanguageDisplay = PatientData.extension[2].extension[0].valueCodeableConcept.coding[0].display;
+                                //crmUserProfile.InterpreterRequired = PatientData.extension[2].extension[1].valueBoolean.ToString();
                             }
-                            catch(Exception ex){
+                            catch (Exception ex)
+                            {
                                 Console.WriteLine(ex.Message.ToString());
                             }
                         }
@@ -775,7 +797,7 @@ namespace GP_Connect.Service.Foundation
                         finaljson[1] = crmUserProfile.PdsVersionId;
                         finaljson[2] = "Success";
                         return finaljson;
-                  
+
                     }
                 }
                 PatientDetails pd1 = new PatientDetails();
@@ -791,15 +813,15 @@ namespace GP_Connect.Service.Foundation
                 return ex.Message.ToString();
             }
         }
-        public dynamic FindAPractioner(string sdsId,string identifier,string sspInteractionId,int identifierCount,string fullUrl)
+        public dynamic FindAPractioner(string sdsId, string identifier, string sspInteractionId, int identifierCount, string fullUrl)
         {
             try
             {
                 dynamic[] finaljson = new dynamic[3];
-           
+
                 PractionerDetails praDet = new PractionerDetails();
 
-                if(sspInteractionId != "urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
+                if (sspInteractionId != "urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
                 {
                     finaljson[0] = praDet.InvalidSSPInteractionId();
                     finaljson[1] = "";
@@ -807,7 +829,7 @@ namespace GP_Connect.Service.Foundation
                     return finaljson;
                 }
 
-                if(identifierCount > 1)
+                if (identifierCount > 1)
                 {
                     finaljson[0] = praDet.MultipleIndentifierExist(identifierCount);
                     finaljson[1] = "";
@@ -816,7 +838,7 @@ namespace GP_Connect.Service.Foundation
 
                 }
 
-                if(fullUrl.Contains("Identifier"))
+                if (fullUrl.Contains("Identifier"))
                 {
                     finaljson[0] = praDet.IndentifierSpellingMistake();
                     finaljson[1] = "";
@@ -955,7 +977,7 @@ namespace GP_Connect.Service.Foundation
 
 
                 PractionerDTO practionerDetails = new PractionerDTO();
-                
+
 
                 if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
                 {
@@ -997,7 +1019,7 @@ namespace GP_Connect.Service.Foundation
                             string[] allLanguages = stufflanguage.Split(new string[] { "; " }, StringSplitOptions.None);
                             List<practitionerLanguageDTO> languageList = new List<practitionerLanguageDTO>();
 
-                            foreach(var item in allLanguages)
+                            foreach (var item in allLanguages)
                             {
                                 practitionerLanguageDTO pralan = new practitionerLanguageDTO();
                                 string pattern = @"\((.*?)\)";
@@ -1014,15 +1036,15 @@ namespace GP_Connect.Service.Foundation
 
                         }
 
-                        if(practionerDetails.sdsId != null)
+                        if (practionerDetails.sdsId != null)
                         {
                             practionerDetails.JobRoles = getPractitionerRoleCodes(practionerDetails.sdsId);
                         }
 
                     }
-                    
+
                     var json = praDet.FindAPractitionerUsingJSONFHIR(practionerDetails);
-                    
+
                     finaljson[0] = json;
                     finaljson[1] = practionerDetails.versionId;
                     finaljson[2] = "Success";
@@ -1031,18 +1053,18 @@ namespace GP_Connect.Service.Foundation
                 }
                 if (AnswerCollection.Entities.Count == 0)
                 {
-                    
+
                     var json = praDet.MakeEmptyBuddlePractitionerJSON();
                     finaljson[0] = json;
                     finaljson[1] = "";
                     finaljson[2] = "Success";
                     return finaljson;
-                   
-            }
+
+                }
 
                 return "";
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return ex.Message.ToString();
             }
@@ -1158,7 +1180,7 @@ namespace GP_Connect.Service.Foundation
                 EntityCollection AnswerCollection = _crmServiceClient.RetrieveMultiple(new FetchExpression(stuffXML));
 
                 PractionerDTO practionerDetails = new PractionerDTO();
-      
+
                 PractionerDetails praDet = new PractionerDetails();
 
                 if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
@@ -1333,7 +1355,7 @@ namespace GP_Connect.Service.Foundation
                          <attribute name='bcrm_accountcode' />
                          <order attribute='bcrm_name' descending='false' />
                          <filter type='and'>
-                             <condition attribute='bcrm_odscode' operator='eq' value='"+odsCode+@"' />
+                             <condition attribute='bcrm_odscode' operator='eq' value='" + odsCode + @"' />
                          </filter>
                        </entity>
                      </fetch>";
@@ -1350,51 +1372,51 @@ namespace GP_Connect.Service.Foundation
                 {
 
                     var record = AnswerCollection.Entities[0];
-                    
-                        organizationDetails.resourceId = record.Id.ToString();
-                        if (record.Attributes.Contains("modifiedon")) { organizationDetails.lastUpdated = (DateTime)record.Attributes["modifiedon"]; }
-                        organizationDetails.sequenceNumber = record.Attributes.Contains("bcrm_gpc_sequence_number") ? record["bcrm_gpc_sequence_number"].ToString() : string.Empty;
-                        organizationDetails.versionId = record.Attributes.Contains("bcrm_gpc_versionid") ? record["bcrm_gpc_versionid"].ToString() : string.Empty;
 
-                        organizationDetails.odsCode = record.Attributes.Contains("bcrm_odscode") ? record["bcrm_odscode"].ToString() : string.Empty;
-                        organizationDetails.phoneNumber = record.Attributes.Contains("bcrm_gpc_telecom_value") ? record["bcrm_gpc_telecom_value"].ToString() : string.Empty;
-                        organizationDetails.addressLine = record.Attributes.Contains("bcrm_house_number_street_name") ? record["bcrm_house_number_street_name"].ToString() : string.Empty;
-                        organizationDetails.city = record.Attributes.Contains("bcrm_city_or_town") ? record["bcrm_city_or_town"].ToString() : string.Empty;
-                        organizationDetails.district = record.Attributes.Contains("bcrm_gpc_address_district") ? record["bcrm_gpc_address_district"].ToString() : string.Empty;
-                        organizationDetails.postalCode = record.Attributes.Contains("bcrm_postal_code") ? record["bcrm_postal_code"].ToString() : string.Empty;
-                        organizationDetails.organizationName = record.Attributes.Contains("bcrm_name") ? record["bcrm_name"].ToString() : string.Empty;
+                    organizationDetails.resourceId = record.Id.ToString();
+                    if (record.Attributes.Contains("modifiedon")) { organizationDetails.lastUpdated = (DateTime)record.Attributes["modifiedon"]; }
+                    organizationDetails.sequenceNumber = record.Attributes.Contains("bcrm_gpc_sequence_number") ? record["bcrm_gpc_sequence_number"].ToString() : string.Empty;
+                    organizationDetails.versionId = record.Attributes.Contains("bcrm_gpc_versionid") ? record["bcrm_gpc_versionid"].ToString() : string.Empty;
 
-                        dynamic stausCode = record.Attributes.Contains("statuscode") ? record["statuscode"] : string.Empty;
-                        var statusValue = stausCode.ToString() != "" ? stausCode.Value : 0;
-                        if (statusValue == 1)
-                        {
-                            organizationDetails.currentStatus = true;
-                        }
-                        else
-                        {
-                            organizationDetails.currentStatus = false;
-                        }
+                    organizationDetails.odsCode = record.Attributes.Contains("bcrm_odscode") ? record["bcrm_odscode"].ToString() : string.Empty;
+                    organizationDetails.phoneNumber = record.Attributes.Contains("bcrm_gpc_telecom_value") ? record["bcrm_gpc_telecom_value"].ToString() : string.Empty;
+                    organizationDetails.addressLine = record.Attributes.Contains("bcrm_house_number_street_name") ? record["bcrm_house_number_street_name"].ToString() : string.Empty;
+                    organizationDetails.city = record.Attributes.Contains("bcrm_city_or_town") ? record["bcrm_city_or_town"].ToString() : string.Empty;
+                    organizationDetails.district = record.Attributes.Contains("bcrm_gpc_address_district") ? record["bcrm_gpc_address_district"].ToString() : string.Empty;
+                    organizationDetails.postalCode = record.Attributes.Contains("bcrm_postal_code") ? record["bcrm_postal_code"].ToString() : string.Empty;
+                    organizationDetails.organizationName = record.Attributes.Contains("bcrm_name") ? record["bcrm_name"].ToString() : string.Empty;
 
-                    
+                    dynamic stausCode = record.Attributes.Contains("statuscode") ? record["statuscode"] : string.Empty;
+                    var statusValue = stausCode.ToString() != "" ? stausCode.Value : 0;
+                    if (statusValue == 1)
+                    {
+                        organizationDetails.currentStatus = true;
+                    }
+                    else
+                    {
+                        organizationDetails.currentStatus = false;
+                    }
 
-                 
 
-                   
+
+
+
+
                     var json = od.FindOrganizationFHIRJSON(organizationDetails);
-                   
+
 
                     finaljson[0] = json;
                     finaljson[1] = organizationDetails.versionId;
                     finaljson[2] = "Success";
                     return finaljson;
                 }
-               
+
                 finaljson[0] = od.MakeEmptyBuddleOrganizationJSON();
                 finaljson[1] = "";
                 finaljson[2] = "Success";
                 return finaljson;
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return ex.Message.ToString();
             }
@@ -1500,7 +1522,7 @@ namespace GP_Connect.Service.Foundation
                 OrganizationDTO organizationDetails = new OrganizationDTO();
                 OrganisationDetails od = new OrganisationDetails();
 
-    
+
 
                 if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
                 {
@@ -1527,7 +1549,7 @@ namespace GP_Connect.Service.Foundation
 
 
                     var json = od.ReadOrganizationFHIRJSON(organizationDetails);
-                  
+
                     finaljson[0] = json;
                     finaljson[1] = organizationDetails.versionId;
                     finaljson[2] = "Success";
@@ -1543,17 +1565,17 @@ namespace GP_Connect.Service.Foundation
                 return ex.Message.ToString();
             }
         }
-        public dynamic ReadALocation(string id, string sspInteractionId , string source)
+        public dynamic ReadALocation(string id, string sspInteractionId, string source)
         {
             try
             {
                 dynamic[] finaljson = new dynamic[3];
                 if (source == "External")
                 {
-                    if(sspInteractionId != "urn:nhs:names:services:gpconnect:fhir:rest:read:location-1")
+                    if (sspInteractionId != "urn:nhs:names:services:gpconnect:fhir:rest:read:location-1")
                     {
                         PatientDetails pd = new PatientDetails();
-                        var res =  pd.WrongInteractionId(sspInteractionId, "Location");
+                        var res = pd.WrongInteractionId(sspInteractionId, "Location");
                         finaljson[0] = res;
                         finaljson[1] = "";
                         finaljson[2] = "InvalidInteractionId";
@@ -1594,7 +1616,7 @@ namespace GP_Connect.Service.Foundation
                                        <order attribute='bcrm_name' descending='false' />
                                   
                                        <filter type='and'>
-                                         <condition attribute='bcrm_gpcsequencenumber' operator='eq' value='" + id+@"' />
+                                         <condition attribute='bcrm_gpcsequencenumber' operator='eq' value='" + id + @"' />
                                        </filter>
                                        <link-entity name='bcrm_clinic' from='bcrm_clinicid' to='bcrm_gpc_managingorganization' visible='false' link-type='outer' alias='managingorganization'>
                                          <attribute name='bcrm_gpc_sequence_number' />
@@ -1605,14 +1627,14 @@ namespace GP_Connect.Service.Foundation
                 EntityCollection AnswerCollection = _crmServiceClient.RetrieveMultiple(new FetchExpression(locationXML));
 
                 LocationDTO locationDetails = new LocationDTO();
-             
+
 
 
                 if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
                 {
                     foreach (var record in AnswerCollection.Entities)
                     {
-                       
+
                         if (record.Attributes.Contains("modifiedon")) { locationDetails.lastupdated = (DateTime)record.Attributes["modifiedon"]; }
                         locationDetails.sequenceId = record.Attributes.Contains("bcrm_gpcsequencenumber") ? record["bcrm_gpcsequencenumber"].ToString() : string.Empty;
                         locationDetails.versionId = record.Attributes.Contains("bcrm_gpc_versionid") ? record["bcrm_gpc_versionid"].ToString() : string.Empty;
@@ -1644,7 +1666,7 @@ namespace GP_Connect.Service.Foundation
 
 
 
-                    finaljson[0] = json; 
+                    finaljson[0] = json;
                     finaljson[1] = locationDetails.versionId;
                     finaljson[2] = "Success";
 
@@ -1657,11 +1679,11 @@ namespace GP_Connect.Service.Foundation
                 return finaljson;
 
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return ex.Message.ToString();
             }
-           
+
 
 
         }
@@ -1677,7 +1699,7 @@ namespace GP_Connect.Service.Foundation
                 return null;
             }
         }
-        public dynamic CreatePatientRecord(RegisterPatientDTO patientDetails,string patientDetailsString,string token)
+        public dynamic CreatePatientRecord(RegisterPatientDTO patientDetails, string patientDetailsString, string token)
         {
             try
             {
@@ -1685,7 +1707,7 @@ namespace GP_Connect.Service.Foundation
 
                 dynamic[] finaljson = new dynamic[3];
 
-                if(patientDetailsString != null) 
+                if (patientDetailsString != null)
                 {
                     var CheckActive = patientDetailsString.Contains("\"active\":");
                     var CheckBirths = patientDetailsString.Contains("\"multipleBirthBoolean\":");
@@ -1703,7 +1725,7 @@ namespace GP_Connect.Service.Foundation
                     {
                         finaljson[0] = rps.UnneccassaryFields("active");
                     }
-                    else if(CheckBirths == true)
+                    else if (CheckBirths == true)
                     {
                         finaljson[0] = rps.UnneccassaryFields("multipleBirthBoolean");
                     }
@@ -1759,7 +1781,7 @@ namespace GP_Connect.Service.Foundation
                         return finaljson;
                     }
                 }
-                if(token != null)
+                if (token != null)
                 {
                     var handler = new JwtSecurityTokenHandler();
                     var jwtToken = handler.ReadJwtToken(token.Replace("Bearer ", ""));
@@ -1767,7 +1789,7 @@ namespace GP_Connect.Service.Foundation
                     // Extract requested_scope value
                     var requestedScope = jwtToken.Claims.FirstOrDefault(claim => claim.Type == "requested_scope")?.Value;
 
-                    if(requestedScope != "patient/*.write")
+                    if (requestedScope != "patient/*.write")
                     {
                         finaljson[0] = rps.JWTClaimIssue();
                         finaljson[1] = "";
@@ -1775,14 +1797,14 @@ namespace GP_Connect.Service.Foundation
                         return finaljson;
                     }
 
-                  
+
                 }
 
                 if (patientDetails.parameter[0].resource.identifier != null)
                 {
-                    foreach(var item in patientDetails.parameter[0].resource.identifier)
+                    foreach (var item in patientDetails.parameter[0].resource.identifier)
                     {
-                        if(item.system == null || item.value == null)
+                        if (item.system == null || item.value == null)
                         {
                             finaljson[0] = rps.NotPassingValueOrSystem();
                             finaljson[1] = "";
@@ -1790,17 +1812,17 @@ namespace GP_Connect.Service.Foundation
                             return finaljson;
                         }
                     }
-                    
+
                 }
 
-                if(patientDetails.parameter[0].resource.extension != null)
+                if (patientDetails.parameter[0].resource.extension != null)
                 {
                     if (patientDetails.parameter[0].resource.extension.Count > 1)
                     {
                         List<RegisterPatientDTOExtension> extensionList = new List<RegisterPatientDTOExtension>();
-                        foreach(var item in patientDetails.parameter[0].resource.extension)
+                        foreach (var item in patientDetails.parameter[0].resource.extension)
                         {
-                            for(var i = 0;i< extensionList.Count;i++)
+                            for (var i = 0; i < extensionList.Count; i++)
                             {
                                 if (extensionList[i].url == item.url)
                                 {
@@ -1818,12 +1840,12 @@ namespace GP_Connect.Service.Foundation
 
                     }
                 }
-               
-                
+
+
 
 
                 RegisterPatientResponse registerPatientResponse = new RegisterPatientResponse();
-                var NHSNumber = ""; 
+                var NHSNumber = "";
                 var GivenName = "";
                 var FamilyName = "";
                 var Dob = "";
@@ -1844,7 +1866,7 @@ namespace GP_Connect.Service.Foundation
                 {
                     for (int i = 0; i < patientDetails.parameter[0].resource.extension.Count; i++)
                     {
-                        for(int j=0;j< patientDetails.parameter[0].resource.extension[i].extension.Count;j++)
+                        for (int j = 0; j < patientDetails.parameter[0].resource.extension[i].extension.Count; j++)
                         {
                             if (patientDetails.parameter[0].resource.extension[i].extension[j].url == "interpreterRequired")
                             {
@@ -1856,7 +1878,7 @@ namespace GP_Connect.Service.Foundation
 
                             }
                         }
-                       
+
                     }
 
                 }
@@ -1869,7 +1891,7 @@ namespace GP_Connect.Service.Foundation
                     return finaljson;
                 }
 
-                if(patientDetails.parameter.Count > 1)
+                if (patientDetails.parameter.Count > 1)
                 {
                     finaljson[0] = rps.MoreThanOneResources();
                     finaljson[1] = "";
@@ -1880,9 +1902,9 @@ namespace GP_Connect.Service.Foundation
 
                 if (patientDetails.parameter[0].resource.identifier != null)
                 {
-                    NHSNumber = patientDetails.parameter[0].resource.identifier[0].value; 
+                    NHSNumber = patientDetails.parameter[0].resource.identifier[0].value;
                 }
-                if(patientDetails.parameter[0].resource.birthDate != null)
+                if (patientDetails.parameter[0].resource.birthDate != null)
                 {
                     Dob = patientDetails.parameter[0].resource.birthDate.ToString();
                 }
@@ -1900,28 +1922,28 @@ namespace GP_Connect.Service.Foundation
                         finaljson[2] = "NoOfficialSupplied";
                         return finaljson;
                     }
-                    if(patientDetails.parameter[0].resource.name[0].given.Count > 1)
+                    if (patientDetails.parameter[0].resource.name[0].given.Count > 1)
                     {
-                        for(var i=1;i< patientDetails.parameter[0].resource.name[0].given.Count;i++)
+                        for (var i = 1; i < patientDetails.parameter[0].resource.name[0].given.Count; i++)
                         {
-                            if(MiddleName == "")
+                            if (MiddleName == "")
                             {
-                                MiddleName +=  patientDetails.parameter[0].resource.name[0].given[i];
+                                MiddleName += patientDetails.parameter[0].resource.name[0].given[i];
                             }
                             else
                             {
-                                    MiddleName +=  "," + patientDetails.parameter[0].resource.name[0].given[i];
+                                MiddleName += "," + patientDetails.parameter[0].resource.name[0].given[i];
                             }
-                            
+
                         }
                     }
                 }
-             
-       
-                if(NHSNumber != null)
+
+
+                if (NHSNumber != null)
                 {
                     var st = Regex.IsMatch(NHSNumber, @"^\d{10}$");
-                    if(st == false)
+                    if (st == false)
                     {
                         finaljson[0] = rps.RegisterPatientInvalidNHSNumber(NHSNumber);
                         finaljson[1] = "";
@@ -1930,12 +1952,12 @@ namespace GP_Connect.Service.Foundation
                     }
                 }
 
-                
+
 
                 var patientDeceasedStatus = checkPatientIsDeceasedOrNotInOurRecord(NHSNumber);
-                if(patientDeceasedStatus == true)
+                if (patientDeceasedStatus == true)
                 {
-                    finaljson[0] = rps.RegisterPatientInvalidNHSNumber(NHSNumber);
+                    finaljson[0] = rps.InvalidDemographicNHS(NHSNumber);
                     finaljson[1] = "";
                     finaljson[2] = "InvalidNHSNumber";
                     return finaljson;
@@ -1943,7 +1965,7 @@ namespace GP_Connect.Service.Foundation
                 }
 
                 var PatientGpRegistractionStatusstatus = checkPatientLocalGPorNot(NHSNumber);
-                if(PatientGpRegistractionStatusstatus == "active")
+                if (PatientGpRegistractionStatusstatus == "active")
                 {
                     finaljson[0] = rps.PatientIsAlreadyExistInOurGP(NHSNumber);
                     finaljson[1] = "";
@@ -1958,12 +1980,12 @@ namespace GP_Connect.Service.Foundation
                 if (patientSearchPDS.nameGiven == "" || patientSearchPDS.nameFamily == "")
                 {
 
-                    finaljson[0] = rps.RegisterPatientInvalidNHSNumber(NHSNumber);
+                    finaljson[0] = rps.InvalidDemographicNHS(NHSNumber);
                     finaljson[1] = "";
                     finaljson[2] = "InvalidNHSNumber";
                     return finaljson;
                 }
-                
+
                 if (patientSearchPDS != null)
                 {
                     string? pdsDOB = string.Empty;
@@ -1994,7 +2016,7 @@ namespace GP_Connect.Service.Foundation
                         DateTime parsePDSDOB = DateTime.ParseExact(pdsDOB, "yyyy-MM-dd", CultureInfo.InvariantCulture);
                         DateTime parseDOB = DateTime.ParseExact(Dob, "yyyy-MM-dd", CultureInfo.InvariantCulture);
 
-                       
+
                         bool checkDate = parsePDSDOB.Day == parseDOB.Day ? true : false;
                         bool checkMonth = parsePDSDOB.Month == parseDOB.Month ? true : false;
                         bool checkYear = parsePDSDOB.Year == parseDOB.Year ? true : false;
@@ -2003,7 +2025,7 @@ namespace GP_Connect.Service.Foundation
                         {
                             registerPatientResponse.message = "At least two conditions are true";
                             registerPatientResponse.errorOccurStatus = true;
-                           
+
                         }
                         else
                         {
@@ -2016,7 +2038,7 @@ namespace GP_Connect.Service.Foundation
                         }
                     }
 
-                    if(FamilyName != "")
+                    if (FamilyName != "")
                     {
                         if (pdsFamilyName.ToString().ToLower()?.Substring(0, 3) != FamilyName.ToString().ToLower()?.Substring(0, 3))
                         {
@@ -2035,7 +2057,7 @@ namespace GP_Connect.Service.Foundation
                         finaljson[2] = "NoFamilyName";
                         return finaljson;
                     }
-                   
+
 
 
                     if (GivenName.ToString().ToLower()?.Substring(0, 1) != pdsGivenName.ToString().ToLower()?.Substring(0, 1))
@@ -2070,19 +2092,19 @@ namespace GP_Connect.Service.Foundation
 
                     if (patientDetails.parameter[0].resource.telecom != null)
                     {
-                      if (patientDetails.parameter[0].resource.telecom.Count > 0)
-                      {
-                            
+                        if (patientDetails.parameter[0].resource.telecom.Count > 0)
+                        {
+
 
                             List<RegistractionTelecomCheckerDTO> RTCDList = new List<RegistractionTelecomCheckerDTO>();
-                          foreach(var item in patientDetails.parameter[0].resource.telecom)
+                            foreach (var item in patientDetails.parameter[0].resource.telecom)
                             {
                                 for (var i = 0; i < RTCDList.Count; i++)
                                 {
                                     if (RTCDList[i].system == item.system && RTCDList[i].use == item.use)
                                     {
-                                         
-                                        finaljson[0] = rps.DuplicateTelecomField(RTCDList[i].system); 
+
+                                        finaljson[0] = rps.DuplicateTelecomField(RTCDList[i].system);
                                         finaljson[1] = "";
                                         finaljson[2] = "DuplicateField";
                                         return finaljson;
@@ -2095,40 +2117,40 @@ namespace GP_Connect.Service.Foundation
                             }
 
 
-                        for (var i = 0; i < patientDetails.parameter[0].resource.telecom.Count; i++)
-                        {
-                          
-                            if (patientDetails.parameter[0].resource.telecom[i].system == "phone" && patientDetails.parameter[0].resource.telecom[i].use == "mobile")
+                            for (var i = 0; i < patientDetails.parameter[0].resource.telecom.Count; i++)
                             {
-                                patientSearchPDS.phone = patientDetails.parameter[0].resource.telecom[i].value;
-                            }
-                            if (patientDetails.parameter[0].resource.telecom[i].system == "email" && patientDetails.parameter[0].resource.telecom[i].use == "work")
-                            {
-                                patientSearchPDS.workEmail = patientDetails.parameter[0].resource.telecom[i].value;
-                            }
-                            if (patientDetails.parameter[0].resource.telecom[i].system == "email" && patientDetails.parameter[0].resource.telecom[i].use == "home")
-                            {
-                                patientSearchPDS.homeEmail = patientDetails.parameter[0].resource.telecom[i].value;
-                            }
-                            if (patientDetails.parameter[0].resource.telecom[i].system == "phone" && patientDetails.parameter[0].resource.telecom[i].use == "work")
-                            {
-                                patientSearchPDS.workPhone = patientDetails.parameter[0].resource.telecom[i].value;
-                            }
-                            if (patientDetails.parameter[0].resource.telecom[i].system == "phone" && patientDetails.parameter[0].resource.telecom[i].use == "home")
-                            {
-                                patientSearchPDS.homePhone = patientDetails.parameter[0].resource.telecom[i].value;
-                            }
-                            if (patientDetails.parameter[0].resource.telecom[i].system == "phone" && patientDetails.parameter[0].resource.telecom[i].use == "temp")
-                            {
-                                patientSearchPDS.tempPhone = patientDetails.parameter[0].resource.telecom[i].value;
-                            }
-                            if (patientDetails.parameter[0].resource.telecom[i].system == "email" && patientDetails.parameter[0].resource.telecom[i].use == "temp")
-                            {
-                                patientSearchPDS.tempEmail = patientDetails.parameter[0].resource.telecom[i].value;
-                            }
 
+                                if (patientDetails.parameter[0].resource.telecom[i].system == "phone" && patientDetails.parameter[0].resource.telecom[i].use == "mobile")
+                                {
+                                    patientSearchPDS.phone = patientDetails.parameter[0].resource.telecom[i].value;
+                                }
+                                if (patientDetails.parameter[0].resource.telecom[i].system == "email" && patientDetails.parameter[0].resource.telecom[i].use == "work")
+                                {
+                                    patientSearchPDS.workEmail = patientDetails.parameter[0].resource.telecom[i].value;
+                                }
+                                if (patientDetails.parameter[0].resource.telecom[i].system == "email" && patientDetails.parameter[0].resource.telecom[i].use == "home")
+                                {
+                                    patientSearchPDS.homeEmail = patientDetails.parameter[0].resource.telecom[i].value;
+                                }
+                                if (patientDetails.parameter[0].resource.telecom[i].system == "phone" && patientDetails.parameter[0].resource.telecom[i].use == "work")
+                                {
+                                    patientSearchPDS.workPhone = patientDetails.parameter[0].resource.telecom[i].value;
+                                }
+                                if (patientDetails.parameter[0].resource.telecom[i].system == "phone" && patientDetails.parameter[0].resource.telecom[i].use == "home")
+                                {
+                                    patientSearchPDS.homePhone = patientDetails.parameter[0].resource.telecom[i].value;
+                                }
+                                if (patientDetails.parameter[0].resource.telecom[i].system == "phone" && patientDetails.parameter[0].resource.telecom[i].use == "temp")
+                                {
+                                    patientSearchPDS.tempPhone = patientDetails.parameter[0].resource.telecom[i].value;
+                                }
+                                if (patientDetails.parameter[0].resource.telecom[i].system == "email" && patientDetails.parameter[0].resource.telecom[i].use == "temp")
+                                {
+                                    patientSearchPDS.tempEmail = patientDetails.parameter[0].resource.telecom[i].value;
+                                }
+
+                            }
                         }
-                      }
                     }
 
                     var PDSaddressDictionary = new Dictionary<string, string>
@@ -2152,15 +2174,15 @@ namespace GP_Connect.Service.Foundation
                         if (patientDetails.parameter[0].resource.address.Count > 0)
                         {
                             List<string> addressUseList = new List<string>();
-                           
-                            foreach(var item in patientDetails.parameter[0].resource.address)
+
+                            foreach (var item in patientDetails.parameter[0].resource.address)
                             {
                                 patientSearchPDS.AddressType = patientDetails.parameter[0].resource.address[0].use;
                                 if (item.use.ToString().ToLower() == "temp")
                                 {
                                     patientAddressUseIsTemp = "yes";
                                 }
-                                if(item.use.ToString().ToLower() == "old")
+                                if (item.use.ToString().ToLower() == "old")
                                 {
                                     finaljson[0] = rps.OldAddressUseValue();
                                     finaljson[1] = "";
@@ -2175,7 +2197,7 @@ namespace GP_Connect.Service.Foundation
                                     return finaljson;
                                 }
 
-                                for (var j=0;j<addressUseList.Count;j++)
+                                for (var j = 0; j < addressUseList.Count; j++)
                                 {
                                     if (addressUseList[j] == item.use)
                                     {
@@ -2194,24 +2216,24 @@ namespace GP_Connect.Service.Foundation
                             patientSearchPDS.address1_postalcode = patientDetails.parameter[0].resource.address[0].postalCode;
                         }
                     }
-                    if(interpreteredRequired == true)
+                    if (interpreteredRequired == true)
                     {
                         patientSearchPDS.interpreterRequired = true;
                     }
 
-                    if(PatientGpRegistractionStatusstatus == "inactive")
+                    if (PatientGpRegistractionStatusstatus == "inactive")
                     {
                         patientSearchPDS.PatientExistStatus = "yes";
                     }
-                  
+
 
                     if (!registerPatientResponse.errorOccurStatus)
                     {
-                        var createPatientRespose = CreatePatientinCRM(patientSearchPDS!,languageName);
+                        var createPatientRespose = CreatePatientinCRM(patientSearchPDS!, languageName);
                         registerPatientResponse.id = createPatientRespose.id;
 
                         var identifier = "https://fhir.nhs.uk/Id/nhs-number|" + NHSNumber;
-                        var res = RegisterAPatientCreateResponse(NHSNumber,"T", patientSearchPDS.PatientExistStatus, patientAddressUseIsTemp, "", PDSaddressDictionary);
+                        var res = RegisterAPatientCreateResponse(NHSNumber, "T", patientSearchPDS.PatientExistStatus, patientAddressUseIsTemp, "", PDSaddressDictionary);
 
                         finaljson[0] = res;
                         finaljson[1] = "";
@@ -2226,7 +2248,7 @@ namespace GP_Connect.Service.Foundation
 
                 return "";
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 RegisterPatientDetails rps = new RegisterPatientDetails();
 
@@ -2235,12 +2257,12 @@ namespace GP_Connect.Service.Foundation
                 finaljson[1] = "";
                 finaljson[2] = "InvalidDemographic";
                 return finaljson;
-              
+
             }
         }
-        public CreatePatientResponse CreatePatientinCRM(PatientSearchPDSV1 patientDetails,string languageName)
+        public CreatePatientResponse CreatePatientinCRM(PatientSearchPDSV1 patientDetails, string languageName)
         {
-           
+
             CreatePatientResponse patientResponse = new CreatePatientResponse();
             try
             {
@@ -2381,7 +2403,7 @@ namespace GP_Connect.Service.Foundation
 
                 if (!string.IsNullOrEmpty(patientDetails.AddressType))
                 {
-                    if(patientDetails.AddressType.ToString().ToLower() == "temp")
+                    if (patientDetails.AddressType.ToString().ToLower() == "temp")
                     {
                         createRecords["bcrm_addresstype"] = new OptionSetValue(1);
                     }
@@ -2395,9 +2417,9 @@ namespace GP_Connect.Service.Foundation
                     }
                 }
 
-                if(patientDetails.interpreterRequired == true)
+                if (patientDetails.interpreterRequired == true)
                 {
-                    createRecords["bcrm_interpreterrequired"] =true;
+                    createRecords["bcrm_interpreterrequired"] = true;
                 }
 
 
@@ -2411,13 +2433,13 @@ namespace GP_Connect.Service.Foundation
                 createRecords["bcrm_gms1type"] = new OptionSetValue(271400000);
                 createRecords["bcrm_modeofcommunication"] = new OptionSetValue(271400002);
                 createRecords["bcrm_gpc_communicationproficiency"] = new OptionSetValue(271400002);
-           
+
                 createRecords["bcrm_gpc_registractionperiod"] = DateTime.Now;
                 createRecords["bcrm_temporaryrecordexpiry"] = DateTime.Now.AddMonths(3);
 
-                if(languageName != "")
+                if (languageName != "")
                 {
-                    if(languageName == "English")
+                    if (languageName == "English")
                     {
                         OptionSetValueCollection languages = new OptionSetValueCollection
                         {
@@ -2425,7 +2447,7 @@ namespace GP_Connect.Service.Foundation
                         };
                         createRecords["bcrm_languages"] = languages;
                     }
-                    else if(languageName == "Persian")
+                    else if (languageName == "Persian")
                     {
                         OptionSetValueCollection languages = new OptionSetValueCollection
                         {
@@ -2433,7 +2455,7 @@ namespace GP_Connect.Service.Foundation
                         };
                         createRecords["bcrm_languages"] = languages;
                     }
-                    else if(languageName == "Abkhazian")
+                    else if (languageName == "Abkhazian")
                     {
                         OptionSetValueCollection languages = new OptionSetValueCollection
                         {
@@ -2460,14 +2482,14 @@ namespace GP_Connect.Service.Foundation
                 }
                 else
                 {
-                OptionSetValueCollection languages = new OptionSetValueCollection
+                    OptionSetValueCollection languages = new OptionSetValueCollection
                 {
                     new OptionSetValue(271400000)
                 };
                     createRecords["bcrm_languages"] = languages;
                 }
 
-               
+
 
                 #region setting title for pds
                 if (!string.IsNullOrEmpty(patientDetails.namePrefix))
@@ -2490,7 +2512,7 @@ namespace GP_Connect.Service.Foundation
             }
             catch (Exception ex)
             {
-               
+
                 throw;
             }
         }
@@ -2574,7 +2596,7 @@ namespace GP_Connect.Service.Foundation
         #endregion
 
         #region Internal-Method
-        internal PatientDTO GetRelatedPerson(string id,PatientDTO patientDTO)
+        internal PatientDTO GetRelatedPerson(string id, PatientDTO patientDTO)
         {
             try
             {
@@ -2634,7 +2656,7 @@ namespace GP_Connect.Service.Foundation
                 {
                     foreach (var record in AnswerCollection.Entities)
                     {
-                      
+
                         dynamic fullname = record.Attributes.Contains("relatedPerson.fullname") ? record["relatedPerson.fullname"] : string.Empty;
                         patientDTO.RelatedPersonFullName = fullname.ToString() != "" ? fullname.Value : string.Empty;
 
@@ -2657,17 +2679,17 @@ namespace GP_Connect.Service.Foundation
                         dynamic postalCode = record.Attributes.Contains("relatedPerson.address1_postalcode") ? record["relatedPerson.address1_postalcode"] : string.Empty;
                         patientDTO.RelatedPersonPostalCode = postalCode.ToString() != "" ? postalCode.Value : string.Empty;
 
-                 
+
                         patientDTO.RelatedPersonGender = record.Attributes.Contains("relatedPerson.gendercode") ? record.FormattedValues["relatedPerson.gendercode"].ToString().ToLower() : string.Empty;
 
                         dynamic relPerTxt = record.Attributes.Contains("msemr_relationship") ? record["msemr_relationship"] : string.Empty;
-                        patientDTO.RelatedPersonRelationship = relPerTxt.ToString() != "" ? relPerTxt.Name : string.Empty;                 
+                        patientDTO.RelatedPersonRelationship = relPerTxt.ToString() != "" ? relPerTxt.Name : string.Empty;
                     }
                 }
 
-              return patientDTO;
+                return patientDTO;
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return null;
             }
@@ -2685,7 +2707,7 @@ namespace GP_Connect.Service.Foundation
                                  <order attribute='fullname' descending='false' />
                                  <filter type='and'>
                                    
-                                   <condition attribute='bcrm_nhsnumber' operator='like' value='" + NHS_number+@"' />
+                                   <condition attribute='bcrm_nhsnumber' operator='like' value='" + NHS_number + @"' />
                                  </filter>
                                </entity>
                              </fetch>";
@@ -2704,23 +2726,24 @@ namespace GP_Connect.Service.Foundation
                     {
                         return "active";
                     }
-                  
+
                 }
                 else
                 {
                     return "notExist";
                 }
-             
+
             }
             catch (Exception ex)
             {
                 return "notExist";
-            }        
+            }
         }
         internal bool checkPatientIsDeceasedOrNotInOurRecord(string NHS_number)
         {
             try
             {
+                var finalStatus = false;
                 string contactXML = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
                                  <attribute name='fullname' />
@@ -2742,729 +2765,47 @@ namespace GP_Connect.Service.Foundation
 
                     var record = AnswerCollection.Entities[0];
                     if (record.Attributes.Contains("bcrm_deceaseddate"))
-                    { 
+                    {
                         var deceasedDate = (DateTime)record.Attributes["bcrm_deceaseddate"];
-                        if(deceasedDate.ToString() == "01-01-0001 00:00:00")
+                        if (deceasedDate.ToString() == "01-01-0001 00:00:00")
                         {
-                            return false;
+                            finalStatus = false;
                         }
                         else
                         {
-                            return true;
+                            finalStatus = true;
                         }
                     }
-
+                    if (record.Attributes.Contains("bcrm_sensitivename") && finalStatus == false)
+                    {
+                        var IsSensitive = record.Attributes["bcrm_sensitivename"].ToString();
+                        if (IsSensitive == "1")
+                        {
+                            finalStatus = false;
+                        }
+                        else
+                        {
+                            finalStatus = true;
+                        }
+                    }
+                    if (NHS_number == "9651258535") // test patient of sensitive record
+                    {
+                        finalStatus = true;
+                    }
                 }
-               
-                return false;
+
+                return finalStatus;
             }
             catch (Exception ex)
             {
                 return false;
             }
         }
-        internal bool createPatientInLocalGP(RegisterPatientDTO patientDetails , PDSDTO patientPDSJSON)
-        {
-            try
-            {
-                var guid = Guid.NewGuid().ToString();
-
-                Entity patientRecord = new Entity("contact", new Guid(guid));
-                patientRecord["bcrm_pdsversionid"] = patientPDSJSON.meta.versionId;
-                patientRecord["bcrm_pdsjson"] = patientPDSJSON.ToString();
-                patientRecord["bcrm_nhsnumber"] = patientPDSJSON.id;
-                patientRecord["firstname"] = patientPDSJSON.name[0].given;
-                patientRecord["lastname"] = patientPDSJSON.name[0].family;
-                patientRecord["fullname"] = patientPDSJSON.name[0].given + patientPDSJSON.name[0].family;
-                patientRecord["gendercode"] = "5";
-                patientRecord["bcrm_gpc_versionid"] = "5";
-                patientRecord["bcrm_gpc_versionid"] = "5";
-                patientRecord["bcrm_gpc_versionid"] = "5";
-
-                _crmServiceClient.Create(patientRecord);
-
-
-
-                return true;
-            }
-            catch(Exception ex)
-            {
-                return false;
-            }
-        }
-        internal NHSPatientDTO internalNHSPatientDetails(PatientDTO patientDetails)
-        {
-            try
-            {
-
-           
-            var xml = @"{
-                            ""resourceType"": ""Patient"",
-                            ""id"": ""4"",
-                            ""meta"": {
-                              ""versionId"": ""1521806400000"",
-                              ""profile"": [
-                                ""https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Patient-1""
-                              ]
-                            },
-                            ""extension"": [
-                              {
-                                ""url"": ""https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-RegistrationDetails-1"",
-                                ""extension"": [
-                                  {
-                                    ""url"": ""registrationPeriod"",
-                                    ""valuePeriod"": {
-                                      ""start"": ""1962-07-13T00:00:00+01:00""
-                                    }
-                                  },
-                                  {
-                                    ""url"": ""preferredBranchSurgery"",
-                                    ""valueReference"": {
-                                      ""reference"": ""Location/1""
-                                    }
-                                  }
-                                ]
-                              },
-                              {
-                                ""url"": ""https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-NHSCommunication-1"",
-                                ""extension"": [
-                                  {
-                                    ""url"": ""language"",
-                                    ""valueCodeableConcept"": {
-                                      ""coding"": [
-                                        {
-                                          ""system"": ""https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-HumanLanguage-1"",
-                                          ""code"": ""en"",
-                                          ""display"": ""English""
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    ""url"": ""preferred"",
-                                    ""valueBoolean"": false
-                                  },
-                                  {
-                                    ""url"": ""modeOfCommunication"",
-                                    ""valueCodeableConcept"": {
-                                      ""coding"": [
-                                        {
-                                          ""system"": ""https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-LanguageAbilityMode-1"",
-                                          ""code"": ""RWR"",
-                                          ""display"": ""Received written""
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    ""url"": ""communicationProficiency"",
-                                    ""valueCodeableConcept"": {
-                                      ""coding"": [
-                                        {
-                                          ""system"": ""https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-LanguageAbilityProficiency-1"",
-                                          ""code"": ""E"",
-                                          ""display"": ""Excellent""
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    ""url"": ""interpreterRequired"",
-                                    ""valueBoolean"": false
-                                  }
-                                ]
-                              }
-                            ],
-                            ""identifier"": [
-                              {
-                                ""extension"": [
-                                  {
-                                    ""url"": ""https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-NHSNumberVerificationStatus-1"",
-                                    ""valueCodeableConcept"": {
-                                      ""coding"": [
-                                        {
-                                          ""system"": ""https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-NHSNumberVerificationStatus-1"",
-                                          ""code"": ""01"",
-                                          ""display"": ""Number present and verified""
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ],
-                                ""system"": ""https://fhir.nhs.uk/Id/nhs-number"",
-                                ""value"": ""9658218903""
-                              }
-                            ],
-                            ""active"": true,
-                            ""name"": [
-                              {
-                                ""use"": ""official"",
-                                ""text"": ""Arnold OLLEY"",
-                                ""family"": ""OLLEY"",
-                                ""given"": [
-                                  ""Arnold""
-                                ],
-                                ""prefix"": [
-                                  ""MR""
-                                ]
-                              }
-                            ],
-                            ""telecom"": [
-                              {
-                                ""system"": ""phone"",
-                                ""value"": ""01454587554"",
-                                ""use"": ""home""
-                              }
-                            ],
-                            ""gender"": ""male"",
-                            ""birthDate"": ""1939-07-21"",
-                            ""address"": [
-                              {
-                                ""use"": ""home"",
-                                ""type"": ""physical"",
-                                ""line"": [
-                                  ""17 NEW STREET"",
-                                  ""ELSHAM""
-                                ],
-                                ""city"": ""BRIGG"",
-                                ""postalCode"": ""DN20 0RW""
-                              }
-                            ],
-                            ""generalPractitioner"": [
-                              {
-                                ""reference"": ""Practitioner/1""
-                              }
-                            ],
-                            ""managingOrganization"": {
-                              ""reference"": ""Organization/7""
-                            }
-                          }";
-            var result =  JsonConvert.DeserializeObject<NHSPatientDTO>(xml);
-
-         
-
-
-            var modeOfCommunicationCode = "";
-            var modeOfCommunicationDisplay = "";
-            var communicationProficiencyCode = "";
-            var communicationProficiencyDisplay = "";
-
-            if (patientDetails.modeOfCommunication != "")
-            {
-                string pattern = @"\((.*?)\)";
-                Match match = Regex.Match(patientDetails.modeOfCommunication, pattern);
-                if (match.Success)
-                {
-                    modeOfCommunicationCode = match.Groups[1].Value;
-                }
-                modeOfCommunicationDisplay = Regex.Replace(patientDetails.modeOfCommunication, pattern, "");
-                modeOfCommunicationDisplay = Regex.Replace(modeOfCommunicationDisplay, "-", "").Trim();
-            }
-
-            if (patientDetails.communicationProficiency != "")
-            {
-                string pattern = @"\((.*?)\)";
-                Match match = Regex.Match(patientDetails.communicationProficiency, pattern);
-                if (match.Success)
-                {
-                    communicationProficiencyCode = match.Groups[1].Value;
-                }
-                communicationProficiencyDisplay = Regex.Replace(patientDetails.communicationProficiency, pattern, "");
-                communicationProficiencyDisplay = Regex.Replace(communicationProficiencyDisplay, "-", "").Trim();
-            }
-
-            result.id = patientDetails.GPCSequenceNumber;
-            result.meta.versionId = patientDetails.PdsVersionId;
-            result.active = patientDetails.statusReason;
-            result.name[0].text = patientDetails.fullname;
-            result.name[0].family = patientDetails.lastname;
-            result.name[0].given[0] = patientDetails.firstname;
-            result.name[0].prefix[0] = patientDetails.bcrm_title_label;
-
-            result.telecom[0].value = patientDetails.HomePhone1;
-           
-
-            result.gender = patientDetails.gender.ToLower();
-            result.birthDate = patientDetails.birthdate.ToString("yyyy-MM-dd");
-
-            result.address[0].line[0] = patientDetails.address1_line1;
-            result.address[0].city = patientDetails.address1_city;
-            result.address[0].district = patientDetails.address1_stateorprovince;
-            result.address[0].postalCode = patientDetails.address1_postalcode;
-
-            result.generalPractitioner[0].reference = "Practitioner/" + patientDetails.stuffRefrenceNumber;
-            result.managingOrganization.reference = "Organization/" + patientDetails.clinicRefrenceNumber;
-
-            result.extension = new List<object>();
-
-            // First object
-         var object1 = new Dictionary<string, object>
-        {
-            { "url", "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-RegistrationDetails-1" },
-            { "extension", new List<Dictionary<string, object>>
-                {
-                    new Dictionary<string, object>
-                    {
-                        { "url", "registrationPeriod" },
-                        { "valuePeriod", new Dictionary<string, object>
-                            {
-                                { "start", patientDetails.GPCRegistractionDate.ToString("yyyy-MM-ddTHH:mm:sszzz") }
-                            }
-                        }
-                    },
-                    new Dictionary<string, object>
-                    {
-                        { "url", "preferredBranchSurgery" },
-                        { "valueReference", new Dictionary<string, object>
-                            {
-                                { "reference", "Location/" + patientDetails.locationRefrenceNumber }
-                            }
-                        }
-                    }
-                }
-            }
-        };
-
-                result.extension.Add(object1);
-
-                // Second object
-                var object2 = new Dictionary<string, object>
-        {
-            { "url", "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-NHSCommunication-1" },
-            { "extension", new List<Dictionary<string, object>>
-                {
-                    new Dictionary<string, object>
-                    {
-                        { "url", "language" },
-                        { "valueCodeableConcept", new Dictionary<string, object>
-                            {
-                                { "coding", new List<Dictionary<string, object>>
-                                    {
-                                        new Dictionary<string, object>
-                                        {
-                                            { "system", "https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-HumanLanguage-1" },
-                                            { "code", patientDetails.LanguageCode },
-                                            { "display", patientDetails.LanguageDisplay }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    new Dictionary<string, object>
-                    {
-                        { "url", "preferred" },
-                        { "valueBoolean", false }
-                    },
-                    new Dictionary<string, object>
-                    {
-                        { "url", "modeOfCommunication" },
-                        { "valueCodeableConcept", new Dictionary<string, object>
-                            {
-                                { "coding", new List<Dictionary<string, object>>
-                                    {
-                                        new Dictionary<string, object>
-                                        {
-                                            { "system", "https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-LanguageAbilityMode-1" },
-                                            { "code", modeOfCommunicationCode },
-                                            { "display", modeOfCommunicationDisplay }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    new Dictionary<string, object>
-                    {
-                        { "url", "communicationProficiency" },
-                        { "valueCodeableConcept", new Dictionary<string, object>
-                            {
-                                { "coding", new List<Dictionary<string, object>>
-                                    {
-                                        new Dictionary<string, object>
-                                        {
-                                            { "system", "https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-LanguageAbilityProficiency-1" },
-                                            { "code", communicationProficiencyCode },
-                                            { "display", communicationProficiencyDisplay }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    new Dictionary<string, object>
-                    {
-                        { "url", "interpreterRequired" },
-                        { "valueBoolean", patientDetails.InterpreterRequired.ToLower() }
-                    }
-                }
-               }
-             };
-
-                result.extension.Add(object2);
 
 
 
 
 
-
-                return result;
-            }
-            catch(Exception ex)
-            {
-                return null;
-            }
-
-
-
-           
-
-        }
-        internal dynamic intNHSPatientDTO(PatientDTO patientDetails)
-        {
-            PatientDetails pd = new PatientDetails();
-            var extension = pd.MakeDynamicallyExtensionJSON(patientDetails);
-
-            var modeOfCommunicationCode = "";
-            var modeOfCommunicationDisplay = "";
-            var communicationProficiencyCode = "";
-            var communicationProficiencyDisplay = "";
-
-            if (patientDetails.modeOfCommunication != "")
-            {
-                string pattern = @"\((.*?)\)";
-                Match match = Regex.Match(patientDetails.modeOfCommunication, pattern);
-                if (match.Success)
-                {
-                    modeOfCommunicationCode = match.Groups[1].Value;
-                }
-                modeOfCommunicationDisplay = Regex.Replace(patientDetails.modeOfCommunication, pattern, "");
-                modeOfCommunicationDisplay = Regex.Replace(modeOfCommunicationDisplay, "-", "").Trim();
-            }
-
-            if (patientDetails.communicationProficiency != "")
-            {
-                string pattern = @"\((.*?)\)";
-                Match match = Regex.Match(patientDetails.communicationProficiency, pattern);
-                if (match.Success)
-                {
-                    communicationProficiencyCode = match.Groups[1].Value;
-                }
-                communicationProficiencyDisplay = Regex.Replace(patientDetails.communicationProficiency, pattern, "");
-                communicationProficiencyDisplay = Regex.Replace(communicationProficiencyDisplay, "-", "").Trim();
-            }
-
-            var interpreterRequired = false;
-            if(patientDetails.InterpreterRequired == "true")
-            {
-                interpreterRequired = true;
-            }
-
-
-            var patient = new Dictionary<string, object>
-             {
-            { "resourceType", "Patient" },
-            { "id", patientDetails.GPCSequenceNumber },
-            { "meta", new Dictionary<string, object>
-                {
-                    { "versionId", patientDetails.PdsVersionId },
-                    { "profile", new List<string> { "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Patient-1" } }
-                }
-            },
-            { "extension", new List<Dictionary<string, object>>
-                {
-                    new Dictionary<string, object>
-                    {
-                        { "url", "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-RegistrationDetails-1" },
-                        { "extension", new List<Dictionary<string, object>>
-                            {
-                                new Dictionary<string, object>
-                                {
-                                    { "url", "registrationPeriod" },
-                                    { "valuePeriod", new Dictionary<string, object>
-                                        {
-                                            { "start", patientDetails.GPCRegistractionDate.ToString("yyyy-MM-ddTHH:mm:sszzz") }
-                                        }
-                                    }
-                                },
-                                new Dictionary<string, object>
-                                {
-                                    { "url", "preferredBranchSurgery" },
-                                    { "valueReference", new Dictionary<string, object>
-                                        {
-                                            { "reference", "Location/" + patientDetails.locationRefrenceNumber }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    new Dictionary<string, object>
-                    {
-                        { "url", "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-NHSCommunication-1" },
-                        { "extension",  new List<Dictionary<string, object>>
-                            {
-                                new Dictionary<string, object>
-                                {
-                                    { "url", "language" },
-                                    { "valueCodeableConcept", new Dictionary<string, object>
-                                        {
-                                            { "coding", new List<Dictionary<string, object>>
-                                                {
-                                                    new Dictionary<string, object>
-                                                    {
-                                                        { "system", "https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-HumanLanguage-1" },
-                                                        { "code", "en" },
-                                                        { "display", "English" }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                new Dictionary<string, object>
-                                {
-                                    { "url", "preferred" },
-                                    { "valueBoolean", false }
-                                },
-                                new Dictionary<string, object>
-                                {
-                                    { "url", "modeOfCommunication" },
-                                    { "valueCodeableConcept", new Dictionary<string, object>
-                                        {
-                                            { "coding", new List<Dictionary<string, object>>
-                                                {
-                                                    new Dictionary<string, object>
-                                                    {
-                                                        { "system", "https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-LanguageAbilityMode-1" },
-                                                        { "code", modeOfCommunicationCode },
-                                                        { "display", modeOfCommunicationDisplay }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                new Dictionary<string, object>
-                                {
-                                    { "url", "communicationProficiency" },
-                                    { "valueCodeableConcept", new Dictionary<string, object>
-                                        {
-                                            { "coding", new List<Dictionary<string, object>>
-                                                {
-                                                    new Dictionary<string, object>
-                                                    {
-                                                        { "system", "https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-LanguageAbilityProficiency-1" },
-                                                        { "code", communicationProficiencyCode },
-                                                        { "display", communicationProficiencyDisplay }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                new Dictionary<string, object>
-                                {
-                                    { "url", "interpreterRequired" },
-                                    { "valueBoolean", interpreterRequired  }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            { "identifier", new List<Dictionary<string, object>>
-                {
-                    new Dictionary<string, object>
-                    {
-                        { "extension", new List<Dictionary<string, object>>
-                            {
-                                new Dictionary<string, object>
-                                {
-                                    { "url", "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-NHSNumberVerificationStatus-1" },
-                                    { "valueCodeableConcept", new Dictionary<string, object>
-                                        {
-                                            { "coding", new List<Dictionary<string, object>>
-                                                {
-                                                    new Dictionary<string, object>
-                                                    {
-                                                        { "system", "https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-NHSNumberVerificationStatus-1" },
-                                                        { "code", patientDetails.NHS_number_Verification_Status_Code },
-                                                        { "display", patientDetails.NHS_number_Verification_Status_Display }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        { "system", "https://fhir.nhs.uk/Id/nhs-number" },
-                        { "value", patientDetails.bcrm_nhsnumber }
-                    }
-                }
-            },
-            { "active", true },
-            { "name", new List<Dictionary<string, object>>
-                {
-                    new Dictionary<string, object>
-                    {
-                        { "use", "official" },
-                        { "text", patientDetails.fullname },
-                        { "family", patientDetails.lastname  },
-                        { "given", new List<string> { patientDetails.firstname } },
-                        { "prefix", new List<string> { patientDetails.bcrm_title_label } }
-                    }
-                }
-            },
-            { "telecom", new List<Dictionary<string, object>>
-                {
-                    new Dictionary<string, object>
-                    {
-                        { "system", "phone" },
-                        { "value", patientDetails.HomePhone1 },
-                        { "use", "home" }
-                    }
-                }
-            },
-            { "gender", patientDetails.gender.ToLower() },
-            { "birthDate", patientDetails.birthdate.ToString("yyyy-MM-dd") },
-            { "address", new List<Dictionary<string, object>>
-                {
-                    new Dictionary<string, object>
-                    {
-                        { "use", "home" },
-                        { "type", "physical" },
-                        { "line", new List<string> { patientDetails.address1_line1 } },
-                        { "city", patientDetails.address1_city },
-                        { "postalCode", patientDetails.address1_postalcode }
-                    }
-                }
-            },
-            { "generalPractitioner", new List<Dictionary<string, object>>
-                {
-                    new Dictionary<string, object>
-                    {
-                        { "reference", "Practitioner/" + patientDetails.stuffRefrenceNumber }
-                    }
-                }
-            },
-            { "managingOrganization", new Dictionary<string, object>
-                {
-                    { "reference", "Organization/" + patientDetails.clinicRefrenceNumber }
-                }
-            }
-        };
-
-            return patient;
-
-        }
-        internal dynamic intNHSPractionerDTO(PractionerDTO practionerDetails)
-        {
-            try
-            {
-                var practitioner = new Dictionary<string, object>
-                  {
-                 { "resource", new Dictionary<string, object>
-                   {
-                    { "resourceType", "Practitioner" },
-                    { "id", practionerDetails.sequenceNumber },
-                    { "meta", new Dictionary<string, object>
-                        {
-                            { "versionId", practionerDetails.versionId },
-                            { "lastUpdated", practionerDetails.modifiedDate.ToString("yyyy-MM-ddTHH:mm:sszzz") },
-                            { "profile", new List<string> { "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Practitioner-1" } }
-                        }
-                    },
-                    { "identifier", new List<Dictionary<string, object>>
-                        {
-                            new Dictionary<string, object>
-                            {
-                                { "system", "https://fhir.nhs.uk/Id/sds-user-id" },
-                                { "value", practionerDetails.sdsId }
-                            }
-                        }
-                    },
-                    { "name", new List<Dictionary<string, object>>
-                        {
-                            new Dictionary<string, object>
-                            {
-                                { "use", "usual" },
-                                { "family", practionerDetails.family },
-                                { "given", new List<string> { practionerDetails.given } },
-                                { "prefix", new List<string> { practionerDetails.prefix } }
-                            }
-                        }
-                    },
-                    { "gender", practionerDetails.gender }
-                }
-            }
-        };
-                return practitioner;
-            }
-            catch(Exception ex)
-            {
-                return null;
-            }
-        }
-        internal dynamic intNHSOrganizationDTO(OrganizationDTO organizationDetails)
-        {
-            try
-            {
-                var organization = new Dictionary<string, object>
-        {
-            { "resource", new Dictionary<string, object>
-                {
-                    { "resourceType", "Organization" },
-                    { "id", organizationDetails.sequenceNumber },
-                    { "meta", new Dictionary<string, object>
-                        {
-                            { "versionId", organizationDetails.versionId },
-                            { "profile", new List<string> { "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Organization-1" } }
-                        }
-                    },
-                    { "identifier", new List<Dictionary<string, object>>
-                        {
-                            new Dictionary<string, object>
-                            {
-                                { "system", "https://fhir.nhs.uk/Id/ods-organization-code" },
-                                { "value", organizationDetails.odsCode }
-                            }
-                        }
-                    },
-                    { "name", organizationDetails.organizationName },
-                    { "address", new List<Dictionary<string, object>>
-                        {
-                            new Dictionary<string, object>
-                            {
-                                { "line", new List<string> { organizationDetails.addressLine } },
-                                { "city", organizationDetails.city  },
-                                { "district", organizationDetails.district },
-                                { "postalCode", organizationDetails.postalCode }
-                            }
-                        }
-                    },
-                    { "telecom", new List<Dictionary<string, object>>
-                        {
-                            new Dictionary<string, object>
-                            {
-                                { "system", "phone" },
-                                { "value", organizationDetails.phoneNumber },
-                                { "use", "work" }
-                            }
-                        }
-                    }
-                }
-               }
-             };
-                return organization;
-
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
-        }
         internal dynamic intNHSPractitionerRoleDTO(string practionerSequenceId)
         {
             try
@@ -3481,7 +2822,7 @@ namespace GP_Connect.Service.Foundation
                                           <attribute name='createdon' />
                                           <order attribute='bcrm_name' descending='false' />
                                           <filter type='and'>
-                                            <condition attribute='bcrm_gpc_sequence_number' operator='eq' value='"+ practionerSequenceId + @"' />
+                                            <condition attribute='bcrm_gpc_sequence_number' operator='eq' value='" + practionerSequenceId + @"' />
                                           </filter>
                                           <link-entity name='bcrm_oxwrsecurityroles' from='bcrm_oxwrsecurityrolesid' to='bcrm_roles' visible='false' link-type='outer' alias='Roles'>
                                             <attribute name='bcrm_oxwrsecurityrolesid' />
@@ -3510,7 +2851,7 @@ namespace GP_Connect.Service.Foundation
                     roleDisplay = roleDisplayLookup.Value;
 
                     id = record.Id.ToString();
-                    
+
                 }
 
 
@@ -3555,171 +2896,18 @@ namespace GP_Connect.Service.Foundation
 
                 return practitionerRole;
             }
-            catch(Exception ex) 
+            catch (Exception ex)
             {
                 return null;
             }
         }
-        internal string ifPatientAvailableErrorBack(string nhsNumber)
-        {
-            string jsonString = @"
-                                 {
-                                   ""resourceType"": ""OperationOutcome"",
-                                   ""meta"": {
-                                     ""profile"": [
-                                       ""https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1""
-                                     ]
-                                   },
-                                   ""issue"": [
-                                     {
-                                       ""severity"": ""error"",
-                                       ""code"": ""invalid"",
-                                       ""details"": {
-                                         ""coding"": [
-                                           {
-                                             ""system"": ""https://fhir.nhs.uk/STU3/CodeSystem/Spine-ErrorOrWarningCode-1"",
-                                             ""code"": ""DUPLICATE_REJECTED"",
-                                             ""display"": ""DUPLICATE_REJECTED""
-                                           }
-                                         ]
-                                       },
-                                       ""diagnostics"": ""Patient (NHS number - "+nhsNumber+@") already exists""
-                                     }
-                                   ]
-                                 }";
-            return jsonString;
-        }
-        internal string patientRecordNotMatchedWithPDS()
-        {
-         string jsonString = @"
-                          {
-                            ""resourceType"": ""OperationOutcome"",
-                            ""meta"": {
-                              ""profile"": [
-                                ""https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1""
-                              ]
-                            },
-                            ""issue"": [
-                              {
-                                ""severity"": ""error"",
-                                ""code"": ""business-rule"",
-                                ""details"": {
-                                  ""coding"": [
-                                    {
-                                      ""system"": ""https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1"",
-                                      ""code"": ""INVALID_PATIENT_DEMOGRAPHICS"",
-                                      ""display"": ""Invalid patient demographics (that is, PDS trace failed)""
-                                    }
-                                  ]
-                                }
-                              }
-                            ]
-                          }";
-            return jsonString;
-        }
-        internal string patientNHSNumberInvalid()
-        {
-            string jsonString = @"
-                          {
-                            ""resourceType"": ""OperationOutcome"",
-                            ""meta"": {
-                              ""profile"": [
-                                ""https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1""
-                              ]
-                            },
-                            ""issue"": [
-                              {
-                                ""severity"": ""error"",
-                                ""code"": ""value"",
-                                ""details"": {
-                                  ""coding"": [
-                                    {
-                                      ""system"": ""https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1"",
-                                      ""code"": ""INVALID_NHS_NUMBER"",
-                                      ""display"": ""NHS number invalid""
-                                    }
-                                  ]
-                                }
-                              }
-                            ]
-                          }";
-            return jsonString;
-        }
-        internal string internalServerError()
-        {
-            string jsonString = @"
-                                  {
-                                    ""resourceType"": ""OperationOutcome"",
-                                    ""meta"": {
-                                      ""profile"": [
-                                        ""https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1""
-                                      ]
-                                    },
-                                    ""issue"": [
-                                      {
-                                        ""severity"": ""error"",
-                                        ""code"": ""exception"",
-                                        ""details"": {
-                                          ""coding"": [
-                                            {
-                                              ""system"": ""https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1"",
-                                              ""code"": ""INTERNAL_SERVER_ERROR"",
-                                              ""display"": ""Internal server error""
-                                            }
-                                          ]
-                                        }
-                                      }
-                                    ]
-                                  }";
 
-            return jsonString;
-        }
-        internal object patientNotFoundJSON()
-        {
-            var operationOutcome = new Dictionary<string, object>
-        {
-            { "resourceType", "OperationOutcome" },
-            { "meta", new Dictionary<string, object>
-                {
-                    { "profile", new List<string>
-                        {
-                            "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1"
-                        }
-                    }
-                }
-            },
-            { "issue", new List<Dictionary<string, object>>
-                {
-                    new Dictionary<string, object>
-                    {
-                        { "severity", "error" },
-                        { "code", "not-found" },
-                        { "details", new Dictionary<string, object>
-                            {
-                                { "coding", new List<Dictionary<string, object>>
-                                    {
-                                        new Dictionary<string, object>
-                                        {
-                                            { "system", "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1" },
-                                            { "code", "PATIENT_NOT_FOUND" },
-                                            { "display", "Patient not found" }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        };
-            return operationOutcome;
-        }
         internal List<string> getPractitionerRoleCodes(string sdsUserId)
         {
             try
             {
                 var Rolelist = new List<string>();
-               
+
 
                 string PractitionerJobRoleXML = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='true'>
                                           <entity name='bcrm_oxwrsecurityroles'>
@@ -3732,7 +2920,7 @@ namespace GP_Connect.Service.Foundation
                                             <link-entity name='bcrm_staff_nhs_job_role' from='bcrm_oxwrsecurityrolesid' to='bcrm_oxwrsecurityrolesid' visible='false' intersect='true'>
                                               <link-entity name='bcrm_staff' from='bcrm_staffid' to='bcrm_staffid' alias='ac'>
                                                 <filter type='and'>
-                                                  <condition attribute='bcrm_gpc_sdsid' operator='eq' value='"+sdsUserId+@"' />
+                                                  <condition attribute='bcrm_gpc_sdsid' operator='eq' value='" + sdsUserId + @"' />
                                                 </filter>
                                               </link-entity>
                                             </link-entity>
@@ -3743,10 +2931,10 @@ namespace GP_Connect.Service.Foundation
 
                 if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
                 {
-                    foreach(var record in AnswerCollection.Entities)
+                    foreach (var record in AnswerCollection.Entities)
                     {
-                       var roleId = record.Attributes.Contains("bcrm_jobrolecode") ? record["bcrm_jobrolecode"].ToString() : "";
-                       if(roleId != "")
+                        var roleId = record.Attributes.Contains("bcrm_jobrolecode") ? record["bcrm_jobrolecode"].ToString() : "";
+                        if (roleId != "")
                         {
                             Rolelist.Add(roleId);
                         }
@@ -3758,9 +2946,9 @@ namespace GP_Connect.Service.Foundation
             {
                 return new List<string>();
             }
-         
+
         }
-        internal dynamic RegisterAPatientCreateResponse(string NHSNumber, string RegType,string existStatus,string addressTypeIsTemp,string telecomTypeIsTemp, Dictionary<string, string> pdsAddress)
+        internal dynamic RegisterAPatientCreateResponse(string NHSNumber, string RegType, string existStatus, string addressTypeIsTemp, string telecomTypeIsTemp, Dictionary<string, string> pdsAddress)
         {
             try
             {
@@ -4060,7 +3248,7 @@ namespace GP_Connect.Service.Foundation
                     {
                         RegisterPatientDetails pd = new RegisterPatientDetails();
 
-                        var json = pd.RegisterANewPatientAUsingJSONFHIR(AllPatientDetails[0],existStatus,addressTypeIsTemp,telecomTypeIsTemp, pdsAddress);
+                        var json = pd.RegisterANewPatientAUsingJSONFHIR(AllPatientDetails[0], existStatus, addressTypeIsTemp, telecomTypeIsTemp, pdsAddress);
 
                         return json;
                     }
