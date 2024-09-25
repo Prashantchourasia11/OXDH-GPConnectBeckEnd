@@ -47,6 +47,11 @@ namespace GP_Connect.Controllers
         /// </summary>
 
         [HttpGet]
+        [HttpDelete]
+        [HttpPut]
+        [HttpPost]
+        [HttpPatch]
+        [HttpOptions]
         [Route("metadata")]
         public ActionResult Metadata(
      [FromHeader(Name = "Ssp-TraceID")][Required] string SspTraceId = "09a01679-2564-0fb4-5129-aecc81ea2706",
@@ -57,6 +62,25 @@ namespace GP_Connect.Controllers
         {
             try
             {
+
+
+                if (HttpContext.Request.Method == "POST" || HttpContext.Request.Method == "PUT" || HttpContext.Request.Method == "DELETE" || HttpContext.Request.Method == "PATCH" || HttpContext.Request.Method == "OPTIONS")
+                {
+                    return new JsonResult(BadRequestJSON(HttpContext.Request.Method))
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 400
+                    };
+                }
+                if(!HttpContext.Request.Path.ToString().Contains("metadata"))
+                {
+                    return new JsonResult(RESOURCENITFOUNDJSON(HttpContext.Request.Path.ToString()))
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 404
+                    };
+                }
+
                 var result = serviceFoundation.FoundationMetaData();
                 return new JsonResult(result)
                 {
@@ -67,6 +91,29 @@ namespace GP_Connect.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        [HttpGet("{*url}")]  // Catch-all route
+        [HttpPost("{*url}")]
+        [HttpPut("{*url}")]
+        [HttpDelete("{*url}")]
+        public ActionResult HandleNonMetaAction(string url)
+        {
+            // Only return this response if the requested URL doesn't start with 'meta'
+            if (url.Contains("meta"))
+            {
+                return new JsonResult(BadRequestJSON(HttpContext.Request.Method))
+                {
+                    ContentType = "application/fhir+json",
+                    StatusCode = 400
+                };
+            }
+
+            return new JsonResult(BadRequestJSON(HttpContext.Request.Path.ToString()))
+            {
+                ContentType = "application/fhir+json",
+                StatusCode = 400
+            };
         }
 
         /// <summary>
@@ -790,6 +837,82 @@ namespace GP_Connect.Controllers
 
 
         #endregion
+
+
+        #region Internal-Method
+        internal dynamic BadRequestJSON(string type)
+        {
+            var operationOutcome = new
+            {
+                resourceType = "OperationOutcome",
+                meta = new
+                {
+                    profile = new[]
+            {
+                    "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1"
+                }
+                },
+                issue = new[]
+{
+                new
+                {
+                    severity = "error",
+                    code = "invalid",
+                    details = new
+                    {
+                        coding = new[]
+                        {
+                            new
+                            {
+                                system = "https://fhir.nhs.uk/STU3/CodeSystem/Spine-ErrorOrWarningCode-1",
+                                code = "BAD_REQUEST",
+                                display = "BAD_REQUEST"
+                            }
+                        }
+                    },
+                    diagnostics = "The interaction ID does not match the HTTP request verb (interaction ID - urn:nhs:names:services:gpconnect:fhir:rest:read:metadata-1 HTTP verb - type)"
+                }
+            }
+            };
+            return operationOutcome;
+        }
+        internal dynamic RESOURCENITFOUNDJSON(string ROUTE)
+        {
+            var operationOutcome = new
+            {
+                resourceType = "OperationOutcome",
+                meta = new
+                {
+                    profile = new[]
+            {
+                        "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1"
+                    }
+                },
+                issue = new[]
+{
+                    new
+                    {
+                        severity = "error",
+                        code = "invalid",
+                        details = new
+                        {
+                            coding = new[]
+                        {
+                                new
+                                {
+                                    system = "https://fhir.nhs.uk/STU3/CodeSystem/Spine-ErrorOrWarningCode-1",
+                                    code = "REFERENCE_NOT_FOUND",
+                                    display = "REFERENCE_NOT_FOUND"
+                                }
+                            }
+                        },
+                        diagnostics = "Request containts invalid resource (" + ROUTE + ")"
+                    }
+                }
+            };
+            return operationOutcome;
+        }
+        #endregion
     }
 
     #region EmptyValidationClasses
@@ -1094,6 +1217,25 @@ namespace GP_Connect.Controllers
                 }
             }
 
+            base.OnActionExecuting(context);
+        }
+    }
+
+    public class HttpMethodCheckAttribute : ActionFilterAttribute
+    {
+        private readonly string[] _allowedMethods;
+
+        public HttpMethodCheckAttribute(params string[] allowedMethods)
+        {
+            _allowedMethods = allowedMethods;
+        }
+
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            if (!_allowedMethods.Contains(context.HttpContext.Request.Method.ToUpper()))
+            {
+                context.Result = new BadRequestObjectResult($"HTTP {context.HttpContext.Request.Method} is not allowed on this endpoint.");
+            }
             base.OnActionExecuting(context);
         }
     }

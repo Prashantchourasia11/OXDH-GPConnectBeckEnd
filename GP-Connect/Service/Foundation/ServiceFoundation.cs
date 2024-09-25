@@ -211,7 +211,7 @@ namespace GP_Connect.Service.Foundation
                       <attribute name='bcrm_interpreterrequired' />
                       <attribute name='bcrm_nhsnumberverificationstatus' />
                       <attribute name='bcrm_nhsnumberverificationstatusdisplay' />
-
+                       <attribute name='bcrm_sensitivename' />
                         <attribute name='bcrm_middlename' />
                         <attribute name='bcrm_deceaseddate' />
                          <attribute name='bcrm_age' />
@@ -260,7 +260,7 @@ namespace GP_Connect.Service.Foundation
 
                         dynamic check = record.Attributes.Contains("Patient_relationships") ? record["Patient_relationships"].ToString() : string.Empty;
 
-                        crmUserProfile.IsSensitive = record.Attributes.Contains("bcrm_SensitiveName") ? record["bcrm_SensitiveName"].ToString() : string.Empty;
+                        crmUserProfile.IsSensitive = record.Attributes.Contains("bcrm_sensitivename") ? record["bcrm_sensitivename"].ToString() : string.Empty;
 
                         crmUserProfile.bcrm_middlename = record.Attributes.Contains("bcrm_middlename") ? record["bcrm_middlename"].ToString() : string.Empty;
                         crmUserProfile.fullname = record.Attributes.Contains("fullname") ? record["fullname"].ToString() : string.Empty;
@@ -417,7 +417,7 @@ namespace GP_Connect.Service.Foundation
 
                         }
 
-                        if (crmUserProfile.IsSensitive == "1" || NHSNumber == "9651258535")
+                        if (crmUserProfile.IsSensitive == "True")
                         {
                             var json = pd.EmptyBuddlePatientJSON(new Guid().ToString());
 
@@ -2750,6 +2750,7 @@ namespace GP_Connect.Service.Foundation
                                  <attribute name='telephone1' />
                                  <attribute name='contactid' />
                                  <attribute name='statuscode' />
+                                <attribute name='bcrm_sensitivename' />
                                  <attribute name='bcrm_deceaseddate' />
                                  <order attribute='createdon' descending='true' />
                                  <filter type='and'>
@@ -2779,19 +2780,16 @@ namespace GP_Connect.Service.Foundation
                     if (record.Attributes.Contains("bcrm_sensitivename") && finalStatus == false)
                     {
                         var IsSensitive = record.Attributes["bcrm_sensitivename"].ToString();
-                        if (IsSensitive == "1")
-                        {
-                            finalStatus = false;
-                        }
-                        else
+                        if (IsSensitive == "True")
                         {
                             finalStatus = true;
                         }
+                        else
+                        {
+                            finalStatus = false;
+                        }
                     }
-                    if (NHS_number == "9651258535") // test patient of sensitive record
-                    {
-                        finalStatus = true;
-                    }
+                  
                 }
 
                 return finalStatus;
