@@ -7,7 +7,7 @@
             var capabilityStatementJson = new
             {
                 resourceType = "CapabilityStatement",
-                version = "3.0.1",
+                version = "1.2.7",
                 name = "OX Digital Health",
                 status = "active",
                 date = "2024-07-22",
@@ -16,19 +16,19 @@
            {
                 new { name = "Prashant Chourasiya" }
             },
-                description = "This server implements the OXDH API version 3.0.1",
+                description = "This server implements the OXDH API version 3.0.0",
                 copyright = "Copyright OXDH 2024",
                 kind = "capability",
                 software = new
                 {
                     name = "IIS FHIR Server",
-                    version = "3.0.1",
+                    version = "3.0.0",
                     releaseDate = "2024-07-22T00:00:00+01:00"
                 },
                 fhirVersion = "3.0.1",
                 acceptUnknown = "both",
                 format = new[]
-           {
+            {
                 "application/fhir+json"
             },
                 profile = new[]
@@ -47,8 +47,22 @@
                 new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-MedicationStatement-1" },
                 new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-MedicationRequest-1" },
                 new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-List-1" },
-                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-StructuredRecord-Bundle-1" }
-            },
+                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-StructuredRecord-Bundle-1" },
+
+                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Patient-1/_history/1.8" },
+                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Organization-1/_history/1.4" },
+                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Practitioner-1/_history/1.2" },
+                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-PractitionerRole-1/_history/1.2" },
+                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-AllergyIntolerance-1/_history/1.7" },
+                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Medication-1/_history/1.2" },
+                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-MedicationStatement-1/_history/1.7" },
+                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-MedicationRequest-1/_history/1.7" },
+                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-List-1/_history/1.2" },
+                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-StructuredRecord-Bundle-1/_history/1.3" },
+                new { reference = "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1/_history/1.2" }
+
+
+                },
                 rest = new[]
            {
                 new
