@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>GP-Connect</name>
+    </assembly>
+    <members>
+        <member name="M:GP_Connect.Controllers.AccessDocumentController.Metadata(System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+             Get the FHIR® conformance profile
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.AccessDocumentController.Patient(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Find a patient
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.AccessDocumentController.DocumentReference(System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Search for a patient's documents
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.AccessDocumentController.Binary(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Retrieve a document
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.AccessRecordHTMLController.Metadata(System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+             Get the FHIR® conformance profile
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.AccessRecordHTMLController.getcarerecord(System.String,System.String,System.String,System.String,System.String,System.Object)">
+            <summary>
+            Retrieve a care record section
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.AccessStructureRecordController.Metadata(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+             Get the FHIR® conformance profile
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.AccessStructureRecordController.getstructuredrecord(System.String,System.String,System.String,System.String,System.String,System.Object)">
+            <summary>
+            Retrieve patient's structured record
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.Appointment_ManagementController.Patient(System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Read Patient Appointment
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.Appointment_ManagementController.Slot(System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+             Search for free slots
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.Appointment_ManagementController.BookAnAppointment(System.String,System.String,System.String,System.String,System.String,System.Object)">
+            <summary>
+             Book an appointment
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.Appointment_ManagementController.ReadAnAppoinbtment(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+             Read an appointment
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.Appointment_ManagementController.AmendOrCancelAppointment(System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.Object)">
+            <summary>
+             Amend or cancel appointment
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.FoundationsController.Metadata(System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+             Get the FHIR® conformance profile
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.FoundationsController.Patient(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Find a patient
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.FoundationsController.PatientId(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Read a patient
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.FoundationsController.Practitioner(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Find a Practitioner
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.FoundationsController.PractitionerId(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Read a Practitioner
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.FoundationsController.Organization(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Find a Organization
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.FoundationsController.OrganizationId(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Read a Organization
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.FoundationsController.LocationId(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Read a Location
+            </summary>
+        </member>
+        <member name="M:GP_Connect.Controllers.FoundationsController.registerAPatient(System.String,System.String,System.String,System.String,System.String,System.Object)">
+            <summary>
+            Register a patient
+            </summary>
+        </member>
+        <member name="M:GP_Connect.PDS.PDSAPI.GetPatientByNHSNumber(System.String)">
+            <summary>
+            Get Patient By NHS Number
+            </summary>
+            <param name="NHS_Number"></param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>
