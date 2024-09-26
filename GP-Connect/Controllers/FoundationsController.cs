@@ -63,7 +63,7 @@ namespace GP_Connect.Controllers
             try
             {
 
-
+                // hello
                 if (HttpContext.Request.Method == "POST" || HttpContext.Request.Method == "PUT" || HttpContext.Request.Method == "DELETE" || HttpContext.Request.Method == "PATCH" || HttpContext.Request.Method == "OPTIONS")
                 {
                     return new JsonResult(BadRequestJSON(HttpContext.Request.Method))
