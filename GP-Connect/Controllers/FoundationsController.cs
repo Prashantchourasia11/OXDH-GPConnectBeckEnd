@@ -1,6 +1,7 @@
 ﻿using AngleSharp.Dom;
 using GP_Connect.CRM_Connection;
 using GP_Connect.DataTransferObject;
+using GP_Connect.JWT_Checker;
 using GP_Connect.Service.AccessDocument;
 using GP_Connect.Service.Foundation;
 using Microsoft.AspNetCore.Http;
@@ -33,6 +34,7 @@ namespace GP_Connect.Controllers
 
         ServiceFoundation serviceFoundation = new ServiceFoundation();
         ServiceAccessDocument serviceDocument = new ServiceAccessDocument();
+        JWTChecker jWTChecker = new JWTChecker();
 
         #endregion
 
@@ -58,12 +60,10 @@ namespace GP_Connect.Controllers
      [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
      [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
      [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1",
-     [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM")
+     [FromHeader(Name = "Authorization")]string Authorization = "")
         {
             try
             {
-
-                // hello
                 if (HttpContext.Request.Method == "POST" || HttpContext.Request.Method == "PUT" || HttpContext.Request.Method == "DELETE" || HttpContext.Request.Method == "PATCH" || HttpContext.Request.Method == "OPTIONS")
                 {
                     return new JsonResult(BadRequestJSON(HttpContext.Request.Method))
@@ -80,6 +80,29 @@ namespace GP_Connect.Controllers
                         StatusCode = 404
                     };
                 }
+
+                Request.Headers.Count();
+
+                var jwtStatus = jWTChecker.JWTCheckingFunction(Authorization);
+
+                if (jwtStatus[2] == "400")
+                {
+                    return new JsonResult(jwtStatus[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 400
+                    };
+                }
+                if (jwtStatus[2] == "422")
+                {
+                    return new JsonResult(jwtStatus[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 422
+                    };
+                }
+
+
 
                 var result = serviceFoundation.FoundationMetaData();
                 return new JsonResult(result)
@@ -810,7 +833,7 @@ namespace GP_Connect.Controllers
              [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
              [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
              [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:documents:fhir:rest:search:documentreference-1",
-             [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM",
+             [FromHeader(Name = "Authorizations")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM",
              [FromQuery(Name = "_include")][Required] string _includes = "DocumentReference:subject:Patient",
              [FromQuery(Name = "_revinclude:recurse")][Required] string _revincluderecurse = "PractitionerRole:practitioner",
              [FromQuery(Name = "Created-start")] string Createdstart = "ge2024-01-05",
