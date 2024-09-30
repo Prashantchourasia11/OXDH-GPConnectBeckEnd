@@ -86,7 +86,7 @@ namespace GP_Connect.Service.AccessDocument
                             var author1 = queryParams["author"].FirstOrDefault(); // Since there's only one 'author'
 
                             // Check if the 'author' contains any invalid characters like '.' or '|'
-                            if (author1.Contains(".") || author1.Contains("|"))
+                            if (!author1.Contains("https://fhir.nhs.uk/Id/ods-organization-code"))
                             {
                                 DocumentDetails dd = new DocumentDetails();
                                 finaljson[0] = dd.InvalidAuthoreJSON();
