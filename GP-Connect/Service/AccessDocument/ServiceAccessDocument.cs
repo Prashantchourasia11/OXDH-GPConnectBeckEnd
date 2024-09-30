@@ -67,14 +67,7 @@ namespace GP_Connect.Service.AccessDocument
                     finaljson[2] = "422";
                     return finaljson;
                 }
-                if (!fullUrl.Contains("_revinclude:recurse"))
-                {
-                    DocumentDetails dd = new DocumentDetails();
-                    finaljson[0] = dd.InvalidParameterJSON();
-                    finaljson[1] = "";
-                    finaljson[2] = "422";
-                    return finaljson;
-                }
+              
                 if (fullUrl != null)
                 {
                     var queryString = fullUrl.Split('?').LastOrDefault();
@@ -573,7 +566,7 @@ namespace GP_Connect.Service.AccessDocument
 
                 var documentReferenceFinal = new Dictionary<string, object>
                           {
-                              { "fullUrl", "https://localhost:7090/W7M0I/STU3/1/gpconnect/Binary/" + DRDTO.masterIdentifierCRMGuid },
+                              { "fullUrl", "https://test-gpc-w7m0i.oxdh.thirdparty.nhs.uk/W7M0I/STU3/1/gpconnect/Binary/" + DRDTO.masterIdentifierCRMGuid },
                               { "resource",  documentReference}
                           };
 
