@@ -405,7 +405,7 @@ namespace GP_Connect.Service.Foundation
                             return finaljson;
                         }
 
-                        if (crmUserProfile.deceasedDate.ToString() != "01-01-0001 00:00:00")
+                        if (!crmUserProfile.deceasedDate.ToString().Contains("0001"))
                         {
                             crmUserProfile.statusReason = false;
                             var json = pd.EmptyBuddlePatientJSON(SspTraceId);
