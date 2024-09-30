@@ -54,7 +54,7 @@ namespace GP_Connect.Service.Foundation
             return data;
 
         }
-        public dynamic FindAPatient(string NHSNumber, string RegType, string identifier, int identifierCount, string fullUrl)
+        public dynamic FindAPatient(string NHSNumber, string RegType, string identifier, int identifierCount, string fullUrl,string SspTraceId)
         {
             try
             {
@@ -397,7 +397,7 @@ namespace GP_Connect.Service.Foundation
                         else
                         {
                             crmUserProfile.statusReason = false;
-                            var json = pd.EmptyBuddlePatientJSON(new Guid().ToString());
+                            var json = pd.EmptyBuddlePatientJSON(SspTraceId);
 
                             finaljson[0] = json;
                             finaljson[1] = crmUserProfile.PdsVersionId;
@@ -408,7 +408,7 @@ namespace GP_Connect.Service.Foundation
                         if (crmUserProfile.deceasedDate.ToString() != "01-01-0001 00:00:00")
                         {
                             crmUserProfile.statusReason = false;
-                            var json = pd.EmptyBuddlePatientJSON(new Guid().ToString());
+                            var json = pd.EmptyBuddlePatientJSON(SspTraceId);
 
                             finaljson[0] = json;
                             finaljson[1] = crmUserProfile.PdsVersionId;
@@ -419,7 +419,7 @@ namespace GP_Connect.Service.Foundation
 
                         if (crmUserProfile.IsSensitive == "True")
                         {
-                            var json = pd.EmptyBuddlePatientJSON(new Guid().ToString());
+                            var json = pd.EmptyBuddlePatientJSON(SspTraceId);
 
                             finaljson[0] = json;
                             finaljson[1] = crmUserProfile.PdsVersionId;
@@ -436,7 +436,7 @@ namespace GP_Connect.Service.Foundation
                     if (AllPatientDetails.Count > 0)
                     {
 
-                        var json = pd.FindAPatientUsingJSONFHIR(AllPatientDetails[0], RegType);
+                        var json = pd.FindAPatientUsingJSONFHIR(AllPatientDetails[0], RegType,SspTraceId);
 
                         finaljson[0] = json;
                         finaljson[1] = crmUserProfile.PdsVersionId;
@@ -448,7 +448,7 @@ namespace GP_Connect.Service.Foundation
 
                 PractionerDetails praDet = new PractionerDetails();
 
-                finaljson[0] = praDet.MakeEmptyBuddlePractitionerJSON();
+                finaljson[0] = pd.EmptyBuddlePatientJSON(SspTraceId);
                 finaljson[1] = "";
                 finaljson[2] = "NotFound";
                 return finaljson;
@@ -1796,8 +1796,6 @@ namespace GP_Connect.Service.Foundation
                         finaljson[2] = "JWTClaimIssue";
                         return finaljson;
                     }
-
-
                 }
 
                 if (patientDetails.parameter[0].resource.identifier != null)

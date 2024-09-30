@@ -15,6 +15,7 @@ using Microsoft.Identity.Client;
 using System.Net.Http.Headers;
 using RestSharp;
 using GP_Connect.Service.Foundation;
+using GP_Connect.FHIR_JSON.AccessDocument;
 
 namespace GP_Connect.Service.AccessDocument
 {
@@ -40,11 +41,83 @@ namespace GP_Connect.Service.AccessDocument
 
         #region Method
 
-        public object GetDocumentReference(string patientId, string Createdstart, string CreatedEnd, string author, string description,string SspTraceId)
+        public dynamic GetDocumentReference(string patientId, string Createdstart, string CreatedEnd, string author, string description,string SspTraceId,string fullUrl)
         {
             try
             {
-        
+                dynamic[] finaljson = new dynamic[3];
+
+                //DocumentDetails dd = new DocumentDetails();
+                //return dd.DocumentReferenceTurnedOff();
+
+                if(fullUrl.Contains("BadParam"))
+                {
+                    DocumentDetails dd = new DocumentDetails();
+                    finaljson[0] = dd.InvalidParameterJSON();
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
+                if(!fullUrl.Contains("_include"))
+                {
+                    DocumentDetails dd = new DocumentDetails();
+                    finaljson[0] = dd.InvalidParameterJSON();
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+                if (!fullUrl.Contains("_revinclude:recurse"))
+                {
+                    DocumentDetails dd = new DocumentDetails();
+                    finaljson[0] = dd.InvalidParameterJSON();
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+                if (fullUrl != null)
+                {
+                    var queryString = fullUrl.Split('?').LastOrDefault();
+
+                    if (!string.IsNullOrEmpty(queryString))
+                    {
+                        var queryParams = queryString.Split('&')
+                                          .Select(param => param.Split(new[] { '=' }, 2)) // Split only at the first '='
+                                          .Where(parts => parts.Length == 2) // Ensure there are both key and value
+                                          .ToLookup(parts => parts[0], parts => Uri.UnescapeDataString(parts[1]));
+
+
+
+                        if (queryParams.Contains("author"))
+                        {
+                            var author1 = queryParams["author"].FirstOrDefault(); // Since there's only one 'author'
+
+                            // Check if the 'author' contains any invalid characters like '.' or '|'
+                            if (author1.Contains(".") || author1.Contains("|"))
+                            {
+                                DocumentDetails dd = new DocumentDetails();
+                                finaljson[0] = dd.InvalidAuthoreJSON();
+                                finaljson[1] = "";
+                                finaljson[2] = "422";
+                                return finaljson;
+                            }
+                            else
+                            {
+                               
+                            }
+                        }
+                        else
+                        {
+                            
+                        }
+                    }
+                }
+
+
+
+
+            
+
                 BundleResponseDTO bundleResponse = new BundleResponseDTO();
                 bundleResponse.resourceType = "Bundle";
                 bundleResponse.id = SspTraceId;
@@ -57,13 +130,25 @@ namespace GP_Connect.Service.AccessDocument
 
 
                 List<object> finalResponse = new List<object>();
-                var patientDetails = scm.GetAllDetailsOfPatientByPatientIdUsedForDocument(patientId);
-                if(patientDetails == null)
+
+                var tempPatient = IsPatientAdminttedInTemporary(patientId);
+                if(tempPatient == true)
                 {
-                    return patientNotFoundJSON();
+                    finaljson[0] = patientNotFoundJSON();
+                    finaljson[1] = "";
+                    finaljson[2] = "404";
+                    return finaljson;
                 }
 
-        
+
+                var patientDetails = scm.GetAllDetailsOfPatientByPatientIdUsedForDocument(patientId);
+                if (patientDetails == null)
+                {
+                    finaljson[0] = patientNotFoundJSON();
+                    finaljson[1] = "";
+                    finaljson[2] = "404";
+                    return finaljson;
+                }
 
                 foreach (var item in patientDetails[0])
                 {
@@ -78,8 +163,10 @@ namespace GP_Connect.Service.AccessDocument
 
                 bundleResponse.entry = finalResponse;
 
-
-                return bundleResponse;
+                finaljson[0] = bundleResponse;
+                finaljson[1] = "";
+                finaljson[2] = "200";
+                return finaljson;
                
             }
             catch(Exception ex)
@@ -334,8 +421,19 @@ namespace GP_Connect.Service.AccessDocument
                               { "resource",  practitionerJSON}
                                   };
                                 documentList.Add(practitioner);
+
+                                var practitionerRoleJSON = foundation.ReadPractionerRoleJSON(documentDetails.practitionerSequenceNumber);
+
+                                var practitionerRole = new Dictionary<string, object>
+                             {
+                            { "fullUrl", "https://oxdhgpconnect.azurewebsites.net/STU3/1/gpconnect-documents/PractitionerRole/" + 25695 },
+                            { "resource",  practitionerRoleJSON}
+                             };
+                                documentList.Add(practitionerRole);
                             }
-                          
+
+                           
+
                         }
 
 
@@ -427,20 +525,7 @@ namespace GP_Connect.Service.AccessDocument
             },
             { "description", DRDTO.description },
             {
-                "content", new List<Dictionary<string, object>>
-                {
-                    new Dictionary<string, object>
-                    {
-                        {
-                            "attachment", new Dictionary<string, object>
-                            {
-                                { "contentType", DRDTO.contentType },
-                                { "url", "http://exampleGPSystem.co.uk/GP0001/STU3/1/gpconnect-documents/Binary/" + DRDTO.masterIdentifierCRMGuid },
-                                { "size", Regex.Match(DRDTO.size, @"^\d+").Value}
-                            }
-                        }
-                    }
-                }
+              "content" , contentCheckFile(DRDTO)
             },
             {
                 "context", new Dictionary<string, object>
@@ -468,11 +553,27 @@ namespace GP_Connect.Service.AccessDocument
                         }
                     }
                 }
-            }
+            },
+            {
+                        "custodian", new Dictionary<string, object>
+                        {
+                            { "reference", "Organization/1000"}
+                        }
+                    }
         };
+
+                //, I have commented this code because of error
+               // {
+                 //   "custodian", new Dictionary<string, object>
+                   //     {
+                     //       { "reference", "Organization/" + 1000 }
+                       // }
+                   // }
+                //
+
                 var documentReferenceFinal = new Dictionary<string, object>
                           {
-                              { "fullUrl", "https://oxdhgpconnect.azurewebsites.net/GP0001/STU3/1/gpconnect-documents/DocumentReference/"+DRDTO.SequenceId },
+                              { "fullUrl", "https://localhost:7090/W7M0I/STU3/1/gpconnect/Binary/" + DRDTO.masterIdentifierCRMGuid },
                               { "resource",  documentReference}
                           };
 
@@ -564,6 +665,74 @@ namespace GP_Connect.Service.AccessDocument
             }
         };
             return operationOutcome;
+        }
+
+        internal bool IsPatientAdminttedInTemporary(string patientId)
+        {
+            var xml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
+                        <entity name='contact'>
+                          <attribute name='fullname' />
+                          <attribute name='telephone1' />
+                          <attribute name='contactid' />
+                          <order attribute='fullname' descending='false' />
+                          <filter type='and'>
+                            <condition attribute='bcrm_gms1type' operator='eq' value='271400000' />
+                            <condition attribute='bcrm_gpc_sequence_number' operator='eq' value='" + patientId + @"' />
+                          </filter>
+                        </entity>
+                      </fetch>";
+            EntityCollection AnswerCollection = _crmServiceClient.RetrieveMultiple(new FetchExpression(xml));
+            if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        internal object contentCheckFile(DocumentReferenceDTO DRDTO)
+        {
+            try
+            {
+                var sizeString = Regex.Match(DRDTO.size, @"^\d+").Value;
+                var sizeNumber = int.Parse(sizeString);
+                if (sizeNumber >= 6000000)
+                {
+
+                    return new Dictionary<string, object>
+                    {
+                        { "attachment", new Dictionary<string, object>
+                            {
+                                { "contentType", DRDTO.contentType },
+                                { "title", "file size 6000000 bytes greater than maximum allowable (5MB)" },
+                                { "size", Regex.Match(DRDTO.size.ToString(), @"^\d+").Value }
+                            }
+                        }
+                    };
+                
+                }
+                else
+                {
+                    return new Dictionary<string, object>
+                    {
+                        { "attachment", new Dictionary<string, object>
+                            {
+                                { "contentType", DRDTO.contentType },
+                                { "url", "https://localhost:7090/W7M0I/STU3/1/gpconnect/Binary/" + DRDTO.masterIdentifierCRMGuid },
+                                { "size", Regex.Match(DRDTO.size.ToString(), @"^\d+").Value }
+                            }
+                        }
+                    };
+                }
+            
+            }
+             catch 
+            {
+               return new object();
+            }
+            
         }
 
 

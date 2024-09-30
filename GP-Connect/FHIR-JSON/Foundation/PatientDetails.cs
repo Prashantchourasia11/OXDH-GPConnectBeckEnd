@@ -19,16 +19,16 @@ namespace GP_Connect.FHIR_JSON
         #region Method
 
 
-        public dynamic FindAPatientUsingJSONFHIR(PatientDTO patientDetails, string regType)
+        public dynamic FindAPatientUsingJSONFHIR(PatientDTO patientDetails, string regType,string SspTraceId)
         {
             if (regType == "T")
             {
-                return RegisterNewPatientResponse(patientDetails);
+                return RegisterNewPatientResponse(patientDetails, SspTraceId);
             }
 
             if (patientDetails.deceasedDate.ToString() != "01-01-0001 00:00:00")
             {
-                return SendingResponseWithDeacesedPatient(patientDetails);
+                return SendingResponseWithDeacesedPatient(patientDetails,SspTraceId);
             }
 
             var modeOfCommunicationCode = "";
@@ -66,7 +66,7 @@ namespace GP_Connect.FHIR_JSON
             var jsonContent = new
             {
                 resourceType = "Bundle",
-                id = patientDetails.Id,
+                id = SspTraceId,
                 meta = new
                 {
                     lastUpdated = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz")
@@ -751,7 +751,7 @@ namespace GP_Connect.FHIR_JSON
             return operationOutcomeJson;
         }
 
-        public dynamic RegisterNewPatientResponse(PatientDTO patientDetails)
+        public dynamic RegisterNewPatientResponse(PatientDTO patientDetails,string SspTraceId)
         {
             var modeOfCommunicationCode = "";
             var modeOfCommunicationDisplay = "";
@@ -788,7 +788,7 @@ namespace GP_Connect.FHIR_JSON
             var jsonContent = new
             {
                 resourceType = "Bundle",
-                id = patientDetails.Id,
+                id = SspTraceId,
                 meta = new
                 {
                     lastUpdated = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz")
@@ -931,7 +931,7 @@ namespace GP_Connect.FHIR_JSON
 
         }
 
-        public dynamic SendingResponseWithDeacesedPatient(PatientDTO patientDetails)
+        public dynamic SendingResponseWithDeacesedPatient(PatientDTO patientDetails,string SspTraceId)
         {
             var modeOfCommunicationCode = "";
             var modeOfCommunicationDisplay = "";
@@ -968,7 +968,7 @@ namespace GP_Connect.FHIR_JSON
             var jsonContent = new
             {
                 resourceType = "Bundle",
-                id = patientDetails.Id,
+                id = SspTraceId,
                 meta = new
                 {
                     lastUpdated = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz")

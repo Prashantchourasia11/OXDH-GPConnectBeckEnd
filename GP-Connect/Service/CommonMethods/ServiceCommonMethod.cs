@@ -110,7 +110,6 @@ namespace GP_Connect.Service.CommonMethods
 
                         var practitionerRoleJSON = foundation.ReadPractionerRoleJSON(PractitionerSequenceNumber);
 
-                       
                         var practitionerRole = new Dictionary<string, object>
                         {
                             { "fullUrl", "https://oxdhgpconnect.azurewebsites.net/STU3/1/gpconnect-documents/PractitionerRole/" + 85695 },

@@ -81,7 +81,7 @@ namespace GP_Connect.Controllers
 
 
                 ServiceFoundation sf = new ServiceFoundation();
-                var result = sf.FindAPatient(nhsNumber, "", identifier, identifierCount, fullUrl);
+                var result = sf.FindAPatient(nhsNumber, "", identifier, identifierCount, fullUrl, SspTraceId);
                 Response.Headers.Add("Cache-Control", "no-store");
 
                 if (result[2] == "InvalidIdentifier" || result[2] == "InvalidParameter")
@@ -145,7 +145,7 @@ namespace GP_Connect.Controllers
             try
             {
                 
-                var result = sam.GetDocumentReference(id, Createdstart , CreatedEnd , author , description, SspTraceId);
+                var result = sam.GetDocumentReference(id, Createdstart , CreatedEnd , author , description, SspTraceId,"");
                 return Ok(result);
             }
             catch (Exception ex)

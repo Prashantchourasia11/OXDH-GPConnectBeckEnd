@@ -167,7 +167,7 @@ namespace GP_Connect.Controllers
                 var queryParams = QueryHelpers.ParseQuery(Request.QueryString.Value);
                 int identifierCount = queryParams.ContainsKey("identifier") ? queryParams["identifier"].Count : 0;
 
-                var result = serviceFoundation.FindAPatient(nhsNumber, "", identifier, identifierCount, fullUrl);
+                var result = serviceFoundation.FindAPatient(nhsNumber, "", identifier, identifierCount, fullUrl, SspTraceId);
 
                 Response.Headers.Add("Cache-Control", "no-store");
 
@@ -628,7 +628,7 @@ namespace GP_Connect.Controllers
              [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
              [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
              [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1",
-             [FromHeader(Name = "Authorizations")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+             [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
 
             )
         {
@@ -833,9 +833,9 @@ namespace GP_Connect.Controllers
              [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
              [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
              [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:documents:fhir:rest:search:documentreference-1",
-             [FromHeader(Name = "Authorizations")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM",
-             [FromQuery(Name = "_include")][Required] string _includes = "DocumentReference:subject:Patient",
-             [FromQuery(Name = "_revinclude:recurse")][Required] string _revincluderecurse = "PractitionerRole:practitioner",
+             [FromHeader(Name = "Authorization")] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM",
+             [FromQuery(Name = "_include")]string _includes = "DocumentReference:subject:Patient",
+             [FromQuery(Name = "_revinclude:recurse")] string _revincluderecurse = "PractitionerRole:practitioner",
              [FromQuery(Name = "Created-start")] string Createdstart = "ge2024-01-05",
               [FromQuery(Name = "Created-end")] string CreatedEnd = "ge2024-10-05",
                [FromQuery(Name = "author")] string author = "docs",
@@ -844,9 +844,36 @@ namespace GP_Connect.Controllers
         {
             try
             {
-                var result = serviceDocument.GetDocumentReference(id, Createdstart, CreatedEnd, author, description, SspTraceId);
+                var fullUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}{Request.QueryString}";
+                var queryParams = QueryHelpers.ParseQuery(Request.QueryString.Value);
 
-                return new JsonResult(result)
+                var result = serviceDocument.GetDocumentReference(id, Createdstart, CreatedEnd, author, description, SspTraceId, fullUrl);
+
+                if (result[2] == "404")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 404
+                    };
+                }
+                if (result[2] == "422")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 422
+                    };
+                }
+                if (result[2] == "400")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 400
+                    };
+                }
+                return new JsonResult(result[0])
                 {
                     ContentType = "application/fhir+json",
                     StatusCode = 200
@@ -857,7 +884,35 @@ namespace GP_Connect.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpGet]
+        [Route("Binary/{id}")]
+        public ActionResult Binary(
+           [FromRoute] string id,
+           [FromHeader(Name = "Ssp-TraceID")][Required] string SspTraceId = "09a01679-2564-0fb4-5129-aecc81ea2706",
+           [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
+           [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
+           [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1",
+           [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+          
+           )
+        {
+            try
+            {
 
+                var result = serviceDocument.GetBase64UsingCRMGuid(id);
+
+                return new JsonResult(result)
+                {
+                    ContentType = "application/fhir+json",
+                    StatusCode = 200
+                };
+              
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         #endregion
 
