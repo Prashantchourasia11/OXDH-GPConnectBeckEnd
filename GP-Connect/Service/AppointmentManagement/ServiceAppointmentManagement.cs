@@ -1,9 +1,11 @@
 ﻿using GP_Connect.CRM_Connection;
 using GP_Connect.DataTransferObject;
 using GP_Connect.FHIR_JSON;
+using GP_Connect.FHIR_JSON.AccessDocument;
 using GP_Connect.FHIR_JSON.AppointmentManagement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Crm.Sdk.Messages;
+using Microsoft.SharePoint.Packaging;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Tooling.Connector;
@@ -13,6 +15,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Swagger.Net;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Policy;
 
 namespace GP_Connect.Service.AppointmentManagement
@@ -39,7 +42,7 @@ namespace GP_Connect.Service.AppointmentManagement
 
         #region Method
 
-        public FinalJSONofSearchSlotDTO1 GetFreeSlot(string fromDate, string toDate, string status, string _include)
+        public dynamic GetFreeSlot(string fromDate, string toDate, string status, string _include)
         {
             try
             {
@@ -176,14 +179,131 @@ namespace GP_Connect.Service.AppointmentManagement
             }
         }
 
-        public dynamic BookAnAppointment(RequestBookAppointmentDTO bookAppointment)
+        public dynamic BookAnAppointment(RequestBookAppointmentDTO bookAppointment,string BookAppointmentDTOString,string Prefer)
         {
             try
             {
+                dynamic[] finaljson = new dynamic[3];
+                AppointmentByAppoIDDetails abai = new AppointmentByAppoIDDetails();
+
+                if(BookAppointmentDTOString.Contains("https://fhir.nhs.uk/Id/gpconnect-appointment-identifier"))
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Identifier Element is not recognized");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
+                if (BookAppointmentDTOString.Contains("\"reason\":["))
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Contain Invalid field : reason");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+              
+
+                if (BookAppointmentDTOString.Contains("http://hl7.org/fhir/stu3/valueset-c80-practice-codes"))
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("practice code should not be acceptable.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
+
+                if (BookAppointmentDTOString.Contains("\"invalidField\":"))
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Contain Invalid field : invalidField");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
+                if (bookAppointment.participant != null)
+                { 
+                    if (bookAppointment.participant[0].status != "accepted")
+                    {
+                        finaljson[0] = abai.InvalidResourceFoundJSON("Participant Status Field Is Missing");
+                        finaljson[1] = "";
+                        finaljson[2] = "422";
+                        return finaljson;
+                    }
+                }else
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Participant Field Is Missing");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
+
+                if(bookAppointment.resourceType != "Appointment")
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Resource Type Is Invalid.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+                if (bookAppointment.extension[0].valueReference.reference.Contains("https:"))
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Invalid Extension Value Reference");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
+                if (bookAppointment.start.ToString().Contains("0001") || bookAppointment.end.ToString().Contains("0001") || bookAppointment.status == null)
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Please check json may be start,end or status field is not present.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+                if (bookAppointment.contained[0].name == null)
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Please check json may be start,end or status field is not present.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+                if (bookAppointment.contained[0].telecom == null)
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Organization Telecom Should Not Be Null");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
+             
+
                 var orgNo = bookAppointment.contained[0].id;
-                var slotNo = bookAppointment.slot[0].reference.Replace("Slot/", "");
-                var locNo = bookAppointment.participant[1].actor.reference.Replace("Location/", "");
-                var patientNo = bookAppointment.participant[0].actor.reference.Replace("Patient/", "");
+                if(orgNo == "1")
+                {
+                    orgNo = "1000";
+                }
+
+                var slotNo = ""; 
+                var locNo = ""; 
+                var patientNo = "";
+
+                try
+                {
+                    slotNo = bookAppointment.slot[0].reference.Replace("Slot/", "");
+                    locNo = bookAppointment.participant[1].actor.reference.Replace("Location/", "");
+                    patientNo = bookAppointment.participant[0].actor.reference.Replace("Patient/", "");
+                }
+                catch (Exception)
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("You need to mandatory send patient ,slot and location id.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+
+                }
+
+
+
                 var startDate = bookAppointment.start;
                 var endDate = bookAppointment.end;
                 var description = bookAppointment.description;
@@ -192,9 +312,19 @@ namespace GP_Connect.Service.AppointmentManagement
 
 
                 var checkSlotStatus = CheckSlotIsAvailableOrNot(slotNo);
+                if (checkSlotStatus == "NotFound")
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Invalid Appointment Number");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
                 if (checkSlotStatus != "free")
                 {
-                    return checkSlotStatus;
+                    finaljson[0] = abai.SlotNotAvailbleJSON();
+                    finaljson[1] = "";
+                    finaljson[2] = "409";
+                    return finaljson;
                 }
 
 
@@ -250,11 +380,21 @@ namespace GP_Connect.Service.AppointmentManagement
                 _crmServiceClient.Update(slotUpdate);
 
                 var appointmentNo = GetAppointmentNumber(appointmentLookup);
-                var bookedAppointmentJSON = ReadAnAppointment(appointmentNo);
+                var bookedAppointmentJSON = ReadAnAppointment(appointmentNo,"Internal");
 
+                if (Prefer == "return=minimal")
+                {
+                    finaljson[0] = "";
+                    finaljson[1] = "";
+                    finaljson[2] = "200";
+                    return finaljson;
+                }
 
+                finaljson[0] = bookedAppointmentJSON;
+                finaljson[1] = "";
+                finaljson[2] = "200";
+                return finaljson;
 
-                return bookedAppointmentJSON;
             }
             catch(Exception ex) 
             {
@@ -262,10 +402,12 @@ namespace GP_Connect.Service.AppointmentManagement
             }
         }
 
-        public AppointmentGetByReverseDTO ReadAnAppointment(string appoinbtmentId)
+        public dynamic ReadAnAppointment(string appoinbtmentId,string type)
         {
             try
             {
+                dynamic[] finaljson = new dynamic[3];
+
                 AppointmentByIdDTO appointmentDetails = new AppointmentByIdDTO();
 
                 var AppontmentXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
@@ -276,6 +418,7 @@ namespace GP_Connect.Service.AppointmentManagement
                                  <attribute name='scheduledend' />
                                  <attribute name='createdby' />
                                  <attribute name='bcrm_status' />
+                                 <attribute name='bcrm_cancellationreason' />
                                  <attribute name='regardingobjectid' />
                                  <attribute name='activityid' />
                                  <attribute name='instancetypecode' />
@@ -333,7 +476,8 @@ namespace GP_Connect.Service.AppointmentManagement
                     appDetails.Status = record.Attributes.Contains("bcrm_status") ? record.FormattedValues["bcrm_status"].ToString() : "";
                     appDetails.ServiceCategory = record.Attributes.Contains("bcrm_servicename") ? record["bcrm_servicename"].ToString() : "";
                     appDetails.Description = record.Attributes.Contains("description") ? record["description"].ToString() : "";
-                    appDetails.comments = record.Attributes.Contains("bcrm_notes") ? record["bcrm_notes"].ToString() : "";
+                    appDetails.comments = record.Attributes.Contains("bcrm_notes") ? record["bcrm_notes"].ToString() : null;
+                    appDetails.CancellationReson = record.Attributes.Contains("bcrm_cancellationreason") ? record["bcrm_cancellationreason"].ToString() : "1";
 
                     if (record.Attributes.Contains("createdon")) { appDetails.createdOn = (DateTime)record.Attributes["createdon"]; }
                     if (record.Attributes.Contains("scheduledstart")) { appDetails.startDate = (DateTime)record.Attributes["scheduledstart"]; }
@@ -371,7 +515,16 @@ namespace GP_Connect.Service.AppointmentManagement
                     appDetails.PractitionerRoleCode = roles.resource.extension[0].valueCodeableConcept.coding[0].code;
 
                     AppointmentByAppoIDDetails app = new AppointmentByAppoIDDetails();
-                    var result = app.GetJSONBYAppointmentId(appDetails);
+
+                    var result = "";
+                    if (appDetails.Status.ToString().ToLower() == "cancelled")
+                    {
+                        result = app.GetJSONBYCancelAppointmentId(appDetails);
+                    }
+                    else
+                    {
+                        result = app.GetJSONBYAppointmentId(appDetails);
+                    }
 
                     var res = JsonConvert.DeserializeObject<AppointmentGetByReverseDTO>(result);
               
@@ -407,14 +560,35 @@ namespace GP_Connect.Service.AppointmentManagement
 
                     allobject.Add(to);
 
+                    if (appDetails.Status.ToString().ToLower() == "cancelled")
+                    {
+                        JObject fourthObj = JObject.Parse(res.extension[3].ToString());
+                        FourthObjectOfExtensionApp po = new FourthObjectOfExtensionApp();
+                        po.url = (string)fourthObj["url"];
+                        po.valueString = (string)fourthObj["valueString"];
+
+                        allobject.Add(po);
+                    }
                     res.extension = allobject;
 
-                    return res;
+                    if (type == "Internal")
+                    {
+                        return res;
+                    }
 
+                   
+                    finaljson[0] = res;
+                    finaljson[1] = appDetails.versionNumber;
+                    finaljson[2] = "200";
+                    return finaljson;
                 }
 
+                AppointmentByAppoIDDetails abai = new AppointmentByAppoIDDetails();
 
-                return null;
+                finaljson[0] = abai.BadRequestAppointmentJSON(appoinbtmentId);
+                finaljson[1] = "";
+                finaljson[2] = "404";
+                return finaljson;
             }
             catch (Exception ex) 
             {
@@ -422,18 +596,73 @@ namespace GP_Connect.Service.AppointmentManagement
             }
         }
 
-        public AppointmentGetByPatientIdDTO GetAppointmentGetByPatientId(string patientId,string fromDate , string toDate)
+        public dynamic GetAppointmentGetByPatientId(string patientId,string fromDate , string toDate,string SspInterctionId,string token)
         {
             try
             {
+                dynamic[] finaljson = new dynamic[3];
+                AppointmentByAppoIDDetails abai = new AppointmentByAppoIDDetails();
+
+                if (!SspInterctionId.Contains("appointment"))
+                {
+                    finaljson[0] = abai.BadRequestSSPInteractionIdNotMatchedJSON();
+                    finaljson[1] = "";
+                    finaljson[2] = "400";
+                    return finaljson;
+                }
+                if (token != null)
+                {
+                    var handler = new JwtSecurityTokenHandler();
+                    var jwtToken = handler.ReadJwtToken(token.Replace("Bearer ", ""));
+
+                    // Extract requested_scope value
+                    var requestedScope = jwtToken.Claims.FirstOrDefault(claim => claim.Type == "requested_scope")?.Value;
+
+                    if(!requestedScope.Contains("appointment"))
+                    {
+                        finaljson[0] = abai.BadRequestJWTTokenNotMatchedJSON();
+                        finaljson[1] = "";
+                        finaljson[2] = "400";
+                        return finaljson;
+                    }
+                }
+
+
+
                 fromDate = fromDate.Replace("ge", "");
                 toDate = toDate.Replace("le", "");
 
-              
-                if(DateTime.Parse(fromDate) < DateTime.UtcNow)
+                var stratDateCheckingStatus = IsValidDate(fromDate);
+                var endDateCheckingStatus = IsValidDate(toDate);
+
+                if(stratDateCheckingStatus == false || endDateCheckingStatus == false)
                 {
-                    fromDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
+                    finaljson[0] = abai.InvalidParameterDateFormatJSON();
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
                 }
+
+                var startDat = DateTime.Parse(fromDate);
+                if(startDat.AddDays(1) < DateTime.UtcNow)
+                {
+                    finaljson[0] = abai.InvalidParameterStartDateShouldNotBePassedDateJSON();
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
+                
+
+                if (DateTime.Parse(fromDate) > DateTime.Parse(toDate))
+                {
+                   
+                    finaljson[0] = abai.InvalidParameterStartDateIsGreaterThanEndDateJSON();
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
 
                 var appoinXML = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                   <entity name='appointment'>
@@ -465,7 +694,12 @@ namespace GP_Connect.Service.AppointmentManagement
                 appDetails.resourceType = "Bundle";
                 appDetails.type = "searchset";
 
-                List<AppointmentGetByReverseDTO> appDTO = new List<AppointmentGetByReverseDTO>();   
+                AppointmentGetByReverseDTOMeta1 am = new AppointmentGetByReverseDTOMeta1();
+                am.lastUpdated =  DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz");
+
+                appDetails.meta = am;
+
+                List<dynamic> appDTO = new List<dynamic>();   
 
                 if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
                 {
@@ -476,22 +710,98 @@ namespace GP_Connect.Service.AppointmentManagement
                         var appointmentNo = AnswerCollection.Entities[i].Attributes.Contains("bcrm_appointmentno") ? AnswerCollection.Entities[i]["bcrm_appointmentno"].ToString() : "";
                         if (appointmentNo != "")
                         {
-                           appDTO.Add(ReadAnAppointment(appointmentNo));
+                            var appDetails1 = ReadAnAppointment(appointmentNo, "Internal");
+                            var resource = new Dictionary<string, object>
+                            {
+                               { "resource",  appDetails1}
+                            };
+
+                            appDTO.Add(resource);
                         }
                     }
+                    appDetails.entry = appDTO;
+                    finaljson[0] = appDetails;
+                    finaljson[1] = "";
+                    finaljson[2] = "200";
+                    return finaljson;
                 }
-                appDetails.entry = appDTO;
-                return appDetails;
+              
+                finaljson[0] = abai.PatientNotFoundUsingJSONFHIR();
+                finaljson[1] = "";
+                finaljson[2] = "404";
+                return finaljson;
             }
             catch (Exception ex)
             {
                 return null;
             }
         }
-        public AppointmentGetByReverseDTO UpdateAppointment(string versionId, RequestBookAppointmentDTO bookAppointment)
+        public dynamic UpdateAppointment(string IfMathch ,RequestBookAppointmentDTO bookAppointment,string sspInterectionId,string BookAppointmentDTOString)
         {
             try
             {
+                dynamic[] finaljson = new dynamic[3];
+                AppointmentByAppoIDDetails abai = new AppointmentByAppoIDDetails();
+
+                if (BookAppointmentDTOString.Contains("appointmentType"))
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Invalid Field : AppointmentType");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
+                if (sspInterectionId == "urn:nhs:names:services:gpconnect:fhir:rest:cancel:appointment-1")
+                {
+                    var res = CancelAppointment(bookAppointment,IfMathch);
+                    return res;
+                }
+             
+                if(bookAppointment.resourceType != "Appointment")
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Resource Type is Invalid");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+                if(bookAppointment.status.ToString().ToLower() != "booked")
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Passing Status Is Invalid :" + bookAppointment.status );
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+                if (BookAppointmentDTOString.Contains("https://fhir.nhs.uk/STU3/StructureDefinition/Extension-GPConnect-AppointmentCancellationReason-1"))
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Cancellation Reason Not Allowed To Update.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+                if (BookAppointmentDTOString.Contains("priority"))
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("You Can't Update Priority.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+                if(bookAppointment.extension != null)
+                {
+                    for(var i=0; i<bookAppointment.extension.Count;i++)
+                    {
+                        if (bookAppointment.extension[i].url == "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-GPConnect-BookingOrganisation-1")
+                        {
+                            if(bookAppointment.extension[i].valueReference.reference.ToString().Contains("https"))
+                            {
+                                finaljson[0] = abai.InvalidResourceFoundJSON("Organization Id is not proper format.");
+                                finaljson[1] = "";
+                                finaljson[2] = "422";
+                                return finaljson;
+                            }
+                        }
+                    }
+                }
+
                 var appointmendId = bookAppointment.id;
                 var AppontmentXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='appointment'>
@@ -524,12 +834,19 @@ namespace GP_Connect.Service.AppointmentManagement
                     var versionNumber = record.Attributes.Contains("bcrm_ra_visit_number") ? record["bcrm_ra_visit_number"].ToString() : "";
                     var appLookup = record.Attributes.Contains("activityid") ? record["activityid"].ToString() : "";
 
-
-                    if (versionNumber != versionId.Replace("W/", ""))
+                    if(IfMathch != "")
                     {
-                        return null;
+                        if (IfMathch != versionNumber)
+                        {
+                            finaljson[0] = abai.IfMatchIsNotOkJSON();
+                            finaljson[1] = "";
+                            finaljson[2] = "409";
+                            return finaljson;
+                        }
                     }
-                    else if (appointmentStatus.ToString().ToLower() != "booked")
+                  
+
+                    if (appointmentStatus.ToString().ToLower() != "booked")
                     {
                         return null;
                     }
@@ -551,8 +868,11 @@ namespace GP_Connect.Service.AppointmentManagement
                             GPConnectAppointment["bcrm_ra_visit_number"] = updatedversion.ToString();
                             _crmServiceClient.Update(GPConnectAppointment);
 
-                            var result = ReadAnAppointment(appointmendId);
-                            return result;
+                            var result = ReadAnAppointment(appointmendId,"Internal");
+                            finaljson[0] = result;
+                            finaljson[1] = updatedversion;
+                            finaljson[2] = "200";
+                            return finaljson;
                         }
                     }
                 }
@@ -564,10 +884,43 @@ namespace GP_Connect.Service.AppointmentManagement
                 return null;
             }
         }
-        public AppointmentGetByReverseDTO CancelAppointment(string versionId, RequestBookAppointmentDTO bookAppointment)
+        public dynamic CancelAppointment(RequestBookAppointmentDTO bookAppointment,string IfMathch)
         {
             try
             {
+
+                dynamic[] finaljson = new dynamic[3];
+                AppointmentByAppoIDDetails abai = new AppointmentByAppoIDDetails();
+
+                if(bookAppointment.participant != null)
+                {
+                    for(var i=0;i<bookAppointment.participant.Count;i++)
+                    {
+                        if (bookAppointment.participant[i].status == "declined")
+                        {
+                            finaljson[0] = abai.InvalidResourceFoundJSON("participant status should not be declined");
+                            finaljson[1] = "";
+                            finaljson[2] = "422";
+                            return finaljson;
+                        }
+                    }
+                }
+                if (bookAppointment.extension != null)
+                {
+                    for (var i = 0; i < bookAppointment.extension.Count; i++)
+                    {
+                        if (bookAppointment.extension[i].url == "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-GPConnect-BookingOrganisation-1")
+                        {
+                            if (bookAppointment.extension[i].valueReference.reference.ToString().Contains("https"))
+                            {
+                                finaljson[0] = abai.InvalidResourceFoundJSON("Organization Id is not proper format.");
+                                finaljson[1] = "";
+                                finaljson[2] = "422";
+                                return finaljson;
+                            }
+                        }
+                    }
+                }
 
                 var appointmendId = bookAppointment.id;
                
@@ -603,28 +956,107 @@ namespace GP_Connect.Service.AppointmentManagement
                     var record = AnswerCollection.Entities[0];
                     var appointmentStatus = record.Attributes.Contains("bcrm_status") ? record.FormattedValues["bcrm_status"].ToString() : "";
                     var versionNumber = record.Attributes.Contains("bcrm_ra_visit_number") ? record["bcrm_ra_visit_number"].ToString() : "";
+                    var description = record.Attributes.Contains("description") ? record["description"].ToString() : "";
+                    var comments = record.Attributes.Contains("bcrm_notes") ? record["bcrm_notes"].ToString() : "";
                     var appLookup = record.Attributes.Contains("activityid") ? record["activityid"].ToString() : "";
 
+                    if (IfMathch != "")
+                    {
+                        if (IfMathch != versionNumber)
+                        {
+                            finaljson[0] = abai.IfMatchFHIRIsNotOkJSON();
+                            finaljson[1] = "";
+                            finaljson[2] = "409";
+                            return finaljson;
+                        }
+                    }
+
+                    if (bookAppointment.comment != "")
+                    { 
+                        if (comments.ToString().ToLower() != bookAppointment.comment.ToString().ToLower())
+                        {
+                            finaljson[0] = abai.InvalidResourceFoundJSON("You can't be update comment");
+                            finaljson[1] = "";
+                            finaljson[2] = "422";
+                            return finaljson;
+                        }
+                    }
+                    if (bookAppointment.description != "")
+                    {
+                        if (description.ToString().ToLower() != bookAppointment.description.ToString().ToLower())
+                        {
+                            finaljson[0] = abai.InvalidResourceFoundJSON("You can't be update description");
+                            finaljson[1] = "";
+                            finaljson[2] = "422";
+                            return finaljson;
+                        }
+                    }
                     if (record.Attributes.Contains("scheduledstart"))
                     {
                         var startDate = (DateTime)record.Attributes["scheduledstart"];
                         if(startDate < DateTime.UtcNow)
                         {
-                            return null;
+                            finaljson[0] = abai.InvalidResourceFoundJSON("can't be cancel past appointment");
+                            finaljson[1] = "";
+                            finaljson[2] = "422";
+                            return finaljson;
                         }
-                    }
-
-
-                    if (versionNumber != versionId.Replace("W/", ""))
-                    {
-                        return null;
                     }
                     else if (appointmentStatus.ToString().ToLower() != "booked")
                     {
-                        return null;
+                        finaljson[0] = abai.InvalidResourceFoundJSON("appointment status must be booked.");
+                        finaljson[1] = "";
+                        finaljson[2] = "422";
+                        return finaljson;
                     }
-                    else
+
+                    var cancelReasonSta = false;
+                    foreach (var item in bookAppointment.extension)
                     {
+                        if (item.url == "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-GPConnect-AppointmentCancellationReason-1")
+                        {
+                            cancelReasonSta = true;
+                        }
+                    }
+                    if(cancelReasonSta == false)
+                    {
+                        finaljson[0] = abai.InvalidResourceFoundJSON("Cancellation Reason must not be empty.");
+                        finaljson[1] = "";
+                        finaljson[2] = "422";
+                        return finaljson;
+                    }
+
+                    if (appLookup != null)
+                        {
+
+
+                        
+                           var updatedversion = int.Parse(versionNumber) + 1;
+                      
+
+                        Entity GPConnectAppointment = new Entity("appointment", new Guid(appLookup));
+                            GPConnectAppointment["bcrm_status"] = new OptionSetValue(4);
+                           GPConnectAppointment["bcrm_ra_visit_number"] = updatedversion.ToString();
+                     
+                        var CancellationReasonChecker = false;
+                             var CancellationText = "";
+                            foreach (var item in bookAppointment.extension)
+                            {
+                                if(item.url == "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-GPConnect-AppointmentCancellationReason-1")
+                                {
+                                CancellationReasonChecker = true;
+                                CancellationText = item.valueString;
+                                GPConnectAppointment["bcrm_cancellationreason"] = item.valueString;
+                                }
+                            }
+
+                            if(CancellationReasonChecker == false || CancellationText == "")
+                        {
+                            finaljson[0] = abai.InvalidParameterJSON("Cancellation Reason must not be empty.");
+                            finaljson[1] = "";
+                            finaljson[2] = "422";
+                            return finaljson;
+                        }
                         if (record.Attributes.Contains("bcrm_slot"))
                         {
                             dynamic slotLookup = record["bcrm_slot"];
@@ -634,30 +1066,17 @@ namespace GP_Connect.Service.AppointmentManagement
                             _crmServiceClient.Update(slotUpdate);
                         }
 
-                        if (appLookup != null)
-                        {
+                           _crmServiceClient.Update(GPConnectAppointment);
+                            var result = ReadAnAppointment(appointmendId,"Internal");
 
-                            var comments = bookAppointment.comment;
-                            var description = bookAppointment.description;
-
-                            Entity GPConnectAppointment = new Entity("appointment", new Guid(appLookup));
-                            GPConnectAppointment["bcrm_status"] = new OptionSetValue(4);
-                            foreach (var item in bookAppointment.extension)
-                            {
-                                if(item.url == "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-GPConnect-AppointmentCancellationReason-1")
-                                {
-                                    GPConnectAppointment["bcrm_cancellationreason"] = item.valueString;
-                                }
-                            }
-
-                            _crmServiceClient.Update(GPConnectAppointment);
-                            var result = ReadAnAppointment(appointmendId);
-
-                            return result;
+                            finaljson[0] = result;
+                            finaljson[1] = updatedversion;
+                            finaljson[2] = "200";
+                            return finaljson;
                         }
 
 
-                    }
+                    
                 }
 
                 return null;
@@ -669,7 +1088,9 @@ namespace GP_Connect.Service.AppointmentManagement
 
         }
 
-         #endregion
+      
+
+        #endregion
 
         #region Internal-Method
 
@@ -1173,7 +1594,7 @@ namespace GP_Connect.Service.AppointmentManagement
                            practitionerDetail.resource.name[0].family = record.Attributes.Contains("bcrm_gpc_name_family") ? record["bcrm_gpc_name_family"].ToString() : string.Empty;
                            practitionerDetail.resource.name[0].given[0] = record.Attributes.Contains("bcrm_gpc_name_given") ? record["bcrm_gpc_name_given"].ToString() : string.Empty;
                            practitionerDetail.resource.name[0].prefix[0] = record.Attributes.Contains("bcrm_gpc_prefix") ? record.FormattedValues["bcrm_gpc_prefix"].ToString() : "";
-                           practitionerDetail.resource.gender = record.Attributes.Contains("bcrm_gender") ? record.FormattedValues["bcrm_gender"].ToString() : "";
+                           practitionerDetail.resource.gender = record.Attributes.Contains("bcrm_gender") ? record.FormattedValues["bcrm_gender"].ToString().ToLower() : "";
 
                            practionerDetailsList.Add(practitionerDetail);
                         }
@@ -1589,36 +2010,85 @@ namespace GP_Connect.Service.AppointmentManagement
                var slotStatus = record.Attributes.Contains("bcrm_slotstatus") ? record.FormattedValues["bcrm_slotstatus"].ToString().ToLower() : string.Empty;
                if(slotStatus.ToString().ToLower() != "free")
                {
-                    string jsonString = @"{
-                                         ""resourceType"": ""OperationOutcome"",
-                                         ""meta"": {
-                                             ""profile"": [
-                                                 ""https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1""
-                                             ]
-                                         },
-                                         ""issue"": [
-                                             {
-                                                 ""severity"": ""error"",
-                                                 ""code"": ""duplicate"",
-                                                 ""details"": {
-                                                     ""coding"": [
-                                                         {
-                                                             ""system"": ""https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1"",
-                                                             ""code"": ""DUPLICATE_REJECTED"",
-                                                             ""display"": ""Create would lead to creation of duplicate resource""
-                                                         }
-                                                     ]
-                                                 }
-                                             }
-                                         ]
-                                     }";
-                    return jsonString;
-
+                    return "booked";
+               }
+               else
+                {
+                    return "free";
                 }
             }
 
-            return "free";
+            return "NotFound";
         }
+
+        public static bool IsValidDate(string dateString)
+        {
+            // Check if the length of the input is exactly 10 characters (yyyy-MM-dd)
+            if (dateString.Length != 10)
+            {
+                return false;
+            }
+
+            // Check if the 5th and 8th characters are hyphens ('-')
+            if (dateString[4] != '-' || dateString[7] != '-')
+            {
+                return false;
+            }
+
+            // Extract year, month, and day parts
+            string yearPart = dateString.Substring(0, 4);
+            string monthPart = dateString.Substring(5, 2);
+            string dayPart = dateString.Substring(8, 2);
+
+            // Check if the year part is numeric and has 4 digits
+            if (!IsAllDigits(yearPart) || yearPart.Length != 4)
+            {
+                return false;
+            }
+
+            // Check if the month part is numeric and between 1 and 12
+            if (!IsAllDigits(monthPart) || !IsValidMonth(monthPart))
+            {
+                return false;
+            }
+
+            // Check if the day part is numeric and between 1 and 31
+            if (!IsAllDigits(dayPart) || !IsValidDay(dayPart))
+            {
+                return false;
+            }
+
+            // If all checks pass, the date is valid
+            return true;
+        }
+
+        // Helper function to check if a string contains only digits
+        private static bool IsAllDigits(string s)
+        {
+            foreach (char c in s)
+            {
+                if (c < '0' || c > '9')
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Helper function to check if the month is between 01 and 12
+        private static bool IsValidMonth(string month)
+        {
+            int monthInt = int.Parse(month);
+            return monthInt >= 1 && monthInt <= 12;
+        }
+
+        // Helper function to check if the day is between 01 and 31
+        private static bool IsValidDay(string day)
+        {
+            int dayInt = int.Parse(day);
+            return dayInt >= 1 && dayInt <= 31;
+        }
+
 
         #endregion
     }

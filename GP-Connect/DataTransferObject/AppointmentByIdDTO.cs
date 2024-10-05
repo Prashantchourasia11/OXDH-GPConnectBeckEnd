@@ -27,5 +27,7 @@
         public string locationReference { get; set; }
         public string PractionerReference { get; set; }
 
+        public string CancellationReson {  get; set; }  
+
     }
 }

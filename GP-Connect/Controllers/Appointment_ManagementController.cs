@@ -43,7 +43,7 @@ namespace GP_Connect.Controllers
         {
             try
             {
-                var res = sam.GetAppointmentGetByPatientId(id, start, end);
+                var res = sam.GetAppointmentGetByPatientId(id, start, end,SspInterctionId,Authorization);
                 return Ok(res);
             }
             catch (Exception ex)
@@ -103,7 +103,7 @@ namespace GP_Connect.Controllers
             try
             {
                 var appointmentDetails = JsonConvert.DeserializeObject<RequestBookAppointmentDTO>(BookAppointmentDTO.ToString());
-                var result = sam.BookAnAppointment(appointmentDetails);
+                var result = sam.BookAnAppointment(appointmentDetails, BookAppointmentDTO.ToString(),"");
                 return Ok(result);
             }
             catch (Exception ex)
@@ -129,7 +129,7 @@ namespace GP_Connect.Controllers
         {
             try
             {
-                var result = sam.ReadAnAppointment(id);
+                var result = sam.ReadAnAppointment(id,"External");
                 return Ok(result);
             }
             catch (Exception ex)
@@ -165,7 +165,7 @@ namespace GP_Connect.Controllers
 
                 if (SspInterctionId == "urn:nhs:names:services:gpconnect:fhir:rest:update:appointment-1")
                 {
-                    var result = sam.UpdateAppointment(IfMatch, appointmentDetails);
+                    var result = sam.UpdateAppointment(IfMatch, appointmentDetails, SspInterctionId, BookAppointmentDTO.ToString());
                     if(result == null)
                     {
                         return StatusCode(422, GetInvalidResourceJSON());
@@ -174,7 +174,7 @@ namespace GP_Connect.Controllers
                 }
                 else if(SspInterctionId == "urn:nhs:names:services:gpconnect:fhir:rest:cancel:appointment-1")
                 {
-                    var result = sam.CancelAppointment(IfMatch, appointmentDetails);
+                    var result = sam.CancelAppointment(appointmentDetails,"");
                     if (result == null)
                     {
                         return StatusCode(422, GetInvalidResourceJSON());

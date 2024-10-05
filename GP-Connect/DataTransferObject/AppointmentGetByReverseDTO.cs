@@ -149,6 +149,10 @@
         public string url { get; set; }
         public string valueCode { get; set; }
     }
-
+    public class FourthObjectOfExtensionApp
+    {
+        public string url { get; set; }
+        public string valueString { get; set; }
+    }
 
 }

@@ -3,6 +3,7 @@ using GP_Connect.CRM_Connection;
 using GP_Connect.DataTransferObject;
 using GP_Connect.JWT_Checker;
 using GP_Connect.Service.AccessDocument;
+using GP_Connect.Service.AppointmentManagement;
 using GP_Connect.Service.Foundation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Office.SharePoint.Tools;
+using Microsoft.VisualBasic;
 using Microsoft.Xrm.Tooling.Connector;
 using Newtonsoft.Json;
 using Swagger.Net.Annotations;
@@ -34,7 +36,10 @@ namespace GP_Connect.Controllers
 
         ServiceFoundation serviceFoundation = new ServiceFoundation();
         ServiceAccessDocument serviceDocument = new ServiceAccessDocument();
+        ServiceAppointmentManagement serviceAppointment = new ServiceAppointmentManagement();
+
         JWTChecker jWTChecker = new JWTChecker();
+
 
         #endregion
 
@@ -43,6 +48,8 @@ namespace GP_Connect.Controllers
         #endregion
 
         #region Method
+
+        #region Foundation API's
 
         /// <summary>
         ///  Get the FHIR® conformance profile
@@ -131,11 +138,19 @@ namespace GP_Connect.Controllers
                     StatusCode = 400
                 };
             }
-
+            // Only return this response if the requested URL doesn't start with 'meta'
+            if (url.Contains("Appointment"))
+            {
+                return new JsonResult(BadRequestAppointmentJSON(HttpContext.Request.Method))
+                {
+                    ContentType = "application/fhir+json",
+                    StatusCode = 404
+                };
+            }
             return new JsonResult(BadRequestJSON(HttpContext.Request.Path.ToString()))
             {
                 ContentType = "application/fhir+json",
-                StatusCode = 400
+                StatusCode = 404
             };
         }
 
@@ -821,9 +836,9 @@ namespace GP_Connect.Controllers
             };
         }
 
-        /// <summary>
-        /// Find a patient
-        /// </summary>
+        #endregion
+
+        #region Access Document Methods
 
         [HttpGet]
         [Route("Patient/{id}/DocumentReference")]
@@ -884,6 +899,8 @@ namespace GP_Connect.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+
         [HttpGet]
         [Route("Binary/{id}")]
         public ActionResult Binary(
@@ -913,6 +930,321 @@ namespace GP_Connect.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        #endregion
+
+
+        #region Appointment
+
+        [HttpGet]
+        [Route("Slot")]
+        public ActionResult Slot(
+         [FromHeader(Name = "Ssp-TraceID")][Required] string SspTraceId = "09a01679-2564-0fb4-5129-aecc81ea2706",
+         [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
+         [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
+         [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1",
+         [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM",
+         [FromQuery(Name = "start")] string start = "ge2024-08-20",
+         [FromQuery(Name = "end")] string end = "le2024-08-30",
+         [FromQuery(Name = "Status ")] string Status = "free",
+         [FromQuery(Name = "_Include ")] string _Include = "Slot:schedule",
+         [FromQuery(Name = "_include:recurse")] string _includerecurse = "--",
+         [FromQuery(Name = "searchFilter")] string searchFilter = "--"
+         )
+        {
+            try
+            {
+                var fullUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}{Request.QueryString}";
+                var queryParams = QueryHelpers.ParseQuery(Request.QueryString.Value);
+
+
+                var result = serviceAppointment.GetFreeSlot(start, end, Status, _Include);
+
+
+                return new JsonResult(result)
+                {
+                    ContentType = "application/fhir+json",
+                    StatusCode = 200
+                };
+              
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("Appointment")]
+        public ActionResult Appointment(
+             [FromHeader(Name = "Ssp-TraceID")][Required] string SspTraceId = "09a01679-2564-0fb4-5129-aecc81ea2706",
+             [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
+             [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
+             [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1",
+             [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM",
+             [FromHeader(Name = "Prefer")] string Prefer = "",
+             [FromBody] dynamic BookAppointmentDTO = null
+             )
+        {
+            try
+            {
+                var appointmentDetails = JsonConvert.DeserializeObject<RequestBookAppointmentDTO>(BookAppointmentDTO.ToString());
+                var result = serviceAppointment.BookAnAppointment(appointmentDetails, BookAppointmentDTO.ToString(), Prefer);
+
+
+                Response.Headers.Add("Cache-Control", "no-store");
+
+                if (result[2] == "400")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 400
+                    };
+                }
+
+                if (result[2] == "422")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 422
+                    };
+                }
+                if (result[2] == "404")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 404
+                    };
+                }
+
+                if (result[2] == "409")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 409
+                    };
+                }
+                if (Prefer == "return=minimal")
+                {
+                    return new ContentResult
+                    {
+                        Content = string.Empty, // Empty body
+                        ContentType = "application/fhir+json",
+                        StatusCode = 201
+                    };
+                }
+            
+                return new JsonResult(result[0])
+                {
+                    ContentType = "application/fhir+json",
+                    StatusCode = 201
+                };
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("Appointment/{id}")]
+        public ActionResult ReadAnAppoinbtment(
+            [FromRoute] string id,
+            [FromHeader(Name = "Ssp-TraceID")][Required] string SspTraceId = "09a01679-2564-0fb4-5129-aecc81ea2706",
+            [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
+            [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
+            [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1",
+            [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM" 
+            )
+        {
+            try
+            {
+                var fullUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}{Request.QueryString}";
+                var queryParams = QueryHelpers.ParseQuery(Request.QueryString.Value);
+
+
+                var result = serviceAppointment.ReadAnAppointment(id,"External");
+
+                Response.Headers.Add("Cache-Control", "no-store");
+
+                if (result[1] != "")
+                {
+                    try { Response.Headers.Add("ETag", "W/\"" + result[1] + "\""); } catch (Exception) { }
+                }
+
+                if (result[2] == "404")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 404
+                    };
+                }
+                
+
+                return new JsonResult(result[0])
+                {
+                    ContentType = "application/fhir+json",
+                    StatusCode = 200
+                };
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("Patient/{id}/Appointment")]
+        public ActionResult PatientAppointment(
+           [FromRoute] string id,
+           [FromHeader(Name = "Ssp-TraceID")][Required] string SspTraceId = "09a01679-2564-0fb4-5129-aecc81ea2706",
+           [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
+           [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
+           [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1",
+           [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM",
+           [FromQuery(Name = "start")] string start = "gl2024-05-01",
+           [FromQuery(Name = "end")] string end = "lg2024-05-10"
+           )
+        {
+            try
+            {
+                var fullUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}{Request.QueryString}";
+                var queryParams = QueryHelpers.ParseQuery(Request.QueryString.Value);
+
+
+             
+
+                dynamic startDates = queryParams.ContainsKey("start") ? queryParams["start"].ToString() : "";
+                string[] startDate = startDates.Split(',');
+
+
+                if(startDate.Length == 2)
+                {
+                    start = startDate[0];
+                    end = startDate[1];
+                }
+
+                var result = serviceAppointment.GetAppointmentGetByPatientId(id, start, end, SspInterctionId,Authorization);
+
+                 try { Response.Headers.Add("ETag", "W/\"" + result[1] + "\""); } catch (Exception) { }
+
+                Response.Headers.Add("Cache-Control", "no-store");
+
+                if (result[2] == "422")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 422
+                    };
+                }
+                if (result[2] == "404")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 404
+                    };
+                }
+                if (result[2] == "400")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 400
+                    };
+                }
+                return new JsonResult(result[0])
+                {
+                    ContentType = "application/fhir+json",
+                    StatusCode = 200
+                };
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPut]
+        [Route("Appointment/{id}")]
+        public ActionResult AmendOrCancelAppointment(
+            [FromRoute] string id,
+           [FromHeader(Name = "Ssp-TraceID")][Required] string SspTraceId = "09a01679-2564-0fb4-5129-aecc81ea2706",
+           [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
+           [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
+           [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:update:appointment-1",
+           [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM",
+           [FromHeader(Name = "If-Match")] string IfMatch = "",
+           [FromBody] dynamic BookAppointmentDTO = null
+           )
+        {
+            try
+            {
+                var appointmentDetails = JsonConvert.DeserializeObject<RequestBookAppointmentDTO>(BookAppointmentDTO.ToString());
+
+                var req = Request.Headers;
+               
+                var result = serviceAppointment.UpdateAppointment(IfMatch ,appointmentDetails,SspInterctionId, BookAppointmentDTO.ToString());
+
+                try { Response.Headers.Add("ETag", "W/\"" + result[1] + "\""); } catch (Exception) { }
+
+                Response.Headers.Add("Cache-Control", "no-store");
+
+                if (result[2] == "422")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 422
+                    };
+                }
+                if (result[2] == "404")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 404
+                    };
+                }
+                if (result[2] == "409")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 409
+                    };
+                }
+                if (result[2] == "400")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 400
+                    };
+                }
+                return new JsonResult(result[0])
+                {
+                    ContentType = "application/fhir+json",
+                    StatusCode = 200
+                };
+
+               
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        #endregion
+
 
         #endregion
 
@@ -954,6 +1286,44 @@ namespace GP_Connect.Controllers
             };
             return operationOutcome;
         }
+
+        internal dynamic BadRequestAppointmentJSON(string type)
+        {
+            var operationOutcome = new
+            {
+                resourceType = "OperationOutcome",
+                meta = new
+                {
+                    profile = new[]
+            {
+                    "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1"
+                }
+                },
+                issue = new[]
+{
+                new
+                {
+                    severity = "error",
+                    code = "invalid",
+                    details = new
+                    {
+                        coding = new[]
+                        {
+                            new
+                            {
+                                system = "https://fhir.nhs.uk/STU3/CodeSystem/Spine-ErrorOrWarningCode-1",
+                                code = "REFERENCE_NOT_FOUND",
+                                display = "REFERENCE_NOT_FOUND"
+                            }
+                        }
+                    },
+                    diagnostics = "Appointment Id Not Found."
+                }
+            }
+            };
+            return operationOutcome;
+        }
+
         internal dynamic RESOURCENITFOUNDJSON(string ROUTE)
         {
             var operationOutcome = new
