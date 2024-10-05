@@ -618,7 +618,7 @@ namespace GP_Connect.Service.AppointmentManagement
                     // Extract requested_scope value
                     var requestedScope = jwtToken.Claims.FirstOrDefault(claim => claim.Type == "requested_scope")?.Value;
 
-                    if(!requestedScope.Contains("patient"))
+                    if(!requestedScope.Contains("patient/*.read"))
                     {
                         finaljson[0] = abai.BadRequestJWTTokenNotMatchedJSON();
                         finaljson[1] = "";
