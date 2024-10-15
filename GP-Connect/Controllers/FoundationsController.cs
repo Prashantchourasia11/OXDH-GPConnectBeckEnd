@@ -3,6 +3,7 @@ using GP_Connect.CRM_Connection;
 using GP_Connect.DataTransferObject;
 using GP_Connect.JWT_Checker;
 using GP_Connect.Service.AccessDocument;
+using GP_Connect.Service.AccessRecordHTML;
 using GP_Connect.Service.AppointmentManagement;
 using GP_Connect.Service.Foundation;
 using Microsoft.AspNetCore.Http;
@@ -37,6 +38,7 @@ namespace GP_Connect.Controllers
         ServiceFoundation serviceFoundation = new ServiceFoundation();
         ServiceAccessDocument serviceDocument = new ServiceAccessDocument();
         ServiceAppointmentManagement serviceAppointment = new ServiceAppointmentManagement();
+        ServiceAccessRecordHTML ServiceAccessRecordHTML = new ServiceAccessRecordHTML();
 
         JWTChecker jWTChecker = new JWTChecker();
 
@@ -733,12 +735,10 @@ namespace GP_Connect.Controllers
             }
         }
 
-        /// <summary>
-        /// Register a patient
-        /// </summary>
+        
 
         [HttpPost]
-        [Route("Patient/$gpc.registerpatient")]
+        [Route("Patient/gpc.registerpatient")]
         public ActionResult registerAPatient(
               [FromHeader(Name = "Ssp-TraceID")][Required] string SspTraceId = "09a01679-2564-0fb4-5129-aecc81ea2706",
              [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
@@ -794,11 +794,34 @@ namespace GP_Connect.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
         [HttpPost]
         [Route("Patient/{*operation}")]
-        public ActionResult HandleInvalidOperation()
+        public async Task<ActionResult> HandleInvalidOperation()
         {
+            var fullUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}{Request.QueryString}";
+            var queryParams = QueryHelpers.ParseQuery(Request.QueryString.Value);
+
+            if (fullUrl.Contains("Patient/$gpc.getcarerecord"))
+            {
+                // Extract headers
+                string sspTraceId = Request.Headers["Ssp-TraceID"].FirstOrDefault() ?? "09a01679-2564-0fb4-5129-aecc81ea2706";
+                string sspFrom = Request.Headers["Ssp-From"].FirstOrDefault() ?? "200000000359";
+                string sspTo = Request.Headers["Ssp-To"].FirstOrDefault() ?? "918999198993";
+                string sspInteractionId = Request.Headers["Ssp-InteractionID"].FirstOrDefault() ?? "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1";
+                string authorization = Request.Headers["Authorization"].FirstOrDefault() ?? "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM";
+
+                // Read and deserialize body asynchronously (assuming the request body is in JSON+FHIR format)
+                using (StreamReader reader = new StreamReader(Request.Body))
+                {
+                    var bodyContent = await reader.ReadToEndAsync();  // Read the body asynchronously
+                    dynamic body = JsonConvert.DeserializeObject(bodyContent);  // Deserialize FHIR+JSON body
+
+                    // Call the getcarerecord method with deserialized body and headers
+                    return getcarerecord(sspTraceId, sspFrom, sspTo, sspInteractionId, authorization, body);
+                }
+            }
+
+            // Return an OperationOutcome for unknown operation types
             var response = new
             {
                 resourceType = "OperationOutcome",
@@ -835,6 +858,7 @@ namespace GP_Connect.Controllers
                 StatusCode = 400
             };
         }
+
 
         #endregion
 
@@ -956,9 +980,35 @@ namespace GP_Connect.Controllers
             {
                 var fullUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}{Request.QueryString}";
                 var queryParams = QueryHelpers.ParseQuery(Request.QueryString.Value);
+                var ods = "";
+                var orgType = "";
+
+                dynamic searchFilter1 = queryParams.ContainsKey("searchFilter") ? queryParams["searchFilter"].ToString() : "";
+                string[] searchFileters = searchFilter1.Split(',');
 
 
-                var result = serviceAppointment.GetFreeSlot(start, end, Status, _Include);
+                if (searchFileters.Length != 0)
+                {
+                    for(var i=0;i< searchFileters.Length;i++)
+                    {
+                        if (searchFileters[i].Contains("ods-organization-code"))
+                        {
+                            ods = searchFileters[i].Length >= 6
+                        ? searchFileters[i].Substring(searchFileters[i].Length - 6)
+                        : searchFileters[i];
+                        }
+                        if(searchFileters[i].Contains("urgent-care"))
+                        {
+                            orgType = "urgent-care";
+                        }
+                        if(searchFileters[i].Contains("gp-practice"))
+                        {
+                            orgType = "gp-practice";
+                        }
+                    }
+                }
+
+                var result = serviceAppointment.GetFreeSlot(start, end, Status, _Include, fullUrl,ods,orgType);
 
 
                 return new JsonResult(result)
@@ -1084,8 +1134,30 @@ namespace GP_Connect.Controllers
                         StatusCode = 404
                     };
                 }
-                
-
+                if (result[2] == "422")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 422
+                    };
+                }
+                if (result[2] == "400")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 400
+                    };
+                }
+                if (result[2] == "409")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 409
+                    };
+                }
                 return new JsonResult(result[0])
                 {
                     ContentType = "application/fhir+json",
@@ -1115,9 +1187,6 @@ namespace GP_Connect.Controllers
             {
                 var fullUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}{Request.QueryString}";
                 var queryParams = QueryHelpers.ParseQuery(Request.QueryString.Value);
-
-
-             
 
                 dynamic startDates = queryParams.ContainsKey("start") ? queryParams["start"].ToString() : "";
                 string[] startDate = startDates.Split(',');
@@ -1241,6 +1310,93 @@ namespace GP_Connect.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+
+        #endregion
+
+        #region Access HTML
+
+
+        [HttpPost]
+        [Route("Patient/gpc.getcarerecord")]
+        public ActionResult getcarerecord(
+    [FromHeader(Name = "Ssp-TraceID")][Required] string SspTraceId = "09a01679-2564-0fb4-5129-aecc81ea2706",
+    [FromHeader(Name = "Ssp-From")][Required] string SspFrom = "200000000359",
+    [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
+    [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1",
+    [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM",
+     [FromBody] dynamic body = null
+    )
+        {
+            try
+            {
+                var bodyResponse = new RequestAccessHTMLDTO();
+                try
+                {
+                    bodyResponse = JsonConvert.DeserializeObject<RequestAccessHTMLDTO>(body.ToString());
+                }
+                catch (Exception)
+                {
+
+                }
+                var response = ServiceAccessRecordHTML.GetAccessHTMLRecord(bodyResponse);
+
+                if (response[2] == "400")
+                {
+                    return new JsonResult(response[0])
+                    {
+                        ContentType = "application/json+fhir",
+                        StatusCode = 400
+                    };
+                }
+                if (response[2] == "403")
+                {
+                    return new JsonResult(response[0])
+                    {
+                        ContentType = "application/json+fhir",
+                        StatusCode = 403
+                    };
+                }
+                if (response[2] == "404")
+                {
+                    return new JsonResult(response[0])
+                    {
+                        ContentType = "application/json+fhir",
+                        StatusCode = 404
+                    };
+                }
+                if (response[2] == "409")
+                {
+                    return new JsonResult(response[0])
+                    {
+                        ContentType = "application/json+fhir",
+                        StatusCode = 409
+                    };
+                }
+
+                if (response[2] == "422")
+                {
+                    return new JsonResult(response[0])
+                    {
+                        ContentType = "application/json+fhir",
+                        StatusCode = 422
+                    };
+                }
+
+                return new JsonResult(response[0])
+                {
+                    ContentType = "application/json+fhir",
+                    StatusCode = 200
+                };
+              
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
 
 
         #endregion

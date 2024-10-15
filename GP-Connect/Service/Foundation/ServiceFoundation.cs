@@ -608,7 +608,19 @@ namespace GP_Connect.Service.Foundation
 
                 if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
                 {
-                    foreach (var record in AnswerCollection.Entities)
+                    var ItenNo = 0;
+
+                    for (var i = 0; i < AnswerCollection.Entities.Count; i++)
+                    {
+                        var rec = AnswerCollection.Entities[i].Attributes.Contains("bcrm_gpc_sequence_number") ? AnswerCollection.Entities[i]["bcrm_gpc_sequence_number"].ToString() : string.Empty;
+                        if (rec == id)
+                        {
+                            ItenNo = i;
+                        }
+                    }
+
+                    var record = AnswerCollection.Entities[ItenNo];
+
                     {
 
                         crmUserProfile.Id = record.Id;

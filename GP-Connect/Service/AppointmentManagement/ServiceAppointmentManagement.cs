@@ -42,7 +42,7 @@ namespace GP_Connect.Service.AppointmentManagement
 
         #region Method
 
-        public dynamic GetFreeSlot(string fromDate, string toDate, string status, string _include)
+        public dynamic GetFreeSlot(string fromDate, string toDate, string status, string _include,string fullUrl,string ods,string orgType)
         {
             try
             {
@@ -50,11 +50,11 @@ namespace GP_Connect.Service.AppointmentManagement
                 {
                     status = "101";
                 }
+                fromDate = fromDate.Replace("ge", "");
+                toDate = toDate.Replace("le", "");
 
-               fromDate = fromDate.Replace("ge", "");
-               toDate = toDate.Replace("le", "");
 
-                var freeSlotxml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false' top='20'>
+                var freeSlotxml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false' top='1000'>
                                      <entity name='msemr_slot'>
                                        <attribute name='msemr_slotid' />
                                        <attribute name='msemr_name' />
@@ -88,8 +88,8 @@ namespace GP_Connect.Service.AppointmentManagement
                                        <attribute name='msemr_appointmentemrid' />
                                        <order attribute='msemr_name' descending='false' />
                                        <filter type='and'>
-                                         <condition attribute='msemr_end' operator='on-or-before' value='" + toDate+@"' />
-                                         <condition attribute='msemr_start' operator='on-or-after' value='"+fromDate+@"' />
+                                         <condition attribute='msemr_end' operator='on-or-before' value='" + toDate + @"' />
+                                         <condition attribute='msemr_start' operator='on-or-after' value='"+ fromDate + @"' />
                                          <condition attribute='bcrm_slotstatus' operator='eq' value='"+status+ @"' />
                                        </filter>
                                        <link-entity name='bcrm_shifts' from='bcrm_shiftsid' to='bcrm_shift' visible='false' link-type='outer' alias='schedule'>
@@ -101,10 +101,86 @@ namespace GP_Connect.Service.AppointmentManagement
                                           <attribute name='bcrm_gplocation' />
                                           <attribute name='bcrm_fromdate' />
                                           <attribute name='bcrm_clinic' />
+                                        <link-entity name='bcrm_clinic' from='bcrm_clinicid' to='bcrm_clinic' visible='false' link-type='outer' alias='organisation'>
+                                        <attribute name='bcrm_gpc_telecom_value' />
+                                        <attribute name='bcrm_gpc_sequence_number' />
+                                        <attribute name='bcrm_clinictype' />     
+                                        <attribute name='bcrm_odscode' />
+                                        <attribute name='bcrm_name' />
+                                        </link-entity>
+                                      
                                        </link-entity>
                                      </entity>
                                     </fetch>";
                 EntityCollection AnswerCollection = _crmServiceClient.RetrieveMultiple(new FetchExpression(freeSlotxml));
+
+                if (AnswerCollection.Entities.Count > 0 && ods != "")
+                {
+                    EntityCollection answerCollectionCorrect = new EntityCollection();
+                    foreach(var record in AnswerCollection.Entities)
+                    {
+                        if (record.Attributes.Contains("organisation.bcrm_odscode"))
+                        {
+                            dynamic ContainODS = record["organisation.bcrm_odscode"];
+                            var odsfinal = ContainODS.Value.ToString().ToUpper();
+                            if (ods.ToString().ToUpper() == odsfinal)
+                            {
+                                answerCollectionCorrect.Entities.Add(record);
+                            }
+                        }
+                    }
+                    AnswerCollection = answerCollectionCorrect;
+                }
+
+                if(AnswerCollection.Entities.Count > 0 && orgType != "")
+                {
+                    EntityCollection answerCollectionCorrect = new EntityCollection();
+                    foreach (var record in AnswerCollection.Entities)
+                    {
+                        if (record.Attributes.Contains("organisation.bcrm_clinictype"))
+                        {
+                           
+                                    dynamic orType = record.Attributes.Contains("organisation.bcrm_clinictype") ? record.FormattedValues["organisation.bcrm_clinictype"].ToString().ToUpper() : "";
+                            if (orgType.ToString().ToUpper() == orType)
+                            {
+                                answerCollectionCorrect.Entities.Add(record);
+                            }
+                        }
+                               
+                    }
+                    AnswerCollection = answerCollectionCorrect;
+                }
+
+                if(AnswerCollection.Entities.Count > 50)
+                {
+                    EntityCollection answerCollectionCorrect = new EntityCollection();
+                    for(var i=0;i<25;i++)
+                    {
+                        answerCollectionCorrect.Entities.Add(AnswerCollection[i]);
+                    }
+                    for (var i = AnswerCollection.Entities.Count-1; i < AnswerCollection.Entities.Count-25; i--)
+                    {
+                        answerCollectionCorrect.Entities.Add(AnswerCollection[i]);
+                    }
+                    AnswerCollection = answerCollectionCorrect;
+                }
+
+
+
+                if(AnswerCollection.Entities.Count > 0)
+                {
+                    try
+                    {
+                        DateTime startDate = DateTimeOffset.Parse(fromDate).DateTime;
+                        DateTime endDate = DateTimeOffset.Parse(toDate).DateTime;
+                        AnswerCollection = GetFilterRecord(AnswerCollection, startDate, endDate);
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                   
+                }
 
                 List<SlotDTO> slotList = new List<SlotDTO>();
 
@@ -201,7 +277,13 @@ namespace GP_Connect.Service.AppointmentManagement
                     finaljson[2] = "422";
                     return finaljson;
                 }
-              
+                if (!BookAppointmentDTOString.Contains("\"resourceType\": \"Organization\""))
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Booking organization object is mandatory object.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
 
                 if (BookAppointmentDTOString.Contains("http://hl7.org/fhir/stu3/valueset-c80-practice-codes"))
                 {
@@ -210,7 +292,13 @@ namespace GP_Connect.Service.AppointmentManagement
                     finaljson[2] = "422";
                     return finaljson;
                 }
-
+                if (!BookAppointmentDTOString.Contains("https://fhir.nhs.uk/STU3/CodeSystem/GPConnect-OrganisationType-1"))
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("organization type is the mandatory element.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
 
                 if (BookAppointmentDTOString.Contains("\"invalidField\":"))
                 {
@@ -275,7 +363,29 @@ namespace GP_Connect.Service.AppointmentManagement
                     return finaljson;
                 }
 
+                if(bookAppointment.comment != null)
+                {
+                    if (bookAppointment.comment.Length > 499)
+                    {
+                        finaljson[0] = abai.InvalidResourceFoundJSON("Comments too long");
+                        finaljson[1] = "";
+                        finaljson[2] = "422";
+                        return finaljson;
+                    }
+                }
              
+                if(bookAppointment.description != null)
+                {
+                    if (bookAppointment.description.Length > 100)
+                    {
+                        finaljson[0] = abai.InvalidResourceFoundJSON("Description too long.");
+                        finaljson[1] = "";
+                        finaljson[2] = "422";
+                        return finaljson;
+                    }
+                }
+              
+
 
                 var orgNo = bookAppointment.contained[0].id;
                 if(orgNo == "1")
@@ -409,6 +519,7 @@ namespace GP_Connect.Service.AppointmentManagement
                 dynamic[] finaljson = new dynamic[3];
 
                 AppointmentByIdDTO appointmentDetails = new AppointmentByIdDTO();
+                AppointmentByAppoIDDetails abai = new AppointmentByAppoIDDetails();
 
                 var AppontmentXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='appointment'>
@@ -467,8 +578,6 @@ namespace GP_Connect.Service.AppointmentManagement
               
                 if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
                 {
-                    
-
                     var record = AnswerCollection.Entities[0];
                     AppointmentByIdDTO appDetails = new AppointmentByIdDTO();
                     appDetails.appointmnetId = record.Attributes.Contains("bcrm_appointmentno") ? record["bcrm_appointmentno"].ToString() : "1";
@@ -513,6 +622,14 @@ namespace GP_Connect.Service.AppointmentManagement
                     var roles = GetOnlyStaffJobRole(appDetails.PractionerReference);
                     appDetails.PractionerDisplayRole = roles.resource.extension[0].valueCodeableConcept.coding[0].display;
                     appDetails.PractitionerRoleCode = roles.resource.extension[0].valueCodeableConcept.coding[0].code;
+
+                    if(type == "External" && appDetails.startDate < DateTime.UtcNow.AddDays(-1))
+                    {
+                        finaljson[0] = abai.InvalidResourceFoundWhenPastAppointmentAccessJSON("You can't access past appointment.");
+                        finaljson[1] = "";
+                        finaljson[2] = "422";
+                        return finaljson;
+                    }
 
                     AppointmentByAppoIDDetails app = new AppointmentByAppoIDDetails();
 
@@ -583,7 +700,7 @@ namespace GP_Connect.Service.AppointmentManagement
                     return finaljson;
                 }
 
-                AppointmentByAppoIDDetails abai = new AppointmentByAppoIDDetails();
+             
 
                 finaljson[0] = abai.BadRequestAppointmentJSON(appoinbtmentId);
                 finaljson[1] = "";
@@ -736,6 +853,7 @@ namespace GP_Connect.Service.AppointmentManagement
                 return null;
             }
         }
+
         public dynamic UpdateAppointment(string IfMathch ,RequestBookAppointmentDTO bookAppointment,string sspInterectionId,string BookAppointmentDTOString)
         {
             try
@@ -778,6 +896,13 @@ namespace GP_Connect.Service.AppointmentManagement
                     finaljson[2] = "422";
                     return finaljson;
                 }
+                if (BookAppointmentDTOString.Contains("minutesDuration"))
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("You can't update minute Duration.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
                 if (BookAppointmentDTOString.Contains("priority"))
                 {
                     finaljson[0] = abai.InvalidResourceFoundJSON("You Can't Update Priority.");
@@ -814,6 +939,7 @@ namespace GP_Connect.Service.AppointmentManagement
                                  <attribute name='bcrm_servicename' />
                                  <attribute name='bcrm_ra_visit_number' />
                                  <attribute name='bcrm_notes' />
+                                 <attribute name='scheduledstart' />
                                  <attribute name='description' />
                                  <attribute name='createdon' />
                                  <attribute name='bcrm_preferredcontactmethod' />
@@ -834,7 +960,19 @@ namespace GP_Connect.Service.AppointmentManagement
                     var versionNumber = record.Attributes.Contains("bcrm_ra_visit_number") ? record["bcrm_ra_visit_number"].ToString() : "";
                     var appLookup = record.Attributes.Contains("activityid") ? record["activityid"].ToString() : "";
 
-                    if(IfMathch != "")
+                    if (record.Attributes.Contains("scheduledstart"))
+                    {
+                        var startDate = (DateTime)record.Attributes["scheduledstart"];
+                        if (startDate < DateTime.UtcNow)
+                        {
+                            finaljson[0] = abai.InvalidResourceFoundJSON("can't be update past appointment");
+                            finaljson[1] = "";
+                            finaljson[2] = "422";
+                            return finaljson;
+                        }
+                    }
+
+                    if (IfMathch != "")
                     {
                         if (IfMathch != versionNumber)
                         {
@@ -848,7 +986,10 @@ namespace GP_Connect.Service.AppointmentManagement
 
                     if (appointmentStatus.ToString().ToLower() != "booked")
                     {
-                        return null;
+                        finaljson[0] = abai.InvalidResourceFoundJSON("you are able to update only booked appointment.");
+                        finaljson[1] = versionNumber;
+                        finaljson[2] = "422";
+                        return finaljson;
                     }
                     else
                     {
@@ -857,9 +998,20 @@ namespace GP_Connect.Service.AppointmentManagement
                             var comments = bookAppointment.comment;
                             var description = bookAppointment.description;
                             var updatedversion = int.Parse(versionNumber) + 1;
-                            if(comments.Length > 499 || description.Length > 99)
+                            if(comments.Length > 499)
                             {
-                                return null;
+                                finaljson[0] = abai.InvalidResourceFoundJSON("Comments too long");
+                                finaljson[1] = versionNumber;
+                                finaljson[2] = "422";
+                                return finaljson;
+                            }
+
+                            if(description.Length > 100)
+                            {
+                                finaljson[0] = abai.InvalidResourceFoundJSON("Description too long.");
+                                finaljson[1] = versionNumber;
+                                finaljson[2] = "422";
+                                return finaljson;
                             }
 
                             Entity GPConnectAppointment = new Entity("appointment", new Guid(appLookup));
@@ -877,13 +1029,17 @@ namespace GP_Connect.Service.AppointmentManagement
                     }
                 }
 
-                return null;
+                finaljson[0] = abai.InvalidResourceFoundJSON("appointment id not exist.");
+                finaljson[1] = "";
+                finaljson[2] = "404";
+                return finaljson;
             }
             catch(Exception ex)
             {
                 return null;
             }
         }
+
         public dynamic CancelAppointment(RequestBookAppointmentDTO bookAppointment,string IfMathch)
         {
             try
@@ -891,6 +1047,14 @@ namespace GP_Connect.Service.AppointmentManagement
 
                 dynamic[] finaljson = new dynamic[3];
                 AppointmentByAppoIDDetails abai = new AppointmentByAppoIDDetails();
+
+                if(bookAppointment.status.ToString().ToLower() != "cancelled")
+                {
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Status must be cancelled");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
 
                 if(bookAppointment.participant != null)
                 {
@@ -2089,6 +2253,40 @@ namespace GP_Connect.Service.AppointmentManagement
             return dayInt >= 1 && dayInt <= 31;
         }
 
+        internal EntityCollection GetFilterRecord(EntityCollection answerCollection, DateTime startDate,DateTime endDate)
+        {
+            if (answerCollection.Entities.Count > 0)
+            {
+                // Create an EntityCollection to hold the filtered records
+                EntityCollection filteredRecords = new EntityCollection
+                {
+                    EntityName = answerCollection.EntityName // Keep the same entity name
+                    
+                };
+
+                // Iterate through each record in the EntityCollection
+                foreach (Entity entity in answerCollection.Entities)
+                {
+                    // Ensure the required fields are present
+                    if (entity.Contains("msemr_start") && entity.Contains("msemr_end"))
+                    {
+                        DateTime msemrStart = (DateTime)entity["msemr_start"];
+                        DateTime msemrEnd = (DateTime)entity["msemr_end"];
+
+                        // Check if the record falls within the date range
+                        if (msemrStart >= startDate && msemrEnd <= endDate)
+                        {
+                            // Add the record to the filtered EntityCollection
+                            filteredRecords.Entities.Add(entity);
+                        }
+                    }
+                }
+
+                return filteredRecords;
+            
+            }
+            return new EntityCollection();
+        }
 
         #endregion
     }

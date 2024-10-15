@@ -125,7 +125,7 @@ namespace GP_Connect.FHIR_JSON
                                        ""versionId"": """+practionerDetails.versionId+@""",
                                        ""lastUpdated"": """+ practionerDetails.modifiedDate.ToString("yyyy-MM-ddTHH:mm:sszzz") +@""",
                                        ""profile"": [
-                                         ""https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Practitioner-1""
+                                         ""http://fhir.nhs.net/StructureDefinition/gpconnect-practitioner-1""
                                        ]
                                      },
                                      ""extension"": [
@@ -197,7 +197,7 @@ namespace GP_Connect.FHIR_JSON
                     lastUpdated = practionerDetails.modifiedDate.ToString("yyyy-MM-ddTHH:mm:sszzz"),
                     profile = new[]
                     {
-                        "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Practitioner-1"
+                        "http://fhir.nhs.net/StructureDefinition/gpconnect-practitioner-1"
                     }
                 },
                 extension = new object[]
@@ -253,7 +253,7 @@ namespace GP_Connect.FHIR_JSON
                 {
                     versionId = practionerDetails.versionId,
                     lastUpdated = practionerDetails.modifiedDate.ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                    profile = new[] { "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Practitioner-1" }
+                    profile = new[] { "http://fhir.nhs.net/StructureDefinition/gpconnect-practitioner-1" }
                 },
                 extension = new[]
         {
@@ -271,7 +271,7 @@ namespace GP_Connect.FHIR_JSON
                 {
                     use = "usual",
                     family = practionerDetails.family,
-                    given = new[] { practionerDetails.gender },
+                    given = new[] { practionerDetails.given },
                     prefix = new[] { prefix }
                 }
             },
@@ -295,7 +295,7 @@ namespace GP_Connect.FHIR_JSON
                                        ""versionId"": """ + practionerDetails.versionId + @""",
                                        ""lastUpdated"": """ + practionerDetails.modifiedDate.ToString("yyyy-MM-ddTHH:mm:sszzz") + @""",
                                        ""profile"": [
-                                         ""https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Practitioner-1""
+                                         ""http://fhir.nhs.net/StructureDefinition/gpconnect-practitioner-1""
                                        ]
                                      },
                                      ""extension"": [

@@ -12,6 +12,8 @@
         public string name { get; set; }
         public RequestAccessHTMLDTOValueIdentifier valueIdentifier { get; set; }
         public RequestAccessHTMLDTOValueCodeableConcept valueCodeableConcept { get; set; }
+
+        public RequestAccessHTMLDTOValuevaluePeriod valuePeriod { get; set; }
     }
 
     public class RequestAccessHTMLDTO
@@ -30,5 +32,9 @@
         public string system { get; set; }
         public string value { get; set; }
     }
-
+    public class RequestAccessHTMLDTOValuevaluePeriod
+    {
+        public string start { get; set; }
+        public string end { get; set; }
+    }
 }

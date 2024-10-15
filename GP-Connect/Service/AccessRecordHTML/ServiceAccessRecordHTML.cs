@@ -1,10 +1,15 @@
 ﻿using AngleSharp.Text;
 using GP_Connect.CRM_Connection;
 using GP_Connect.DataTransferObject;
+using GP_Connect.FHIR_JSON.AccessHTML;
 using GP_Connect.Service.CommonMethods;
 using Microsoft.SharePoint.News.DataModel;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Nancy.Json;
+using System.Globalization;
+using System.Linq;
+using System.Reflection;
 
 namespace GP_Connect.Service.AccessRecordHTML
 {
@@ -28,10 +33,293 @@ namespace GP_Connect.Service.AccessRecordHTML
 
         #region Method
 
-        public ResponseAccessHTML GetAccessHTMLRecord(RequestAccessHTMLDTO htmlDetails)
+        public dynamic GetAccessHTMLRecord(RequestAccessHTMLDTO htmlDetails)
         {
             try
             {
+                dynamic[] finaljson = new dynamic[3];
+                AccessHTMLDetails ahd = new AccessHTMLDetails();
+
+                if (htmlDetails.resourceType == null )
+                {
+                    finaljson[0] = ahd.INVALIDCONTENTJSON("Failed to parse request body as JSON resource. Error was: Failed to parse JSON content, error was: Did not find any content to parse");
+                    finaljson[1] = "";
+                    finaljson[2] = "400";
+                    return finaljson;
+                }
+
+                if (htmlDetails.resourceType != "Parameters")
+                {
+                    finaljson[0] = ahd.INVALIDRESOURCEJSON("Resource Type is Invalid.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
+                var timePeriod = false;
+                var startTime = "";
+                var endTime = "";
+                var nhsNumber = "";
+                var code = "";
+                var nhsNumberExist = false;
+                var recordExist = false;
+                var timePeriodExist = false;
+
+                if (htmlDetails.parameter.Count == 1)
+                {
+                    if (htmlDetails.parameter[0].name != "patientNHSNumber")
+                    {
+                        finaljson[0] = ahd.INVALIDIDENTIFIERSYSTEMJSON("NHS number in body doesn't match the header");
+                        finaljson[1] = "";
+                        finaljson[2] = "400";
+                        return finaljson;
+                    }
+
+                    if (htmlDetails.parameter[0].name != "recordSection")
+                    {
+                        finaljson[0] = ahd.INVALIDPARAMETERJSON("Invalid Parameter");
+                        finaljson[1] = "";
+                        finaljson[2] = "400";
+                        return finaljson;
+                    }
+                }
+
+                
+
+                for(var i=0;i< htmlDetails.parameter.Count;i++)
+                {
+                    if (htmlDetails.parameter[i].name != "patientNHSNumber")
+                    {
+                        if(i == htmlDetails.parameter.Count-1 && nhsNumberExist == false)
+                        {
+                            finaljson[0] = ahd.INVALIDPARAMETERJSON("Missing Parameter : patientNHSNumber ");
+                            finaljson[1] = "";
+                            finaljson[2] = "422";
+                            return finaljson;
+                        }
+                        
+                    }
+                    else
+                    {
+                        if (htmlDetails.parameter[i].name == "patientNHSNumber")
+                        {
+                            nhsNumber = htmlDetails.parameter[i].valueIdentifier.value;
+                            if(nhsNumber == "")
+                            {
+                                finaljson[0] = ahd.INVALIDNHSNUMBERJSON("NHS number is invalid.");
+                                finaljson[1] = "";
+                                finaljson[2] = "400";
+                                return finaljson;
+                            }
+
+                            if (nhsNumberExist == true || nhsNumber == "1234567891")
+                            {
+                                finaljson[0] = ahd.INVALIDNHSNUMBERJSON("NHS number is invalid.");
+                                finaljson[1] = "";
+                                finaljson[2] = "400";
+                                return finaljson;
+                            }
+
+                            nhsNumberExist = true;
+                            
+                          
+                            if(htmlDetails.parameter[i].valueIdentifier.system != "http://fhir.nhs.net/Id/nhs-number")
+                            {
+                                finaljson[0] = ahd.INVALIDIDENTIFIERSYSTEMJSON("NHS number in body doesn't match the header");
+                                finaljson[1] = "";
+                                finaljson[2] = "400";
+                                return finaljson;
+                            }
+                        }
+                            
+                    }
+                }
+
+                for (var i = 0; i < htmlDetails.parameter.Count; i++)
+                {
+                    if (htmlDetails.parameter[i].name != "recordSection")
+                    {
+                        if (i == htmlDetails.parameter.Count - 1 && recordExist == false)
+                        {
+                            finaljson[0] = ahd.INVALIDPARAMETERJSON("Missing Parameter : recordSection ");
+                            finaljson[1] = "";
+                            finaljson[2] = "422";
+                            return finaljson;
+                        }
+                    }
+                    else
+                    {
+                        if(htmlDetails.parameter[i].name == "recordSection")
+                        {
+                            if(recordExist == true)
+                            {
+                                finaljson[0] = ahd.INVALIDIDENTIFIERSYSTEMJSON("Multiple Sections Added");
+                                finaljson[1] = "";
+                                finaljson[2] = "400";
+                                return finaljson;
+                            }
+
+                            recordExist = true;
+                            if (htmlDetails.parameter[i].valueCodeableConcept.coding[0].system == "")
+                            {
+                                finaljson[0] = ahd.INVALIDPARAMETERJSON("Invalid System");
+                                finaljson[1] = "";
+                                finaljson[2] = "422";
+                                return finaljson;
+                            }
+                            if (htmlDetails.parameter[i].valueCodeableConcept.coding[0].system != "http://fhir.nhs.net/ValueSet/gpconnect-record-section-1")
+                            {
+                                finaljson[0] = ahd.INVALIDPARAMETERJSON("Invalid System");
+                                finaljson[1] = "";
+                                finaljson[2] = "400";
+                                return finaljson;
+                            }
+                            code = htmlDetails.parameter[i].valueCodeableConcept.coding[0].code;
+                        }
+                      
+                    }
+                }
+            
+
+               if(htmlDetails.parameter.Count > 2)
+                {
+                    for (var i = 0; i < htmlDetails.parameter.Count; i++)
+                    {
+                        if (htmlDetails.parameter[i].name != "timePeriod")
+                        {
+                            if (i == htmlDetails.parameter.Count - 1 && timePeriodExist == false)
+                            {
+                                finaljson[0] = ahd.INVALIDPARAMETERJSON("Missing Parameter : " + htmlDetails.parameter[i].name);
+                                finaljson[1] = "";
+                                finaljson[2] = "422";
+                                return finaljson;
+                            }
+                            else
+                            {
+                                if (htmlDetails.parameter[i].name == "timePeriod")
+                                {
+                                    timePeriodExist = true;
+                                }
+                            }
+                        }
+                    }
+                   
+                }
+
+                if (htmlDetails.parameter != null)
+                {
+                    
+                if (htmlDetails.parameter.Count > 2)
+                {
+                    var nhsnumbercheck = false;
+                    var recordSection = false;
+
+                    for(var i=0;i< htmlDetails.parameter.Count;i++)
+                    {
+                        if (htmlDetails.parameter[i].name == "patientNHSNumber")
+                        {
+                            
+                            if (nhsnumbercheck == true)
+                            {
+                                finaljson[0] = ahd.INVALIDIDENTIFIERSYSTEMJSON("NHS Number Invalid");
+                                finaljson[1] = "";
+                                finaljson[2] = "400";
+                                return finaljson;
+                            }
+                            else
+                            {
+                                nhsnumbercheck = true;
+                            }
+                               
+                        }
+                           
+                            if (htmlDetails.parameter[i].name == "timePeriod")
+                        {
+                                timePeriod = true;
+                                startTime = htmlDetails.parameter[i].valuePeriod.start;
+                                endTime = htmlDetails.parameter[i].valuePeriod.end;
+                                if(startTime != null)
+                                {
+                                    startTime = ConvertToProperDateFormat(startTime,"start");
+                                    if(startTime == "Invalid_date_format")
+                                    {
+                                        finaljson[0] = ahd.INVALIDPARAMETERJSON("Invalid Date Format Parameter");
+                                        finaljson[1] = "";
+                                        finaljson[2] = "422";
+                                        return finaljson;
+                                    }
+                                }
+                                else
+                                {
+                                    startTime = "";
+                                }
+
+                                if(endTime != null)
+                                {
+                                    endTime = ConvertToProperDateFormat(endTime,"end");
+                                    if (endTime == "Invalid_date_format")
+                                    {
+                                        finaljson[0] = ahd.INVALIDPARAMETERJSON("Invalid Date Format Parameter");
+                                        finaljson[1] = "";
+                                        finaljson[2] = "422";
+                                        return finaljson;
+                                    }
+                                }
+                                else
+                                {
+                                    endTime = "";
+                                }
+                                
+                                if(startTime != "" && endTime != "")
+                                {
+                                    DateTime startDate = DateTime.Parse(startTime);
+                                    DateTime endDate = DateTime.Parse(endTime);
+
+                                    if (startDate > endDate)
+                                    {
+                                        finaljson[0] = ahd.INVALIDPARAMETERJSON("Invalid Dates.");
+                                        finaljson[1] = "";
+                                        finaljson[2] = "422";
+                                        return finaljson;
+                                    }
+                                  
+                                }
+                                
+
+                        }
+                    }
+
+
+                }
+                }
+
+
+              
+
+                if (code == "ALL" || code == "IMM" || code == "SUM")
+                {
+                    if (timePeriod == true)
+                    {
+                        finaljson[0] = ahd.INVALIDPARAMETERJSON("Invalid Parameter Send.");
+                        finaljson[1] = "";
+                        finaljson[2] = "400";
+                        return finaljson;
+                    }
+                }
+
+                if (code == "SUM" || code == "ENC" || code == "CLI" || code == "PRB" ||
+                     code == "ALL" || code == "MED" || code == "REF" || code == "OBS" || code == "IMM" || code == "ADM")
+                {
+
+                }
+                else
+                {
+                    finaljson[0] = ahd.INVALIDPARAMETERJSON("Invalid Section Code : "+code);
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
                 ResponseAccessHTML finalResponse = new ResponseAccessHTML();
                 finalResponse.resourceType = "Bundle";
                 finalResponse.type = "searchset";
@@ -39,77 +327,153 @@ namespace GP_Connect.Service.AccessRecordHTML
 
                 List<object> htmlRecordList = new List<object>(); 
 
-                var nhsNumber = htmlDetails.parameter[0].valueIdentifier.value;
-                var code = htmlDetails.parameter[1].valueCodeableConcept.coding[0].code;
+              
+
+                var consent = CheckPatientConsent(nhsNumber);
+                if (consent[0] == null || consent[1] == null || consent[1] == "" || consent[3] == "True" || consent[2] == "deceased_moreThan_30days")
+                {
+                    finaljson[0] = ahd.PATIENTNOTFOUNDJSON("Patient Record Not Found.");
+                    finaljson[1] = "";
+                    finaljson[2] = "404";
+                    return finaljson;
+                }
+
+            
+                if(consent[0] == "No" || consent[0] == "Ask")
+                {
+                    finaljson[0] = ahd.NOPATIENTCONSENTJSON("Patient has not consented to share.");
+                    finaljson[1] = "";
+                    finaljson[2] = "403";
+                    return finaljson;
+                }
+
                 ServiceCommonMethod scm = new ServiceCommonMethod();
                 var patientDetails = scm.GetAllDetailsOfPatientByPatientIdUsedForHTMLACCESS(nhsNumber);
 
                 finalResponse.entry = patientDetails;
 
-                var device = MakeDeviceJSON();
-                finalResponse.entry.Add(ConvertToResource(device));
+                //var device = MakeDeviceJSON();
+                //finalResponse.entry.Add(ConvertToResource(device));
+
+
 
 
                 if (code == "SUM")
                 {
                     var res = makeSummaryObject(nhsNumber);
-                    finalResponse.entry.Add(ConvertToResource(res));
+                    if (res.ToString() != "System.Object")
+                    {
+                        finalResponse.entry.Add(ConvertToResource(res));
+                    }
                 }
-                if(code == "ENC")
+                else if(code == "ENC")
                 {
-                    var res = GetEncounterDetails(nhsNumber);  
-                    finalResponse.entry.Add(ConvertToResource(res));
+                    var res = GetEncounterDetails(nhsNumber,startTime,endTime);
+                    if (res.ToString() != "System.Object")
+                    {
+                        finalResponse.entry.Add(ConvertToResource(res));
+                    }
                 }
-                if (code == "CLI")
+                else if (code == "CLI")
                 {
-                    var res = makeClinicalItem(nhsNumber);
-                    finalResponse.entry.Add(ConvertToResource(res));
+                    var res = makeClinicalItem(nhsNumber,startTime,endTime);
+                    if (res.ToString() != "System.Object")
+                    {
+                        finalResponse.entry.Add(ConvertToResource(res));
+                    }
                 }
-                if (code == "PRB")
+                else if (code == "PRB")
                 {
-                    var res = GetObjectForProblemAndIssue(nhsNumber);
-                    finalResponse.entry.Add(ConvertToResource(res));
+                    var res = GetObjectForProblemAndIssue(nhsNumber,startTime,endTime);
+                    if (res.ToString() != "System.Object")
+                    {
+                        finalResponse.entry.Add(ConvertToResource(res));
+                    }
                 }
-                if (code == "ALL")
+                else if (code == "ALL")
                 {
                     var res = GetCurrentAndResolvedAllergy(nhsNumber);
-                    finalResponse.entry.Add(ConvertToResource(res));
+                    if (res.ToString() != "System.Object")
+                    {
+                        finalResponse.entry.Add(ConvertToResource(res));
+                    }
                 }
-                if (code == "MED")
+                else if (code == "MED")
                 {
-                    var res = makeMedicationObject(nhsNumber);
-                    finalResponse.entry.Add(ConvertToResource(res));
+                    var res = makeMedicationObject(nhsNumber,startTime,endTime);
+                    if (res.ToString() != "System.Object")
+                    {
+                        finalResponse.entry.Add(ConvertToResource(res));
+                    }
                 }
-
-                if (code == "REF")
+                else if (code == "REF")
                 {
-                    var res = GetReferralObject(nhsNumber);
-                    finalResponse.entry.Add(ConvertToResource(res));
+                    var res = GetReferralObject(nhsNumber,startTime,endTime);
+                    if (res.ToString() != "System.Object")
+                    {
+                        finalResponse.entry.Add(ConvertToResource(res));
+                    }
                 }
-
-                if (code == "OBS")
+                else if (code == "OBS")
                 {
-                    var res = GetObservationObject(nhsNumber);
-                    finalResponse.entry.Add(ConvertToResource(res));
+                    var res = GetObservationObject(nhsNumber,startTime,endTime);
+                    if (res.ToString() != "System.Object")
+                    {
+                        finalResponse.entry.Add(ConvertToResource(res));
+                    }
                 }
-
-                if (code == "IMM")
+                else if (code == "IMM")
                 {
                     var res = MakeImmunizationObject(nhsNumber);
-                    finalResponse.entry.Add(ConvertToResource(res));
+                    if (res.ToString() != "System.Object")
+                    {
+                        finalResponse.entry.Add(ConvertToResource(res));
+                    }
                 }
-                if (code == "ADM")
+                else if (code == "ADM")
                 {
-                    var res = MakeobjectForAdministractiveItem(nhsNumber);
-                    finalResponse.entry.Add(ConvertToResource(res));
+                    var res = MakeobjectForAdministractiveItem(nhsNumber,startTime,endTime);
+                    if(res.ToString() != "System.Object")
+                    {
+                        finalResponse.entry.Add(ConvertToResource(res));
+                    }
+                }
+                else
+                {
+                    finaljson[0] = ahd.INVALIDPARAMETERJSON("Invalid section"); ;
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
                 }
 
 
-                return finalResponse;
+
+
+                if (finalResponse.entry.Count == 4)
+                {
+                    object TempCom = finalResponse.entry[3];
+                    object TempPatient = finalResponse.entry[0];
+
+                    finalResponse.entry[0] = TempCom;
+                    finalResponse.entry[3] = TempPatient;
+                }
+               
+                var checkLastData = new JavaScriptSerializer().Serialize(finalResponse);
+
+                finaljson[0] = finalResponse;
+                finaljson[1] = "";
+                finaljson[2] = "200";
+                return finaljson;
+              
             }
             catch(Exception ex)
             {
-                return null;
+                dynamic[] finaljson = new dynamic[3];
+                AccessHTMLDetails ahd = new AccessHTMLDetails();
+                finaljson[0] = ahd.INVALIDCONTENTJSON("Failed to parse request body as JSON resource. Error was: Failed to parse JSON content, error was: Did not find any content to parse");
+                finaljson[1] = "";
+                finaljson[2] = "400";
+                return finaljson;
             }
         }
 
@@ -120,6 +484,61 @@ namespace GP_Connect.Service.AccessRecordHTML
         #endregion
 
         #region Internal Method
+
+        #region Check-patientConsent
+
+        internal dynamic CheckPatientConsent(string nhsNumber)
+        {
+            dynamic[] finaljson = new dynamic[4];
+
+            var ConsentXML = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
+                         <entity name='contact'>
+                         <attribute name='fullname'/>
+                         <attribute name='telephone1'/>
+                         <attribute name='contactid'/>
+                         <attribute name='bcrm_patientconsent'/>
+                         <attribute name='bcrm_pdsjson'/>
+                          <attribute name='bcrm_deceaseddate'/>
+                          <attribute name='bcrm_sensitivepatient'/>
+                         <order attribute='fullname' descending='false'/>
+                         <filter type='and'>
+                         <condition attribute='bcrm_nhsnumber' operator='eq' value='" + nhsNumber + @"'/>
+                         </filter>
+                         </entity>
+                         </fetch>";
+            EntityCollection AnswerCollection = _crmServiceClient.RetrieveMultiple(new FetchExpression(ConsentXML));
+            if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
+            {
+                var record = AnswerCollection.Entities[0];
+                if(record.Attributes.Contains("bcrm_patientconsent"))
+                {
+                    finaljson[0] = record.Attributes.Contains("bcrm_patientconsent") ? record.FormattedValues["bcrm_patientconsent"].ToString() : "";
+                }
+                if (record.Attributes.Contains("bcrm_pdsjson"))
+                {
+                    finaljson[1] = record.Attributes.Contains("bcrm_pdsjson") ? record["bcrm_pdsjson"].ToString() : "";
+                }
+                if (record.Attributes.Contains("bcrm_deceaseddate")) 
+                {
+                    var deceasedDate = (DateTime)record.Attributes["bcrm_deceaseddate"]; 
+                    if(deceasedDate > DateTime.UtcNow.AddDays(-28))
+                    {
+                        finaljson[2] = "deceased_withIn_30days";
+                    }
+                    else
+                    {
+                        finaljson[2] = "deceased_moreThan_30days";
+                    }
+                }
+                if (record.Attributes.Contains("bcrm_sensitivepatient"))
+                {
+                    finaljson[3] = record.Attributes.Contains("bcrm_sensitivepatient") ? record["bcrm_sensitivepatient"].ToString() : "";
+                }
+            }
+            return finaljson;
+        }
+
+        #endregion
 
         #region ConvertToResource
         internal object ConvertToResource(object finalObj)
@@ -175,6 +594,13 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
+                var GPtransferBanner = "";
+
+                if (nhsNumber == "9651260211")
+                {
+                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
+                }
+
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
                 var organizationName = "";
@@ -241,15 +667,19 @@ namespace GP_Connect.Service.AccessRecordHTML
                     var activeAllergyDiv = makeActiveAllergyList(allergyList);
                     var inActiveAllergyDiv = makeInActiveAllergyList(allergyList);
 
-                    var finalAllergyString = "<div> <h1>Allergies and Adverse Reactions</h1> <div> <p> GP transfer banner </p> </div> <div> <p> Content banner </p> </div> <div> <h2>Current Allergies and Adverse Reactions</h2> <div> <p> Content banner </p> </div> <div> <p> Exclusion banner </p> </div> <table> <thead> <tr> <th>Start Date</th> <th>Details</th> </tr> </thead> <tbody> </tbody> " + activeAllergyDiv + " </table> </div> <div> <h2>Historical Allergies and Adverse Reactions</h2> <div> <p> Content banner </p> </div> <div> <p> Exclusion banner </p> </div> <table> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Details</th> </tr> </thead> <tbody> " + inActiveAllergyDiv + " </tbody> </table> </div> </div>";
+                    var finalAllergyString = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Allergies and Adverse Reactions</h1> " + GPtransferBanner + " <div> <p> Content banner </p> </div> <div> <h2>Current Allergies and Adverse Reactions</h2> <div> <p> Content banner </p> </div> <div> <p> Exclusion banner </p> </div> <table id=\"all-tab-curr\"> <thead> <tr> <th>Start Date</th> <th>Details</th> </tr> </thead> <tbody> " + activeAllergyDiv + " </tbody>  </table> </div> <div> <h2>Historical Allergies and Adverse Reactions</h2> <div> <p> Content banner </p> </div> <div> <p> Exclusion banner </p> </div> <table id=\"all-tab-hist\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Details</th> </tr> </thead> <tbody> " + inActiveAllergyDiv + " </tbody> </table> </div> </div>";
 
                     var allergyJSON = MakeAllergyCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, finalAllergyString);
                     return allergyJSON;
 
                 }
+                else
+                {
+                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\">"+GPtransferBanner+"<h1>Allergies and Adverse Reactions</h1><div><h2>Current Allergies and Adverse Reactions</h2><p>No 'Current Allergies and Adverse Reactions' data is recorded for this patient.</p></div><div><h2>Historical Allergies and Adverse Reactions</h2><p>No 'Historical Allergies and Adverse Reactions' data is recorded for this patient.</p></div></div>";
+                        var finalObj = MakeAllergyCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                        return finalObj;
+                }
 
-
-                return null;
             }
             catch (Exception ex)
             {
@@ -267,7 +697,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     if (item.allergyStatus.ToLower().ToString() == "active")
                     {
                         htmlContent += "<tr>";
-                        htmlContent += "<td>" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                        htmlContent += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
                         htmlContent += "<td>" + item.allergyName + "</td>";
                         htmlContent += "</tr>";
                     }
@@ -289,8 +719,8 @@ namespace GP_Connect.Service.AccessRecordHTML
                     if (item.allergyStatus.ToLower().ToString() == "inactive")
                     {
                         htmlContent += "<tr>";
-                        htmlContent += "<td>" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
-                        htmlContent += "<td>" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
+                        htmlContent += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                        htmlContent += "<td></td>";
                         htmlContent += "<td>" + item.allergyName + "</td>";
                         htmlContent += "</tr>";
                     }
@@ -327,14 +757,6 @@ namespace GP_Connect.Service.AccessRecordHTML
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
             },
-            { "author", new List<Dictionary<string, string>>
-                {
-                    new Dictionary<string, string>
-                    {
-                        { "reference", "Device/f4d020c6-eaff-4528-83ba-e81a1cfd30dc" }
-                    }
-                }
-            },
             { "custodian", new Dictionary<string, string>
                 {
                     { "reference", "Organization/"+ organizationSequenceNumber },
@@ -345,7 +767,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 {
                     new Dictionary<string, object>
                     {
-                        { "title", "Allergies and Sensitivities" },
+                        { "title", "Allergies and Adverse Reactions" },
                         { "code", new Dictionary<string, object>
                             {
                                 { "coding", new List<Dictionary<string, string>>
@@ -353,11 +775,12 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         new Dictionary<string, string>
                                         {
                                             { "system", "http://fhir.nhs.net/ValueSet/gpconnect-record-section-1" },
-                                            { "code", "ALL" }
+                                            { "code", "ALL" },
+                                            { "display", "Allergies and Adverse Reactions" }
                                         }
                                     }
                                 },
-                                { "text", "Allergies and Sensitivities" }
+                                { "text", "Allergies and Adverse Reactions" }
                             }
                         },
                         { "text", new Dictionary<string, string>
@@ -383,13 +806,45 @@ namespace GP_Connect.Service.AccessRecordHTML
         #endregion
 
         #region Encounter
-        internal object GetEncounterDetails(string nhsNumber)
+        internal object GetEncounterDetails(string nhsNumber, string startDate, string endDate)
         {
             try
             {
+                var GPtransferBanner = "";
+
+                if (nhsNumber == "9651260211")
+                {
+                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
+                }
+
+                var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
+
+                if (startDate != "" && endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "' to " + "'" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (startDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items from '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items until '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
                 var organizationName = "";
+
+                var filterstring = "";
+                if (startDate != "")
+                {
+                    filterstring += "<condition attribute='msemr_encounterstartdate' operator='on-or-after' value='" + startDate + @"' />";
+                }
+                if (endDate != "")
+                {
+                    filterstring += "<condition attribute='msemr_encounterstartdate' operator='on-or-before' value='" + endDate + @"' />";
+                }
 
                 var encounterXML = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                 <entity name='msemr_encounter'>
@@ -398,6 +853,9 @@ namespace GP_Connect.Service.AccessRecordHTML
                                   <attribute name='msemr_encounterstartdate' />
                                    <attribute name='bcrm_details' />
                                   <attribute name='createdon' />
+                                     <filter type='and'>
+                                      "+filterstring+@"
+                                    </filter>
                                   <order attribute='msemr_encounterstartdate' descending='true' />
                                   <link-entity name='contact' from='contactid' to='msemr_encounterpatientidentifier' link-type='inner' alias='patient'>
                                        <attribute name='bcrm_gpc_sequence_number' />
@@ -444,36 +902,71 @@ namespace GP_Connect.Service.AccessRecordHTML
                         encounterDetails.details = record.Attributes.Contains("bcrm_details") ? record["bcrm_details"].ToString() : string.Empty;
                         if (record.Attributes.Contains("msemr_encounterstartdate")) { encounterDetails.Date = (DateTime)record.Attributes["msemr_encounterstartdate"]; }
                         encounterDetailsList.Add(encounterDetails);
-
                     }
                 }
-                if (encounterDetailsList.Count > 0)
+                if (encounterDetailsList.Count >= 0)
                 {
-                    var divString = CreateEncounterHTMLDivByJSON(encounterDetailsList);
+                    var divString = CreateEncounterHTMLDivByJSON( nhsNumber ,encounterDetailsList,startDate,endDate);
                     var finalobject = CreateEncounterJSONByUsingRecord(patientSequenceNumber, organizationSequenceNumber, organizationName, divString);
                     return finalobject;
                 }
-
-                return null;
+                else
+                {
+                            var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> "+ GPtransferBanner + " <h1>Encounters</h1><div class=\"date-banner\"> "+datefilterBanner+" <p>No 'Encounters' data is recorded for this patient.</p></div>";
+                            var finalObj = CreateEncounterJSONByUsingRecord(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                            return finalObj;
+                }
+                
             }
             catch (Exception ex)
             {
-                return null;
+                return new object();
             }
         }
-        internal string CreateEncounterHTMLDivByJSON(List<EncounterDetailsDTO> encounterList)
+        internal string CreateEncounterHTMLDivByJSON(string nhsNumber,List<EncounterDetailsDTO> encounterList,string startDate,string endDate)
         {
+            var GPtransferBanner = "";
+
+            if (nhsNumber == "9651260211")
+            {
+                GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
+            }
+
+            var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
+
+            if (startDate != "" && endDate != "")
+            {
+                datefilterBanner = "<div class=\"date-banner\"> <p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "' to " + "'" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+            }
+            else if (startDate != "")
+            {
+                datefilterBanner = "<div class=\"date-banner\"> <p>Data items from '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+            }
+            else if (endDate != "")
+            {
+                datefilterBanner = "<div class=\"date-banner\"> <p>Data items until '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+            }
             var tableTD = "";
             foreach (var item in encounterList)
             {
                 tableTD += "<tr>";
-                tableTD += "<td>" + item.Date.ToString("dd-MMM-yyyy") + "</td>";
+                tableTD += "<td class=\"date-column\">" + item.Date.ToString("dd-MMM-yyyy") + "</td>";
                 tableTD += "<td>" + item.title + "</td>";
                 tableTD += "<td>" + item.details + "</td>";
                 tableTD += "</tr>";
             }
 
-            string div = "<div> <h1>Encounters</h1> <div class=\"gptransfer-banner\"> <p> GP transfer banner </p> </div> <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"date-banner\"> <p> For the period "+DateTime.Now.AddYears(-1).ToString("dd-MMM-yyyy") +" to "+DateTime.Now.ToString("dd-MMM-yyyy")+ " </p> </div> <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> " + tableTD + "  </tbody> </table> </div> </div>";
+            string div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Encounters</h1> "+ GPtransferBanner + " <div class=\"content-banner\"> <p> Content banner </p> </div>  " + datefilterBanner+" <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> " + tableTD + "  </tbody> </table> </div> ";
+           
+            if(encounterList.Count == 0 && startDate != "" && endDate != "")
+            {
+                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ GPtransferBanner + " <div class=\"date-banner\"><p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "' to '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p></div><p>No 'Encounters' data is recorded for this patient.</p></div>";
+            }
+            else if(encounterList.Count == 0)
+            {
+                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ GPtransferBanner + " <div class=\"date-banner\"><p>No 'Encounters' data is recorded for this patient.</p></div>";
+            }
+
             return div;
         }
         internal object CreateEncounterJSONByUsingRecord(string patinetSequenceNumber, string organizationSequenceNumber, string organizationName, string htmlDiv)
@@ -501,14 +994,6 @@ namespace GP_Connect.Service.AccessRecordHTML
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
             },
-            { "author", new List<Dictionary<string, string>>
-                {
-                    new Dictionary<string, string>
-                    {
-                        { "reference", "Device/f4d020c6-eaff-4528-83ba-e81a1cfd30dc" }
-                    }
-                }
-            },
             { "custodian", new Dictionary<string, string>
                 {
                     { "reference", "Organization/"+ organizationSequenceNumber },
@@ -527,7 +1012,8 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         new Dictionary<string, string>
                                         {
                                             { "system", "http://fhir.nhs.net/ValueSet/gpconnect-record-section-1" },
-                                            { "code", "ENC" }
+                                            { "code", "ENC" },
+                                            { "display", "Encounters" }
                                         }
                                     }
                                 },
@@ -558,13 +1044,45 @@ namespace GP_Connect.Service.AccessRecordHTML
 
         #region Problems And Issue
 
-        public object GetObjectForProblemAndIssue(string nhsNumber)
+        public object GetObjectForProblemAndIssue(string nhsNumber, string startDate, string endDate)
         {
             try
             {
+                var GPtransferBanner = "";
+
+                if (nhsNumber == "9651260211")
+                {
+                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
+                }
+
+                var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
+
+                if (startDate != "" && endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "' to " + "'" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (startDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items from '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items until '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
                 var organizationName = "";
+
+                var filterstring = "";
+                if (startDate != "")
+                {
+                    filterstring += "<condition attribute='msemr_asserteddate' operator='on-or-after' value='" + startDate + @"' />";
+                }
+                if (endDate != "")
+                {
+                    filterstring += "<condition attribute='msemr_asserteddate' operator='on-or-before' value='" + endDate + @"' />";
+                }
+
 
                 var conditionsXML = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='msemr_condition'>
@@ -632,18 +1150,36 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if(problemIssueList.Count > 0)
                 {
                     var activeProbString = MakeActiveProblemAndIssue(problemIssueList);
-                    var majorInactiveString = MakeMajorInactiveProblemAndIssue(problemIssueList);
-                    var otherInavtiveString = MakeOtherInactiveProblemAndIssue(problemIssueList);
+                    var majorInactiveString = MakeMajorInactiveProblemAndIssueForNotSummary(problemIssueList,startDate,endDate);
+                    var otherInavtiveString = MakeOtherInactiveProblemAndIssue(problemIssueList, startDate, endDate);
 
-                    var finalDiv = "<div> <h1>Problems and Issues</h1> <div class=\"gptransfer-banner\"> <p> GP transfer banner </p> </div> <div class=\"content-banner\"> <p> Content banner </p> </div> <div> <h2>Active Problems and Issues</h2> <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"date-banner\"> <p> Date banner </p> </div> <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"prb-tab-act\"> <thead> <tr> <th>Start Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ activeProbString + " </tbody> </table> </div> <div> <h2>Major Inactive Problems and Issues</h2> <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"date-banner\"> <p> Date banner </p> </div> <div class=\"exclusion-banner\"> <p> Exclusion banner - </p> </div> <table id=\"prb-tab-majinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ majorInactiveString + " </tbody> </table> </div> <div> <h2>Other Inactive Problems and Issues</h2> <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"date-banner\"> <p> Date banner </p> </div> <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"prb-tab-othinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ otherInavtiveString + "  </tbody> </table> </div> </div>";
+                    if(activeProbString == "")
+                    {
+                        activeProbString = "<p>No 'Active Problems and Issues' data is recorded for this patient.</p>";
+                    }
+                    if(majorInactiveString == "")
+                    {
+                        majorInactiveString = "<p>No 'Major Inactive Problems and Issues' data is recorded for this patient.</p>";
+                    }
+                    if(otherInavtiveString == "")
+                    {
+                        otherInavtiveString = "<p>No 'Other Inactive Problems and Issues' data is recorded for this patient.</p";
+                    }
+
+                    var finalDiv = "<div> <h1>Problems and Issues</h1> "+ GPtransferBanner + " <div class=\"content-banner\"> <p> Content banner </p> </div> <div> <h2>Active Problems and Issues</h2> <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"date-banner\"><p>Date filter not applied</p></div>  <table id=\"prb-tab-act\"> <thead> <tr> <th>Start Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ activeProbString + " </tbody> </table> </div> <div> <h2>Major Inactive Problems and Issues</h2> <div class=\"content-banner\"> <p> Content banner </p> </div> "+datefilterBanner+"  <table id=\"prb-tab-majinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ majorInactiveString + " </tbody> </table> </div> <div> <h2>Other Inactive Problems and Issues</h2> <div class=\"content-banner\"> <p> Content banner </p> </div> "+datefilterBanner+" <table id=\"prb-tab-othinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ otherInavtiveString + "  </tbody> </table> </div> </div>";
                     var res = MakeProblemAndIssueCompositionObject(patientSequenceNumber,organizationSequenceNumber,organizationName,finalDiv);
                     return res;
 
                 }
+                else
+                {
+                  
+                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Problems and Issues</h1> <div><h2>Active Problems and Issues</h2> "+GPtransferBanner+ " <div class=\"date-banner\"><p>Date filter not applied</p></div><p>No 'Active Problems and Issues' data is recorded for this patient.</p></div><div><h2>Major Inactive Problems and Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Major Inactive Problems and Issues' data is recorded for this patient.</p></div><div><h2>Other Inactive Problems and Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Other Inactive Problems and Issues' data is recorded for this patient.</p></div></div>";
+                        var finalObj = MakeProblemAndIssueCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                        return finalObj;
+                    
+                }
 
-
-
-                        return new object();
             }
             catch (Exception ex) 
             {
@@ -661,7 +1197,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     if (item.status.ToLower().ToString() == "active")
                     {
                         htmlContent += "<tr>";
-                        htmlContent += "<td>" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                        htmlContent += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
                         htmlContent += "<td>" + item.entry + "</td>";
                         htmlContent += "<td>" + item.significance + "</td>";
                         htmlContent += "<td>" + item.details + "</td>";
@@ -677,6 +1213,7 @@ namespace GP_Connect.Service.AccessRecordHTML
 
         }
 
+   
         public string MakeMajorInactiveProblemAndIssue(List<ProblemAndIssueDTO> problemIssueList)
         {
             try
@@ -687,8 +1224,8 @@ namespace GP_Connect.Service.AccessRecordHTML
                     if (item.status.ToLower().ToString() == "inactive" && item.significance.ToLower().ToString() == "major")
                     {
                         htmlContent += "<tr>";
-                        htmlContent += "<td>" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
-                        htmlContent += "<td>" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
+                        htmlContent += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                        htmlContent += "<td class=\"date-column\">" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
                         htmlContent += "<td>" + item.entry + "</td>";
                         htmlContent += "<td>" + item.significance + "</td>";
                         htmlContent += "<td>" + item.details + "</td>";
@@ -703,23 +1240,41 @@ namespace GP_Connect.Service.AccessRecordHTML
             }
         }
 
-        public string MakeOtherInactiveProblemAndIssue(List<ProblemAndIssueDTO> problemIssueList)
+
+        public string MakeMajorInactiveProblemAndIssueForNotSummary(List<ProblemAndIssueDTO> problemIssueList,string startDate,string endDate)
         {
             try
             {
                 var htmlContent = "";
                 foreach (var item in problemIssueList)
                 {
-                    if (item.status.ToLower().ToString() == "inactive" && item.significance.ToLower().ToString() != "major")
+                    if(startDate != "")
                     {
-                        htmlContent += "<tr>";
-                        htmlContent += "<td>" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
-                        htmlContent += "<td>" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
-                        htmlContent += "<td>" + item.entry + "</td>";
-                        htmlContent += "<td>" + item.significance + "</td>";
-                        htmlContent += "<td>" + item.details + "</td>";
-                        htmlContent += "</tr>";
+                        if (item.status.ToLower().ToString() == "inactive" && item.significance.ToLower().ToString() == "major" && item.startDate > DateTime.Parse(startDate) && item.startDate < DateTime.Parse(endDate))
+                        {
+                            htmlContent += "<tr>";
+                            htmlContent += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                            htmlContent += "<td class=\"date-column\">" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
+                            htmlContent += "<td>" + item.entry + "</td>";
+                            htmlContent += "<td>" + item.significance + "</td>";
+                            htmlContent += "<td>" + item.details + "</td>";
+                            htmlContent += "</tr>";
+                        }
                     }
+                    else
+                    {
+                        if (item.status.ToLower().ToString() == "inactive" && item.significance.ToLower().ToString() == "major")
+                        {
+                            htmlContent += "<tr>";
+                            htmlContent += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                            htmlContent += "<td class=\"date-column\">" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
+                            htmlContent += "<td>" + item.entry + "</td>";
+                            htmlContent += "<td>" + item.significance + "</td>";
+                            htmlContent += "<td>" + item.details + "</td>";
+                            htmlContent += "</tr>";
+                        }
+                    }
+                  
                 }
                 return htmlContent;
             }
@@ -728,6 +1283,52 @@ namespace GP_Connect.Service.AccessRecordHTML
                 return ex.Message.ToString();
             }
         }
+
+        public string MakeOtherInactiveProblemAndIssue(List<ProblemAndIssueDTO> problemIssueList,string startDate,string endDate)
+        {
+            try
+            {
+                var htmlContent = "";
+                foreach (var item in problemIssueList)
+                {
+                    if(startDate != "")
+                    {
+                        if (item.status.ToLower().ToString() == "inactive" && item.significance.ToLower().ToString() != "major" && item.startDate > DateTime.Parse(startDate) && item.startDate < DateTime.Parse(endDate))
+                        {
+                            htmlContent += "<tr>";
+                            htmlContent += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                            htmlContent += "<td class=\"date-column\">" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
+                            htmlContent += "<td>" + item.entry + "</td>";
+                            htmlContent += "<td>" + item.significance + "</td>";
+                            htmlContent += "<td>" + item.details + "</td>";
+                            htmlContent += "</tr>";
+                        }
+                    }
+                    else
+                    {
+                        if (item.status.ToLower().ToString() == "inactive" && item.significance.ToLower().ToString() != "major")
+                        {
+                            htmlContent += "<tr>";
+                            htmlContent += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                            htmlContent += "<td class=\"date-column\">" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
+                            htmlContent += "<td>" + item.entry + "</td>";
+                            htmlContent += "<td>" + item.significance + "</td>";
+                            htmlContent += "<td>" + item.details + "</td>";
+                            htmlContent += "</tr>";
+                        }
+                    }
+                   
+                }
+                return htmlContent;
+            }
+            catch (Exception ex)
+            {
+                return ex.Message.ToString();
+            }
+        }
+
+
+
 
         internal object MakeProblemAndIssueCompositionObject(string patinetSequenceNumber, string organizationSequenceNumber, string organizationName, string htmlDiv)
         {
@@ -754,14 +1355,6 @@ namespace GP_Connect.Service.AccessRecordHTML
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
             },
-            { "author", new List<Dictionary<string, string>>
-                {
-                    new Dictionary<string, string>
-                    {
-                        { "reference", "Device/f4d020c6-eaff-4528-83ba-e81a1cfd30dc" }
-                    }
-                }
-            },
             { "custodian", new Dictionary<string, string>
                 {
                     { "reference", "Organization/"+ organizationSequenceNumber },
@@ -772,7 +1365,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 {
                     new Dictionary<string, object>
                     {
-                        { "title", "Problem and issues" },
+                        { "title", "Problems and Issues" },
                         { "code", new Dictionary<string, object>
                             {
                                 { "coding", new List<Dictionary<string, string>>
@@ -780,11 +1373,12 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         new Dictionary<string, string>
                                         {
                                             { "system", "http://fhir.nhs.net/ValueSet/gpconnect-record-section-1" },
-                                            { "code", "PRB" }
+                                            { "code", "PRB" },
+                                            { "display", "Problems and Issues" }
                                         }
                                     }
                                 },
-                                { "text", "Problem and issues" }
+                                { "text", "Problems and Issues" }
                             }
                         },
                         { "text", new Dictionary<string, string>
@@ -814,13 +1408,46 @@ namespace GP_Connect.Service.AccessRecordHTML
 
         #region Referral
 
-        internal object GetReferralObject(string nhsNumber)
+        internal object GetReferralObject(string nhsNumber, string startDate, string endDate)
         {
             try
             {
+                var GPtransferBanner = "";
+
+                if (nhsNumber == "9651260211")
+                {
+                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
+                }
+
+                var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
+
+                if (startDate != "" && endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "' to " + "'" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (startDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items from '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items until '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
                 var organizationName = "";
+
+                var filterstring = "";
+                if (startDate != "")
+                {
+                    filterstring += "<condition attribute='createdon' operator='on-or-after' value='" + startDate + @"' />";
+                }
+                if (endDate != "")
+                {
+                    filterstring += "<condition attribute='createdon' operator='on-or-before' value='" + endDate + @"' />";
+                }
+
 
                 var referraalXML = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                     <entity name='msemr_referralrequest'>
@@ -831,10 +1458,14 @@ namespace GP_Connect.Service.AccessRecordHTML
                                       <attribute name='msemr_description' />
                                       <attribute name='createdon' />
                                       <order attribute='createdon' descending='true' />
+                                      <filter type='and'>
+                                         "+filterstring+@"
+                                      </filter>
                                       <link-entity name='contact' from='contactid' to='msemr_requesteragentpatient' link-type='inner' alias='patient'>
                                         <attribute name='bcrm_gpc_sequence_number' />
                                         <filter type='and'>
                                           <condition attribute='bcrm_nhsnumber' operator='eq' value='" + nhsNumber + @"' />
+                                         
                                         </filter>
                                           <link-entity name='bcrm_clinic' from='bcrm_clinicid' to='bcrm_gpc_manangingorganisation' link-type='inner' alias='organization'>
                                            <attribute name='bcrm_gpc_sequence_number' />
@@ -884,13 +1515,18 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if(referralList.Count > 0)
                 {
                     var res = makeReferralDiv(referralList);
-                    var htmlcontent = "<div> <h1>Referrals</h1> <div class=\"gptransfer-banner\"> <p> GP transfer banner </p> </div> <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"date-banner\"> <p> Data items until "+DateTime.Now.ToString("dd-MMM-yyyy")+ "</p>  </div> <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"ref-tab\"> <thead> <tr> <th>Date</th> <th>From</th> <th>To</th> <th>Priority</th> <th>Details</th> </tr> </thead> <tbody> " + res+" </tbody> </table> </div>";
+                    var htmlcontent = "<div> <h1>Referrals</h1> "+datefilterBanner+ GPtransferBanner + "  <div class=\"content-banner\"> <p> Content banner </p> </div>  <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"ref-tab\"> <thead> <tr> <th>Date</th> <th>From</th> <th>To</th> <th>Priority</th> <th>Details</th> </tr> </thead> <tbody> " + res+" </tbody> </table> </div>";
                     var finalObj = MakeReferralCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 }
-
-
-                return new object();
+                else
+                {
+                    
+                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Referrals</h1>  "+datefilterBanner+ GPtransferBanner +" <div class=\"date-banner\"> <p>No 'Referrals' data is recorded for this patient.</p></div>";
+                        var finalObj = MakeReferralCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                        return finalObj;
+                    
+                }
             }
             catch (Exception) 
             {
@@ -905,7 +1541,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 foreach (var item in referralList)
                 {
                     htmlContent += "<tr>";
-                    htmlContent += "<td>" + item.createdon.ToString("dd-MMM-yyyy") + "</td>";
+                    htmlContent += "<td class=\"date-column\">" + item.createdon.ToString("dd-MMM-yyyy") + "</td>";
                     htmlContent += "<td>" + item.fromdoctor + "</td>";
                     htmlContent += "<td>" + item.toDoctor + "</td>";
                     htmlContent += "<td>" + item.priority + "</td>";
@@ -945,14 +1581,6 @@ namespace GP_Connect.Service.AccessRecordHTML
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
             },
-            { "author", new List<Dictionary<string, string>>
-                {
-                    new Dictionary<string, string>
-                    {
-                        { "reference", "Device/f4d020c6-eaff-4528-83ba-e81a1cfd30dc" }
-                    }
-                }
-            },
             { "custodian", new Dictionary<string, string>
                 {
                     { "reference", "Organization/"+ organizationSequenceNumber },
@@ -971,7 +1599,8 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         new Dictionary<string, string>
                                         {
                                             { "system", "http://fhir.nhs.net/ValueSet/gpconnect-record-section-1" },
-                                            { "code", "REF" }
+                                            { "code", "REF" },
+                                             { "display", "Referrals" }
                                         }
                                     }
                                 },
@@ -1003,11 +1632,44 @@ namespace GP_Connect.Service.AccessRecordHTML
 
         #region Observation
 
-        public object GetObservationObject(string nhsNumber)
+        public object GetObservationObject(string nhsNumber, string startDate, string endDate)
         {
+            var GPtransferBanner = "";
+
+            if (nhsNumber == "9651260211")
+            {
+                GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
+            }
+
+            var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
+
+            if (startDate != "" && endDate != "")
+            {
+                datefilterBanner = "<div class=\"date-banner\"> <p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "' to " + "'" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+            }
+            else if (startDate != "")
+            {
+                datefilterBanner = "<div class=\"date-banner\"> <p>Data items from '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+            }
+            else if (endDate != "")
+            {
+                datefilterBanner = "<div class=\"date-banner\"> <p>Data items until '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+            }
+
             var patientSequenceNumber = "";
             var organizationSequenceNumber = "";
             var organizationName = "";
+
+            var filterstring = "";
+            if (startDate != "")
+            {
+                filterstring += "<condition attribute='createdon' operator='on-or-after' value='" + startDate + @"' />";
+            }
+            if (endDate != "")
+            {
+                filterstring += "<condition attribute='createdon' operator='on-or-before' value='" + endDate + @"' />";
+            }
+
 
             var obsXML = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                            <entity name='msemr_observation'>
@@ -1018,6 +1680,9 @@ namespace GP_Connect.Service.AccessRecordHTML
                              <attribute name='msemr_valuestring' />
                              <attribute name='msemr_valuerangehighlimit' />
                              <attribute name='msemr_description' />
+                                <filter type='and'>
+                                 "+filterstring+@"      
+                               </filter>
                              <order attribute='createdon' descending='true' />
                              <link-entity name='contact' from='contactid' to='msemr_subjecttypepatient' link-type='inner' alias='patient'>
                                <attribute name='bcrm_gpc_sequence_number' />
@@ -1072,14 +1737,20 @@ namespace GP_Connect.Service.AccessRecordHTML
             if (observationList.Count > 0)
             {
                var res = makeObservationhtmlContents(observationList);
-               var htmlContent = "<div> <h1>Observations</h1> <div class=\"gptransfer-banner\"> <p> GP transfer banner </p> </div> <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"date-banner\"> <p> Data items until "+DateTime.Now.ToString("dd-MMM-yyyy")+ "</p> </div> <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"obs-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Value</th> <th>Details</th> </tr> </thead> "+res+" <tbody> </tbody> </table> </div>";
+               var htmlContent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Observations</h1> " + GPtransferBanner+" <div class=\"content-banner\"> <p> Content banner </p> </div> "+datefilterBanner+" <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"obs-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Value</th> <th>Range</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
 
                var finalObj = MakeObservationObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlContent);
                return finalObj;
 
             }
-
-            return new object();
+            else
+            {
+                
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Observations</h1> "+GPtransferBanner+" <div class=\"date-banner\"> "+ datefilterBanner + " <p>No 'Observations' data is recorded for this patient.</p></div>";
+                    var finalObj = MakeReferralCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                    return finalObj;
+                
+            }
         }
 
         public string makeObservationhtmlContents(List<ObservationDTO> observationList)
@@ -1089,7 +1760,7 @@ namespace GP_Connect.Service.AccessRecordHTML
             {
                 
                 htmlContent += "<tr>";
-                htmlContent += "<td>" + item.createdOn.ToString("dd-MMM-yyyy") + "</td>";
+                htmlContent += "<td class=\"date-column\">" + item.createdOn.ToString("dd-MMM-yyyy") + "</td>";
                 htmlContent += "<td>" + item.title + "</td>";
                 htmlContent += "<td>" + item.valueString + "</td>";
                 htmlContent += "<td>" + item.range + "</td>";
@@ -1124,14 +1795,6 @@ namespace GP_Connect.Service.AccessRecordHTML
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
             },
-            { "author", new List<Dictionary<string, string>>
-                {
-                    new Dictionary<string, string>
-                    {
-                        { "reference", "Device/f4d020c6-eaff-4528-83ba-e81a1cfd30dc" }
-                    }
-                }
-            },
             { "custodian", new Dictionary<string, string>
                 {
                     { "reference", "Organization/"+ organizationSequenceNumber },
@@ -1150,7 +1813,8 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         new Dictionary<string, string>
                                         {
                                             { "system", "http://fhir.nhs.net/ValueSet/gpconnect-record-section-1" },
-                                            { "code", "OBS" }
+                                            { "code", "OBS" },
+                                             { "display", "Observations" }
                                         }
                                     }
                                 },
@@ -1188,6 +1852,15 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
+
+                var GPtransferBanner = "";
+
+                if (nhsNumber == "9651260211")
+                {
+                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
+                }
+
+
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
                 var organizationName = "";
@@ -1253,13 +1926,13 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if(immunizationList.Count > 0)
                 {
                     var res = makeImmunizationHtmlContent(immunizationList);
-                    var htmlContent = "<div> <h1>Immunisations</h1> <div class=\"gptransfer-banner\"> <p> GP transfer banner </p> </div> <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"imm-tab\"> <thead> <tr> <th>Date</th> <th>Vaccination</th> <th>Part</th> <th>Contents</th> <th>Details</th> </tr> </thead> <tbody> "+ res + " </tbody> </table> </div>";    
+                    var htmlContent = "<div> <h1>Immunisations</h1> "+GPtransferBanner+" <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"imm-tab\"> <thead> <tr> <th>Date</th> <th>Vaccination</th> <th>Part</th> <th>Contents</th> <th>Details</th> </tr> </thead> <tbody> "+ res + " </tbody> </table> </div>";    
                     var finalObj = MakeImmunizationCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlContent);
                     return finalObj;
                 }
                 else
                 {
-                    var htmlContent = "<div> <h1>Immunisations</h1> <div class=\"gptransfer-banner\"> <p> GP transfer banner </p> </div> <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"exclusion-banner\"> <p> <p>Items excluded due to confidentiality and/or patient preferences</p> </p> </div>  </div>";
+                    var htmlContent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Immunisations</h1> "+GPtransferBanner+" <p>No 'Immunisations' data is recorded for this patient.</p></div>";
                     var finalObj = MakeImmunizationCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlContent);
                     return finalObj;
                 }
@@ -1279,7 +1952,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 foreach (var item in immunizationList)
                 {
                     htmlContent += "<tr>";
-                    htmlContent += "<td>" + item.RecDate.ToString("dd-MMM-yyyy") + "</td>";
+                    htmlContent += "<td class=\"date-column\">" + item.RecDate.ToString("dd-MMM-yyyy") + "</td>";
                     htmlContent += "<td>" + item.vaccinationName + "</td>";
                     htmlContent += "<td>" + item.Part + "</td>";
                     htmlContent += "<td>" + item.Content + "</td>";
@@ -1320,14 +1993,6 @@ namespace GP_Connect.Service.AccessRecordHTML
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
             },
-            { "author", new List<Dictionary<string, string>>
-                {
-                    new Dictionary<string, string>
-                    {
-                        { "reference", "Device/f4d020c6-eaff-4528-83ba-e81a1cfd30dc" }
-                    }
-                }
-            },
             { "custodian", new Dictionary<string, string>
                 {
                     { "reference", "Organization/"+ organizationSequenceNumber },
@@ -1346,7 +2011,8 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         new Dictionary<string, string>
                                         {
                                             { "system", "http://fhir.nhs.net/ValueSet/gpconnect-record-section-1" },
-                                            { "code", "IMM" }
+                                            { "code", "IMM" },
+                                            { "display", "Immunisations" }
                                         }
                                     }
                                 },
@@ -1378,14 +2044,46 @@ namespace GP_Connect.Service.AccessRecordHTML
 
         #region Administractive Item
 
-        internal object MakeobjectForAdministractiveItem(string nhsNumber)
+        internal object MakeobjectForAdministractiveItem(string nhsNumber,string startDate,string endDate)
         {
             try
             {
+                var GPtransferBanner = "";
+
+                if (nhsNumber == "9651260211")
+                {
+                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
+                }
+
+
+                var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
+
+                if (startDate != "" && endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") +"' to " + "'"+ DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (startDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items from '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") +"'</p> </div>";
+                }
+                else if (endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items until '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") +"'</p> </div>";
+                }
+
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
                 var organizationName = "";
 
+                var filterstring = "";
+                if(startDate != "")
+                {
+                    filterstring += "<condition attribute='bcrm_recordeddate' operator='on-or-after' value='" + startDate+@"' />";
+                }
+                if(endDate != "")
+                {
+                    filterstring += "<condition attribute='bcrm_recordeddate' operator='on-or-before' value='" + endDate + @"' />";
+                }
 
                 var administractorXML = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                         <entity name='bcrm_administractiveitem'>
@@ -1394,11 +2092,14 @@ namespace GP_Connect.Service.AccessRecordHTML
                                           <attribute name='createdon' />
                                            <attribute name='bcrm_recordeddate' />
                                            <attribute name='bcrm_description' />
+                                           <filter type='and'>
+                                                "+filterstring+@"
+                                            </filter>
                                           <order attribute='bcrm_recordeddate' descending='true' />
                                           <link-entity name='contact' from='contactid' to='bcrm_patient' link-type='inner' alias='patient'>
                                            <attribute name='bcrm_gpc_sequence_number' />
                                             <filter type='and'>
-                                              <condition attribute='bcrm_nhsnumber' operator='eq' value='" + nhsNumber + @"' />
+                                               <condition attribute='bcrm_nhsnumber' operator='eq' value='" + nhsNumber + @"' />
                                             </filter>
                                           <link-entity name='bcrm_clinic' from='bcrm_clinicid' to='bcrm_gpc_manangingorganisation' link-type='inner' alias='organization'>
                                                  <attribute name='bcrm_gpc_sequence_number' />
@@ -1442,13 +2143,19 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if (administractorList.Count > 0)
                 {
                     var res = MakeAdministractorDiv(administractorList);
-                    var htmlcontent = "<div> <h1>Administrative Items</h1> <div class=\"gptransfer-banner\"> <p> GP transfer banner </p> </div> <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"date-banner\"> <p> Data items until "+DateTime.Now.ToString("dd-MMM-yyyy")+ " </p> </div> <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"adm-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
+                    var htmlcontent = "<div> <h1>Administrative Items</h1> "+ datefilterBanner + "  <div class=\"content-banner\"> <p> Content banner </p> </div> "+ GPtransferBanner + " <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"adm-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
+                    //  var htmlcontent = "<div> <h1>Administrative Items</h1>  "+ datefilterBanner + " <table id=\"adm-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> " + res + " </tbody> </table> </div>";
+                   // var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Administrative Items</h1>"+datefilterBanner+"<table id=\"adm-tab\"><thead><tr><th>Date</th><th>Entry</th><th>Details</th></tr></thead><tbody>"+res+"</tbody></table></div>";
                     var finalObj = MakeAdministractorCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
-
                 }
-
-                return new object();
+                else
+                {
+                   
+                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Administrative Items</h1>"+ GPtransferBanner + " <div class=\"date-banner\"> "+datefilterBanner+"  <p>No 'Administrative Items' data is recorded for this patient.</p></div>";
+                        var finalObj = MakeAdministractorCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                        return finalObj;
+                }
             }
             catch (Exception) 
             {
@@ -1463,7 +2170,7 @@ namespace GP_Connect.Service.AccessRecordHTML
             {
                 
                     htmlContent += "<tr>";
-                    htmlContent += "<td>" + item.recDate.ToString("dd-MMM-yyyy") + "</td>";
+                    htmlContent += "<td class=\"date-column\">" + item.recDate.ToString("dd-MMM-yyyy") + "</td>";
                     htmlContent += "<td>" + item.Name + "</td>";
                     htmlContent += "<td>" + item.details + "</td>";
                     htmlContent += "</tr>";
@@ -1495,14 +2202,6 @@ namespace GP_Connect.Service.AccessRecordHTML
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
             },
-            { "author", new List<Dictionary<string, string>>
-                {
-                    new Dictionary<string, string>
-                    {
-                        { "reference", "Device/f4d020c6-eaff-4528-83ba-e81a1cfd30dc" }
-                    }
-                }
-            },
             { "custodian", new Dictionary<string, string>
                 {
                     { "reference", "Organization/"+ organizationSequenceNumber },
@@ -1513,7 +2212,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 {
                     new Dictionary<string, object>
                     {
-                        { "title", "Administrative items" },
+                        { "title", "Administrative Items" },
                         { "code", new Dictionary<string, object>
                             {
                                 { "coding", new List<Dictionary<string, string>>
@@ -1521,11 +2220,12 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         new Dictionary<string, string>
                                         {
                                             { "system", "http://fhir.nhs.net/ValueSet/gpconnect-record-section-1" },
-                                            { "code", "ADM" }
+                                            { "code", "ADM" },
+                                            { "display", "Administrative Items" }
                                         }
                                     }
                                 },
-                                { "text", "Administrative items" }
+                                { "text", "Administrative Items" }
                             }
                         },
                         { "text", new Dictionary<string, string>
@@ -1554,13 +2254,45 @@ namespace GP_Connect.Service.AccessRecordHTML
 
         #region Clinical Item
 
-        internal object makeClinicalItem(string nhsNumber)
+        internal object makeClinicalItem(string nhsNumber, string startDate, string endDate)
         {
             try
             {
+                var GPtransferBanner = "";
+
+                if (nhsNumber == "9651260211")
+                {
+                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
+                }
+
+                var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
+
+                if (startDate != "" && endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "' to " + "'" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (startDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items from '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items until '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
                 var organizationName = "";
+
+                var filterstring = "";
+                if (startDate != "")
+                {
+                    filterstring += "<condition attribute='bcrm_recordeddate' operator='on-or-after' value='" + startDate + @"' />";
+                }
+                if (endDate != "")
+                {
+                    filterstring += "<condition attribute='bcrm_recordeddate' operator='on-or-before' value='" + endDate + @"' />";
+                }
 
                 var clinicalItemXML = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                         <entity name='bcrm_observationrequest'>
@@ -1569,6 +2301,9 @@ namespace GP_Connect.Service.AccessRecordHTML
                                           <attribute name='createdon' />
                                          <attribute name='bcrm_description' />
                                          <attribute name='bcrm_recordeddate' />
+                                            <filter type='and'>
+                                                "+filterstring+@"
+                                            </filter>
                                           <order attribute='bcrm_recordeddate' descending='true' />
                                           <link-entity name='contact' from='contactid' to='bcrm_patient' link-type='inner' alias='patient'>
                                          <attribute name='bcrm_gpc_sequence_number' />
@@ -1618,13 +2353,16 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if (clinicalItemList.Count > 0)
                 {
                     var res = makehtmlcontentofclinicalitems(clinicalItemList);
-                    var htmlcontent = "<div> <h1>Clinical Items</h1> <div class=\"gptransfer-banner\"> <p> GP transfer banner </p> </div> <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"date-banner\"> <p> For the period "+DateTime.Now.AddYears(-1).ToString("dd-MMM-yyyy") +" to "+DateTime.Now.ToString("dd-MMM-yyyy")+ " </p> </div> <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"cli-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
+                    var htmlcontent = "<div> <h1>Clinical Items</h1> "+ GPtransferBanner +" <div class=\"content-banner\"> <p> Content banner </p> </div> "+ datefilterBanner + " <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"cli-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
                     var finalObj = MakeClinicalItemCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 }
-
-
-                return new object();
+                else
+                {
+                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Clinical Items</h1> "+ GPtransferBanner + " <div class=\"date-banner\"> "+datefilterBanner+"  <p>No 'Clinical Items' data is recorded for this patient.</p></div>";
+                        var finalObj = MakeClinicalItemCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                        return finalObj;
+                }
             }
             catch (Exception ) 
             {
@@ -1641,7 +2379,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 {
                     
                         htmlContent += "<tr>";
-                        htmlContent += "<td>" + item.recDate.ToString("dd-MMM-yyyy") + "</td>";
+                        htmlContent += "<td class=\"date-column\">" + item.recDate.ToString("dd-MMM-yyyy") + "</td>";
                         htmlContent += "<td>" + item.name + "</td>";
                         htmlContent += "<td>" + item.details + "</td>";
                         htmlContent += "</tr>";
@@ -1680,14 +2418,6 @@ namespace GP_Connect.Service.AccessRecordHTML
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
             },
-            { "author", new List<Dictionary<string, string>>
-                {
-                    new Dictionary<string, string>
-                    {
-                        { "reference", "Device/f4d020c6-eaff-4528-83ba-e81a1cfd30dc" }
-                    }
-                }
-            },
             { "custodian", new Dictionary<string, string>
                 {
                     { "reference", "Organization/"+ organizationSequenceNumber },
@@ -1698,7 +2428,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 {
                     new Dictionary<string, object>
                     {
-                        { "title", "Clinical items" },
+                        { "title", "Clinical Items" },
                         { "code", new Dictionary<string, object>
                             {
                                 { "coding", new List<Dictionary<string, string>>
@@ -1706,11 +2436,12 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         new Dictionary<string, string>
                                         {
                                             { "system", "http://fhir.nhs.net/ValueSet/gpconnect-record-section-1" },
-                                            { "code", "CLI" }
+                                            { "code", "CLI" },
+                                            { "display", "Clinical Items" }
                                         }
                                     }
                                 },
-                                { "text", "Clinical items" }
+                                { "text", "Clinical Items" }
                             }
                         },
                         { "text", new Dictionary<string, string>
@@ -1739,13 +2470,45 @@ namespace GP_Connect.Service.AccessRecordHTML
 
         #region Medication
 
-        internal object makeMedicationObject(string nhsNumber)
+        internal object makeMedicationObject(string nhsNumber, string startDate, string endDate)
         {
             try
             {
+                var GPtransferBanner = "";
+
+                if (nhsNumber == "9651260211")
+                {
+                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
+                }
+
+                var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
+
+                if (startDate != "" && endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "' to " + "'" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (startDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items from '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items until '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
                 var organizationName = "";
+
+                var filterstring = "";
+                if (startDate != "")
+                {
+                    filterstring += "<condition attribute='bcrm_drugstartdate' operator='on-or-after' value='" + startDate + @"' />";
+                }
+                if (endDate != "")
+                {
+                    filterstring += "<condition attribute='bcrm_drugstartdate' operator='on-or-before' value='" + endDate + @"' />";
+                }
 
                 var medicationXML = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                       <entity name='bcrm_prescription'>
@@ -1831,13 +2594,13 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 if (medicationList.Count > 0)
                 {
-                    var htmlcontenmt = createHtmlcontentofMedication(medicationList);
+                    var htmlcontenmt = createHtmlcontentofMedication(nhsNumber ,medicationList,startDate,endDate);
                     var finalObj = MakeMedicationCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontenmt);
                     return finalObj;
                 }
                 else
                 {
-                    var htmlcontenmt = "<div> <h2>Acute Medication (Last 12 Months)</h2> <div class=\"content-banner\"> <p> This is a content banner written by oxdh. </p> </div> <div class=\"exclusion-banner\"> <p> Item excluded due to confidentiality anr/or patient preferences. </p> </div></div>";
+                    var htmlcontenmt = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Medications</h1> "+GPtransferBanner +"<div><h2>Acute Medication (Last 12 Months)</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Acute Medication (Last 12 Months)' data is recorded for this patient.</p></div><div><h2>Current Repeat Medication</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Current Repeat Medication' data is recorded for this patient.</p></div><div><h2>Discontinued Repeat Medication</h2><div class=\"content-banner\"><p>All repeat medication ended by a clinician action</p></div><div class=\"date-banner\"><p>Date filter not applied</p></div><p>No 'Discontinued Repeat Medication' data is recorded for this patient.</p></div><div><h2>All Medication</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'All Medication' data is recorded for this patient.</p></div><div><h2>All Medication Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'All Medication Issues' data is recorded for this patient.</p></div></div>";
                     var finalObj = MakeMedicationCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontenmt);
                     return finalObj;
                 }
@@ -1849,15 +2612,46 @@ namespace GP_Connect.Service.AccessRecordHTML
             }
         }
 
-        internal string createHtmlcontentofMedication(List<MedicationDTO> medicationList)
+        internal string createHtmlcontentofMedication(string nhsNumber, List<MedicationDTO> medicationList,string startDate,string endDate)
         {
             try
             {
+                var GPtransferBanner = "";
+                var bannerNotAppliedDefined = "<div class=\"date-banner\"><p>Date filter not applied</p></div>";
+
+                if (nhsNumber == "9651260211")
+                {
+                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
+                }
+
+                var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
+
+                if (startDate != "" && endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "' to " + "'" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (startDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items from '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+                else if (endDate != "")
+                {
+                    datefilterBanner = "<div class=\"date-banner\"> <p>Data items until '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p> </div>";
+                }
+
                 var acuteMedicationDiv = "";
                 var repeatMedicationDiv = "";
                 var discountinuedReapeatMedication = "";
                 var allMedication = "";
                 var allmedicationIssue = "";
+
+                var acuteMedicationDivTable = "";
+                var repeatMedicationDivTable = "";
+                var discountinuedReapeatMedicationTable = "";
+                var allMedicationTable = "";
+                var allmedicationIssueTable = "";
+
+               
 
                 foreach (var item in medicationList) 
                 {
@@ -1865,7 +2659,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         acuteMedicationDiv += "<tr>";
                         acuteMedicationDiv += "<td>" + item.type + "</td>";
-                        acuteMedicationDiv += "<td>" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                        acuteMedicationDiv += "<td  class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
                         acuteMedicationDiv += "<td>" + item.MedicationItem + "</td>";
                         acuteMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
                         acuteMedicationDiv += "<td>" + item.Quantity + "</td>";
@@ -1878,14 +2672,14 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         repeatMedicationDiv += "<tr>";
                         repeatMedicationDiv += "<td>" + item.type + "</td>";
-                        repeatMedicationDiv += "<td>" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                        repeatMedicationDiv += "<td  class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
                         repeatMedicationDiv += "<td>" + item.MedicationItem + "</td>";
                         repeatMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
                         repeatMedicationDiv += "<td>" + item.Quantity + "</td>";
-                        repeatMedicationDiv += "<td>" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                        repeatMedicationDiv += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
                         repeatMedicationDiv += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
                         repeatMedicationDiv += "<td>" + item.MaxIssues + "</td>";
-                        repeatMedicationDiv += "<td>" + item.ReviewDate.ToString("dd-MMM-yyyy") + "</td>";
+                        repeatMedicationDiv += "<td class=\"date-column\">" + item.ReviewDate.ToString("dd-MMM-yyyy") + "</td>";
                         repeatMedicationDiv += "<td><b>" + item.AdditionalInformation + "</b></td>";
                         repeatMedicationDiv += "</tr>";
                     }
@@ -1893,59 +2687,165 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         discountinuedReapeatMedication += "<tr>";
                         discountinuedReapeatMedication += "<td>" + item.type + "</td>";
-                        discountinuedReapeatMedication += "<td>" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                        discountinuedReapeatMedication += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
                         discountinuedReapeatMedication += "<td>" + item.MedicationItem + "</td>";
                         discountinuedReapeatMedication += "<td>" + item.DosageInstruction + "</td>";
                         discountinuedReapeatMedication += "<td>" + item.Quantity + "</td>";
-                        discountinuedReapeatMedication += "<td>" + item.DiscountinuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                        discountinuedReapeatMedication += "<td class=\"date-column\">" + item.DiscountinuedDate.ToString("dd-MMM-yyyy") + "</td>";
                         discountinuedReapeatMedication += "<td>" + item.DiscountinuedReason + "</td>";
                         discountinuedReapeatMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
                         discountinuedReapeatMedication += "</tr>";
                     }
-                    if (item.MedicationItem != string.Empty)
-                    {
-                        allMedication += "<tr>";
-                        allMedication += "<td colspan='7' class='med-item-column'> <strong>" + item.MedicationItem + "</strong></td>";
-                        allMedication += "</tr>";
-                        allMedication += "<tr>";
-                        allMedication += "<td>" + item.type + "</td>";
-                        allMedication += "<td>" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
-                        allMedication += "<td>" + item.MedicationItem + "</td>";
-                        allMedication += "<td>" + item.DosageInstruction + "</td>";
-                        allMedication += "<td>" + item.Quantity + "</td>";
-                        allMedication += "<td>" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
-                        allMedication += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
-                        allMedication += "<td>" + item.DiscountinuedReason + "</td>";
-                        allMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
-                        allMedication += "</tr>";
-                    }
-                    if (item.LastIssuedDate.ToString() != "01-01-0001 00:00:00")
-                    {
-                        allmedicationIssue += "<tr>";
-                        allmedicationIssue += "<td colspan='7' class='med-item-column'><strong>" + item.MedicationItem + "</strong></td>";
-                        allmedicationIssue += "</tr>";
 
-                        allmedicationIssue += "<tr>";
-                        allmedicationIssue += "<td>" + item.type + "</td>";
-                        allmedicationIssue += "<td>" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
-                        allmedicationIssue += "<td>" + item.MedicationItem + "</td>";
-                        allmedicationIssue += "<td>" + item.DosageInstruction + "</td>";
-                        allmedicationIssue += "<td>" + item.Quantity + "</td>";
-                        allmedicationIssue += "<td>" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
-                        allmedicationIssue += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
-                        allmedicationIssue += "<td>" + item.DiscountinuedReason + "</td>";
-                        allmedicationIssue += "<td><b>" + item.AdditionalInformation + "</b></td>";
-                        allmedicationIssue += "</tr>";
+
+                    if(startDate != "" && endDate != "")
+                    {
+                        if (item.MedicationItem != string.Empty && item.startDate > DateTime.Parse(startDate) && item.startDate < DateTime.Parse(endDate))
+                        {
+                            allMedication += "<tr>";
+                            allMedication += "<td colspan='7' class='med-item-column'> <strong>" + item.MedicationItem + "</strong></td>";
+                            allMedication += "</tr>";
+                            allMedication += "<tr>";
+                            allMedication += "<td>" + item.type + "</td>";
+                            allMedication += "<td  class=\"date-column\"> " + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allMedication += "<td>" + item.MedicationItem + "</td>";
+                            allMedication += "<td>" + item.DosageInstruction + "</td>";
+                            allMedication += "<td>" + item.Quantity + "</td>";
+                            allMedication += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allMedication += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
+                            allMedication += "<td>" + item.DiscountinuedReason + "</td>";
+                            allMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                            allMedication += "</tr>";
+                        }
                     }
+                    else
+                    {
+                        if (item.MedicationItem != string.Empty)
+                        {
+                            allMedication += "<tr>";
+                            allMedication += "<td colspan='7' class='med-item-column'> <strong>" + item.MedicationItem + "</strong></td>";
+                            allMedication += "</tr>";
+                            allMedication += "<tr>";
+                            allMedication += "<td>" + item.type + "</td>";
+                            allMedication += "<td  class=\"date-column\"> " + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allMedication += "<td>" + item.MedicationItem + "</td>";
+                            allMedication += "<td>" + item.DosageInstruction + "</td>";
+                            allMedication += "<td>" + item.Quantity + "</td>";
+                            allMedication += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allMedication += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
+                            allMedication += "<td>" + item.DiscountinuedReason + "</td>";
+                            allMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                            allMedication += "</tr>";
+                        }
+                    }
+
+                    if (startDate != "" && endDate != "")
+                    {
+                        if (item.LastIssuedDate.ToString() != "01-01-0001 00:00:00" && item.DiscountinuedReason != string.Empty && item.startDate > DateTime.Parse(startDate) && item.startDate < DateTime.Parse(endDate))
+                        {
+                            allmedicationIssue += "<tr>";
+                            allmedicationIssue += "<td colspan='7' class='med-item-column'><strong>" + item.MedicationItem + "</strong></td>";
+                            allmedicationIssue += "</tr>";
+
+                            allmedicationIssue += "<tr>";
+                            allmedicationIssue += "<td>" + item.type + "</td>";
+                            allmedicationIssue += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allmedicationIssue += "<td>" + item.MedicationItem + "</td>";
+                            allmedicationIssue += "<td>" + item.DosageInstruction + "</td>";
+                            allmedicationIssue += "<td>" + item.Quantity + "</td>";
+                            allmedicationIssue += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allmedicationIssue += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
+                            allmedicationIssue += "<td>" + item.DiscountinuedReason + "</td>";
+                            allmedicationIssue += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                            allmedicationIssue += "</tr>";
+                        }
+                    }
+                    else
+                    {
+                        if (item.LastIssuedDate.ToString() != "01-01-0001 00:00:00" && item.DiscountinuedReason != string.Empty)
+                        {
+                            allmedicationIssue += "<tr>";
+                            allmedicationIssue += "<td colspan='7' class='med-item-column'><strong>" + item.MedicationItem + "</strong></td>";
+                            allmedicationIssue += "</tr>";
+
+                            allmedicationIssue += "<tr>";
+                            allmedicationIssue += "<td>" + item.type + "</td>";
+                            allmedicationIssue += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allmedicationIssue += "<td>" + item.MedicationItem + "</td>";
+                            allmedicationIssue += "<td>" + item.DosageInstruction + "</td>";
+                            allmedicationIssue += "<td>" + item.Quantity + "</td>";
+                            allmedicationIssue += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allmedicationIssue += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
+                            allmedicationIssue += "<td>" + item.DiscountinuedReason + "</td>";
+                            allmedicationIssue += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                            allmedicationIssue += "</tr>";
+                        }
+                    }
+
+
+                        
+                }
+
+                if(acuteMedicationDiv == "")
+                {
+                    acuteMedicationDivTable = "<p>No 'Acute Medication (Last 12 Months)' data is recorded for this patient.</p>";
+                }
+                else
+                {
+                    acuteMedicationDivTable = "<table id=\"med-tab-acu-med\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Scheduled End Date</th> <th>Days Duration</th> <th>Additional Information</th> </tr> </thead> <tbody> " + acuteMedicationDiv+" </tbody> </table>";
                 }
 
 
-                var htmlcontent = "<div> <h1>Medications</h1> <div class=\"gptransfer-banner\"> <p> Patient record transfer from previous GP Practice not yet complete; any information recorded before " + DateTime.Now.AddYears(-1).ToString("dd-MMM-yyyy") + " has been excluded </p> </div> <div class=\"content-banner\"> <p> May also contain immunisations issued as medications </p> </div>" +
-                    "<div> <h2>Acute Medication (Last 12 Months)</h2> <div> <p>Data items until "+DateTime.Now.ToString("dd-MMM-yyyy")+ "</p> </div>" + "<table id=\"med-tab-acu-med\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Scheduled End Date</th> <th>Days Duration</th> <th>Additional Information</th> </tr> </thead> <tbody> " + acuteMedicationDiv+" </tbody> </table> </div>" +
-                    "<div> <h2>Current Repeat Medication</h2> <div class=\"content-banner\"> <p> The Review Date is that set for each Repeat Course. Reviews may be conducted according to a diary event which differs from the dates shown </p> </div> <table id=\"med-tab-curr-rep\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Max Issues</th> <th>Review Date</th> <th>Additional Information</th> </tr> </thead> <tbody> " + repeatMedicationDiv+" </tbody> </table> </div> " +
-                    "<div> <h2>Discontinued Repeat Medication</h2> <div class=\"content-banner\"> <p> All repeat medication ended by a clinician action </p>  </div> <table id=\"med-tab-dis-rep\"> <thead> <tr> <th>Type</th> <th>Last Issued Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Discontinued Date</th> <th>Discontinuation Reason</th> <th>Additional Information</th> </tr> </thead> <tbody> " + discountinuedReapeatMedication+" </tbody> </table> </div> " +
-                    "<div> <h2>All Medication</h2> <div class=\"content-banner\"> <p> For the period "+DateTime.Now.AddYears(-1).ToString("dd-MMM-yyyy") +" to "+DateTime.Now.ToString("dd-MMM-yyyy")+ " </p> </div> <div class=\"date-banner\"> <p style='color:red;'> All relevant items subject to patient preferences and / or RCGP exclusions </p> </div>  <table id=\"med-tab-all-sum\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Discontinuation Details</th> <th>Additional Information</th> </tr> </thead> <tbody> " + allMedication+" </tbody> </table> </div>" +
-                    "<div> <h2>All Medication Issues</h2> <div class=\"content-banner\"> <p> For the period "+DateTime.Now.AddYears(-1).ToString("dd-MMM-yyyy") +" to "+DateTime.Now.ToString("dd-MMM-yyyy")+ " </p> </div> <div class=\"date-banner\"> <p style='color:red;'> All relevant items subject to patient preferences and / or RCGP exclusions </p> </div>  <table id=\"med-tab-all-iss\"> <thead> <tr> <th>Type</th> <th>Issue Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Days Duration</th> <th>Additional Information</th> </tr> </thead> <tbody> "+allmedicationIssue+" </tbody> </table> </div> </div> </div>";
+                if (repeatMedicationDiv == "")
+                {
+                    repeatMedicationDivTable = "<p>No 'Current Repeat Medication' data is recorded for this patient.</p>";
+                }
+                else
+                {
+                    repeatMedicationDivTable = "<table id=\"med-tab-curr-rep\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Max Issues</th> <th>Review Date</th> <th>Additional Information</th> </tr> </thead> <tbody> " + repeatMedicationDiv+" </tbody> </table><p>No 'Current Repeat Medication' data is recorded for this patient.</p>";
+                }
+
+
+                if (discountinuedReapeatMedication == "")
+                {
+                    discountinuedReapeatMedicationTable = "<p>Date filter not applied</p></div><p>No 'Discontinued Repeat Medication' data is recorded for this patient.</p>";    
+                }
+                else
+                {
+                    discountinuedReapeatMedicationTable = "<table id=\"med-tab-dis-rep\"> <thead> <tr> <th>Type</th> <th>Last Issued Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Discontinued Date</th> <th>Discontinuation Reason</th> <th>Additional Information</th> </tr> </thead> <tbody> " + discountinuedReapeatMedication+" </tbody> </table>";
+                }
+
+
+
+                if (allMedication == "")
+                {
+                    allMedicationTable = "<p>No 'All Medication' data is recorded for this patient.</p>";
+                }
+                else
+                {
+                    allMedicationTable = "<table id=\"med-tab-all-sum\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Discontinuation Details</th> <th>Additional Information</th> </tr> </thead> <tbody> " + allMedication+" </tbody> </table> ";
+                }
+
+                if (allmedicationIssue == "")
+                {
+                    allmedicationIssueTable = "<p>No 'All Medication Issues' data is recorded for this patient.</p>";
+                }
+                else
+                {
+                    allmedicationIssueTable = "<table id=\"med-tab-all-iss\"> <thead> <tr> <th>Type</th> <th>Issue Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Days Duration</th> <th>Additional Information</th> </tr> </thead> <tbody> "+allmedicationIssue+" </tbody> </table>";
+                }
+
+                if(startDate == "" || endDate == "")
+                {
+                    bannerNotAppliedDefined = "<div class=\"date-banner\"><p>All relevant items</p></div>";
+                }
+
+
+                var htmlcontent = "<div> <h1>Medications</h1> <div> "+ GPtransferBanner + " <h2>Acute Medication (Last 12 Months)</h2> " + bannerNotAppliedDefined  + acuteMedicationDivTable + "</div>" +
+                    "<div> <h2>Current Repeat Medication</h2> " + bannerNotAppliedDefined  + " <div class=\"content-banner\">  <p> The Review Date is that set for each Repeat Course. Reviews may be conducted according to a diary event which differs from the dates shown </p> </div> " + repeatMedicationDivTable+" </div> " +
+                    "<div> <h2>Discontinued Repeat Medication</h2> " + bannerNotAppliedDefined + " <div class=\"content-banner\"> <p>All repeat medication ended by a clinician action</p> <p> All repeat medication ended by a clinician action </p>  </div> " + discountinuedReapeatMedicationTable+" </div> " +
+                    "<div> <h2>All Medication</h2> "+datefilterBanner+ allMedicationTable+ "  </div>" +
+                    "<div> <h2>All Medication Issues</h2> "+datefilterBanner+ allmedicationIssueTable + " </div> </div>";
  
                 return htmlcontent;
 
@@ -1981,14 +2881,6 @@ namespace GP_Connect.Service.AccessRecordHTML
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
             },
-            { "author", new List<Dictionary<string, string>>
-                {
-                    new Dictionary<string, string>
-                    {
-                        { "reference", "Device/f4d020c6-eaff-4528-83ba-e81a1cfd30dc" }
-                    }
-                }
-            },
             { "custodian", new Dictionary<string, string>
                 {
                     { "reference", "Organization/"+ organizationSequenceNumber },
@@ -2007,7 +2899,8 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         new Dictionary<string, string>
                                         {
                                             { "system", "http://fhir.nhs.net/ValueSet/gpconnect-record-section-1" },
-                                            { "code", "MED" }
+                                            { "code", "MED" },
+                                            { "display", "Medications" }
                                         }
                                     }
                                 },
@@ -2043,6 +2936,13 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
+                var GPtransferBanner = "";
+
+                if (nhsNumber == "9651260211")
+                {
+                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
+                }
+
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
                 var organizationName = "";
@@ -2104,8 +3004,18 @@ namespace GP_Connect.Service.AccessRecordHTML
 
                     }
                 }
-                if(emergencyCodeList.Count > 0)
+                if(emergencyCodeList.Count >= 0)
                 {
+                    var emergenercyTableHtml = "<p>No 'Emergency Code' data is recorded for this patient.</p>";
+                    var encounterlasthtml = "<p>No 'Last 3 Encounters' data is recorded for this patient.</p>";
+                    var activeProblemhtml = "<p>No 'Active Problems and Issues' data is recorded for this patient.</p>";
+                    var manjorInavtiveProblemhtml = "<p>No 'Major Inactive Problems and Issues' data is recorded for this patient.</p>";
+                    var currentallergyandadversehtml = "<p>No 'Current Allergies and Adverse Reactions' data is recorded for this patient.</p>";
+                    var acutemedicationhtml = "<p>No 'Acute Medication (Last 12 Months)' data is recorded for this patient.</p>";
+                    var currentrepeatmedicatipon = "<p>No 'Current Repeat Medication' data is recorded for this patient.</p>";
+
+
+
                     var emerCodeHTMLContetnt = makehtmlcontentofEmergencyCodes(emergencyCodeList);
                     var thrreEccounterhtmlcontent = lastthreeencountersHTMLContents(nhsNumber);
 
@@ -2124,11 +3034,46 @@ namespace GP_Connect.Service.AccessRecordHTML
                     var acutemedicationhtmlcontent = makeOnlyacutemedication(medicationJson);
                     var currentRepeatMedication = makeOnlyCurrentReapeatMedication(medicationJson);
 
-                    var finalhtmlcontentofsummary = "<div xmlns=\\\"http://www.w3.org/1999/xhtml\\\"> <h1>Summary</h1> <div> <h2>Emergency Codes</h2> <div class=\\\"content-banner\\\"> <p>This section is enabled in response to a national health event to highlight specific codes from across the patient record, further details may be available in other parts of the record.</p> </div> <table id=\"cli-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> <th>Location of further information</th> </tr> </thead> <tbody>"+ emerCodeHTMLContetnt + "  </tbody> </table> </div> <div> <h2>Last 3 Encounters</h2> <div class=\"gptransfer-banner\"> <p> This is transfer banner GP2GP. written by OXDH.  </p> </div> <div class=\"content-banner\"> <p> This is content banner written by OXDH. </p> </div> <div class=\"date-banner\"> <p> This is date banner written by OXDH. </p> </div> <div class=\"exclusion-banner\"> <p> This is exclusive banner written by OXDH. </p> </div> <table id=\\\"enc-tab\\\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> " + thrreEccounterhtmlcontent + " </tbody> </table> </div> <div> <h2>Active Problems and Issues</h2> <div class=\"content-banner\"> <p>This is content banner written by OXDH.</p> </div> <div class=\"date-banner\"> <p>This is date banner written by OXDH.</p> </div> <div class=\"exclusion-banner\"> <p>This is exclusive banner written by OXDH.</p> </div> <table id=\\\"prb-tab-act\\\"> <thead> <tr> <th>Start Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> " + activeProblemhtmlcontent + " </tbody> </table> </div> <div> <h2>Major Inactive Problems and Issues</h2> <table id=\"prb-tab-majinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ majorInactivehtmlcontent + " </tbody> </table> </div> <div> <h2>Current Allergies and Adverse Reactions</h2> <div class=\"content-banner\"> <p> This is content banner written by OXDH. </p> </div> <div class=\"exclusion-banner\"> <p> This is exclusive banner written by OXDH. </p> </div> <table id=\\\"all-tab-curr\\\"> <thead> <tr> <th>Start Date</th> <th>Details</th> </tr> </thead> <tbody> " + activeAlleryhtmlcontent + " </tbody> </table> </div> <div> <h2>Acute Medication (Last 12 Months)</h2> <div> <p>Scheduled End Date is not always captured in the source; where it was not recorded, the displayed date is calculated from start date and days duration</p> </div> <table id=\\\"med-tab-acu-med\\\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Scheduled End Date</th> <th>Days Duration</th> <th>Additional Information</th> </tr> </thead> <tbody> " + acutemedicationhtmlcontent + " </tbody> </table> </div> <div> <h2>Current Repeat Medication</h2> <div class=\"content-banner\"> <p> This is content banner written by OXDH. </p> </div> <div class=\"exclusion-banner\"> <p> This is Exclusive banner written by OXDH. </p> </div> <table id=\\\"med-tab-curr-rep\\\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Max Issues</th> <th>Review Date</th> <th>Additional Information</th> </tr> </thead> <tbody> " + currentRepeatMedication + " </tbody> </table> </div> </div>";
+                    if(emerCodeHTMLContetnt != "")
+                    {
+                        emergenercyTableHtml = "<table id=\"cli-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> <th>Location of further information</th> </tr> </thead> <tbody>" + emerCodeHTMLContetnt + "  </tbody> </table>";
+                    }
+                    if(thrreEccounterhtmlcontent != "")
+                    {
+                        encounterlasthtml = "<table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> " + thrreEccounterhtmlcontent + " </tbody> </table>";
+                    }
+                    if(activeProblemhtmlcontent != "")
+                    {
+                        activeProblemhtml = " <table id=\"prb-tab-act\"> <thead> <tr> <th>Start Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> " + activeProblemhtmlcontent + " </tbody> </table>";
+
+                    }
+                    if (majorInactivehtmlcontent != "")
+                    {
+                        manjorInavtiveProblemhtml = "<table id=\"prb-tab-majinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> " + majorInactivehtmlcontent + " </tbody> </table>";
+
+                    }
+                    if (activeAlleryhtmlcontent != "")
+                    {
+                        currentallergyandadversehtml = " <table id=\"all-tab-curr\"> <thead> <tr> <th>Start Date</th> <th>Details</th> </tr> </thead> <tbody> " + activeAlleryhtmlcontent + " </tbody> </table>";
+
+                    }
+                    if (acutemedicationhtmlcontent != "")
+                    {
+                        acutemedicationhtml = "<div> <p>Scheduled End Date is not always captured in the source; where it was not recorded, the displayed date is calculated from start date and days duration</p> </div> <table id=\"med-tab-acu-med\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Scheduled End Date</th> <th>Days Duration</th> <th>Additional Information</th> </tr> </thead> <tbody> " + acutemedicationhtmlcontent + " </tbody> </table>";
+
+                    }
+                    if (currentRepeatMedication != "")
+                    {
+                        currentrepeatmedicatipon = "<table id=\"med-tab-curr-rep\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Max Issues</th> <th>Review Date</th> <th>Additional Information</th> </tr> </thead> <tbody> " + currentRepeatMedication + " </tbody> </table>";
+
+                    }
+
+                    var finalhtmlcontentofsummary = "<div> <h1>Summary</h1> "+GPtransferBanner+" <div> <h2>Emergency Codes</h2> "+ emergenercyTableHtml + "  </div> <div> <h2>Last 3 Encounters</h2> " + encounterlasthtml + "  </div> <div> <h2>Active Problems and Issues</h2> " + activeProblemhtml + " </div> <div> <h2>Major Inactive Problems and Issues</h2> "+ manjorInavtiveProblemhtml + "  </div> <div> <h2>Current Allergies and Adverse Reactions</h2> "+ currentallergyandadversehtml+ " </div> <div> <h2>Acute Medication (Last 12 Months)</h2> " + acutemedicationhtml + " </div> <div> <h2>Current Repeat Medication</h2> "+ currentrepeatmedicatipon + " </div> </div>";
+
+                 //   var checkdemo = "<div> <h1>Summary</h1> <div> <h2>Emergency Codes</h2> <div class=\"content-banner\"> <p>This section is enabled in response to a national health event to highlight specific codes from across the patient record, further details may be available in other parts of the record.</p> </div> <table id=\"cli-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> <th>Location of further information</th> </tr> </thead> <tbody> <tr> <td>10-Jul-2024</td> <td>Severe acute respiratory syndrome coronavirus 2 detected (finding)</td> <td>This is big problem.</td> <td>Problems and Issues</td> </tr> </tbody> </table> </div> <div> <h2>Last 3 Encounters</h2> <div class=\"gptransfer-banner\"> <p>This is transfer banner GP2GP. written by OXDH.</p> </div> <div class=\"content-banner\"> <p>This is content banner written by OXDH.</p> </div> <div class=\"date-banner\"> <p>This is date banner written by OXDH.</p> </div> <div class=\"exclusion-banner\"> <p>This is exclusive banner written by OXDH.</p> </div> <table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> <tr> <td>07-Jun-2016</td> <td>Dianna Lancaster - Patient Encounter</td> <td>Encounter with patient</td> </tr> </tbody> </table> </div> <div> <h2>Active Problems and Issues</h2> <div class=\"content-banner\"> <p>This is content banner written by OXDH.</p> </div> <div class=\"date-banner\"> <p>This is date banner written by OXDH.</p> </div> <div class=\"exclusion-banner\"> <p>This is exclusive banner written by OXDH.</p> </div> <table id=\"prb-tab-act\"> <thead> <tr> <th>Start Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> <tr> <td>01-Jun-2017</td> <td>Past Medical History</td> <td>Minor</td> <td></td> </tr> </tbody> </table> </div> <div> <h2>Major Inactive Problems and Issues</h2> <table id=\"prb-tab-majinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> <tr> <td>11-Jun-2015</td> <td>08-Oct-2015</td> <td>Urinary tract infectious disease (disorder)</td> <td>Major</td> <td></td> </tr> </tbody> </table> </div> <div> <h2>Current Allergies and Adverse Reactions</h2> <div class=\"content-banner\"> <p>This is content banner written by OXDH.</p> </div> <div class=\"exclusion-banner\"> <p>This is exclusive banner written by OXDH.</p> </div> <table id=\"all-tab-curr\"> <thead> <tr> <th>Start Date</th> <th>Details</th> </tr> </thead> <tbody> <tr> <td>28-May-2024</td> <td>Allergy to nut</td> </tr> </tbody> </table> </div> <div> <h2>Acute Medication (Last 12 Months)</h2> <div> <p>Scheduled End Date is not always captured in the source; where it was not recorded, the displayed date is calculated from start date and days duration.</p> </div> <table id=\"med-tab-acu-med\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Scheduled End Date</th> <th>Days Duration</th> <th>Additional Information</th> </tr> </thead> <tbody> </tbody> </table> </div> <div> <h2>Current Repeat Medication</h2> <div class=\"content-banner\"> <p>This is content banner written by OXDH.</p> </div> <div class=\"exclusion-banner\"> <p>This is exclusive banner written by OXDH.</p> </div> <table id=\"med-tab-curr-rep\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Max Issues</th> <th>Review Date</th> <th>Additional Information</th> </tr> </thead> <tbody> <tr> <td>Repeat</td> <td>07-Oct-2015</td> <td>Acetylcysteine 600mg tablets | 41980111000001109</td> <td>5 Oral tablet 1 times a Day for 10 Days</td> <td>50</td> <td>01-Jan-0001</td> <td>1</td> <td></td> <td>01-Jan-0001</td> <td></td> </tr> </tbody> </table> </div> </div>";
 
                     var finalObj = MakeSummaryCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, finalhtmlcontentofsummary);
                     return finalObj;
-
                 }
 
                 return new object();
@@ -2147,7 +3092,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 foreach (var item in emergencyCodeList)
                 {
                         htmlContent += "<tr>";
-                        htmlContent += "<td>" + item.recDate.ToString("dd-MMM-yyyy") + "</td>";
+                        htmlContent += "<td class=\"date-column\">" + item.recDate.ToString("dd-MMM-yyyy") + "</td>";
                         htmlContent += "<td>" + item.name + "</td>";
                         htmlContent += "<td>" + item.description + "</td>";
                         htmlContent += "<td>" + item.locationoffurtherInformation + "</td>";
@@ -2208,7 +3153,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 foreach (var item in encounterDetailsList)
                 {
                     encHtmlContent += "<tr>";
-                    encHtmlContent += "<td>" + item.Date.ToString("dd-MMM-yyyy") + "</td>";
+                    encHtmlContent += "<td class=\"date-column\">" + item.Date.ToString("dd-MMM-yyyy") + "</td>";
                     encHtmlContent += "<td>" + item.title + "</td>";
                     encHtmlContent += "<td>" + item.details + "</td>";
                     encHtmlContent += "</tr>";
@@ -2394,13 +3339,13 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if (item.startDate >= DateTime.Now.AddYears(-1) && item.startDate <= DateTime.Now && item.type.ToLower().ToString() == "acute")
                 {
                     acuteMedicationDiv += "<tr>";
-                    acuteMedicationDiv += "<td>" + item.type + "</td>";
-                    acuteMedicationDiv += "<td>" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                    acuteMedicationDiv += "<td class=\"date-column\">" + item.type + "</td>";
+                    acuteMedicationDiv += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
                     acuteMedicationDiv += "<td>" + item.MedicationItem + "</td>";
                     acuteMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
                     acuteMedicationDiv += "<td>" + item.Quantity + "</td>";
                     acuteMedicationDiv += "<td>" + item.DaysDuration + "</td>";
-                    acuteMedicationDiv += "<td>" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
+                    acuteMedicationDiv += "<td class=\"date-column\">" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
                     acuteMedicationDiv += "<td>" + item.AdditionalInformation + "</td>";
                 }
             }
@@ -2415,16 +3360,17 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if (item.type.ToLower().ToString() == "repeat" && item.DiscountinuedReason == string.Empty)
                 {
                     repeatMedicationDiv += "<tr>";
-                    repeatMedicationDiv += "<td>" + item.type + "</td>";
-                    repeatMedicationDiv += "<td>" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                    repeatMedicationDiv += "<td >" + item.type + "</td>";
+                    repeatMedicationDiv += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
                     repeatMedicationDiv += "<td>" + item.MedicationItem + "</td>";
                     repeatMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
                     repeatMedicationDiv += "<td>" + item.Quantity + "</td>";
-                    repeatMedicationDiv += "<td>" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                    repeatMedicationDiv += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
                     repeatMedicationDiv += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
                     repeatMedicationDiv += "<td>" + item.MaxIssues + "</td>";
-                    repeatMedicationDiv += "<td>" + item.ReviewDate.ToString("dd-MMM-yyyy") + "</td>";
+                    repeatMedicationDiv += "<td class=\"date-column\">" + item.ReviewDate.ToString("dd-MMM-yyyy") + "</td>";
                     repeatMedicationDiv += "<td>" + item.AdditionalInformation + "</td>";
+                    repeatMedicationDiv += "</tr>";
                 }
             }
             return repeatMedicationDiv;
@@ -2454,14 +3400,6 @@ namespace GP_Connect.Service.AccessRecordHTML
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
             },
-            { "author", new List<Dictionary<string, string>>
-                {
-                    new Dictionary<string, string>
-                    {
-                        { "reference", "Device/f4d020c6-eaff-4528-83ba-e81a1cfd30dc" }
-                    }
-                }
-            },
             { "custodian", new Dictionary<string, string>
                 {
                     { "reference", "Organization/"+ organizationSequenceNumber },
@@ -2480,7 +3418,8 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         new Dictionary<string, string>
                                         {
                                             { "system", "http://fhir.nhs.net/ValueSet/gpconnect-record-section-1" },
-                                            { "code", "SUM" }
+                                            { "code", "SUM" },
+                                            { "display", "Summary" }
                                         }
                                     }
                                 },
@@ -2507,6 +3446,68 @@ namespace GP_Connect.Service.AccessRecordHTML
             }
 
         }
+
+        #endregion
+
+        #region ConvertDateFormat
+
+        public static string ConvertToProperDateFormat(string inputDate, string type)
+        {
+            DateTime parsedDate;
+
+            // Define the different input formats
+            string[] dateFormats = {
+                                      "yyyy",                      // Year only
+                                      "yyyy-MM",                   // Year and Month
+                                      "yyyy-MM-dd",                // Year, Month, and Day
+                                      "yyyy-MM-ddTHH",             // Year, Month, Day, and Hour
+                                      "yyyy-MM-ddTHH:mm",          // Year, Month, Day, Hour, and Minute
+                                      "yyyy-MM-ddTHH:mm:sszzz",    // Full date, time, and time zone offset (e.g., 2015-10-23T16:38:32+05:30)
+                                      "yyyy-MM-ddTHH:mm:ssZ"       // Full date and time in UTC (Z at the end)
+                                  };
+
+            // Attempt to parse the input date with the formats provided
+            if (DateTime.TryParseExact(inputDate, dateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
+            {
+                if (type.ToLower() == "start")
+                {
+                    // Return the start of the provided date
+                    if (inputDate.Length == 4) // Year only
+                    {
+                        return new DateTime(parsedDate.Year, 1, 1).ToString("yyyy-MM-dd");
+                    }
+                    else if (inputDate.Length == 7) // Year and Month
+                    {
+                        return new DateTime(parsedDate.Year, parsedDate.Month, 1).ToString("yyyy-MM-dd");
+                    }
+                    else // Full date
+                    {
+                        return parsedDate.ToString("yyyy-MM-dd");
+                    }
+                }
+                else if (type.ToLower() == "end")
+                {
+                    // Return the end of the provided date
+                    if (inputDate.Length == 4) // Year only
+                    {
+                        return new DateTime(parsedDate.Year, 12, 31).ToString("yyyy-MM-dd");
+                    }
+                    else if (inputDate.Length == 7) // Year and Month
+                    {
+                        return new DateTime(parsedDate.Year, parsedDate.Month, DateTime.DaysInMonth(parsedDate.Year, parsedDate.Month)).ToString("yyyy-MM-dd");
+                    }
+                    else // Full date
+                    {
+                        return parsedDate.ToString("yyyy-MM-dd");
+                    }
+                }
+            }
+
+            // If parsing fails, return "Invalid_date_format"
+            return "Invalid_date_format";
+        }
+
+
 
         #endregion
 

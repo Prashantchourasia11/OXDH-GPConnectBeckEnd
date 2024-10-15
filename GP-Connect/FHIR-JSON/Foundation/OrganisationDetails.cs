@@ -41,7 +41,7 @@ namespace GP_Connect.FHIR_JSON
                                                ""versionId"": """+organizationDetails.versionId+@""",
                                                ""lastUpdated"": """+ organizationDetails.lastUpdated.ToString("yyyy-MM-ddTHH:mm:sszzz") + @""",
                                                ""profile"": [
-                                                 ""https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Organization-1""
+                                                 ""http://fhir.nhs.net/StructureDefinition/gpconnect-organization-1""
                                                ]
                                              },
                                              ""identifier"": [
@@ -85,7 +85,7 @@ namespace GP_Connect.FHIR_JSON
                                                ""versionId"": """ + organizationDetails.versionId + @""",
                                                ""lastUpdated"": """ + organizationDetails.lastUpdated.ToString("yyyy-MM-ddTHH:mm:sszzz") + @""",
                                                ""profile"": [
-                                                 ""https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Organization-1""
+                                                 ""http://fhir.nhs.net/StructureDefinition/gpconnect-organization-1""
                                                ]
                                              },
                                              ""identifier"": [
@@ -155,7 +155,7 @@ namespace GP_Connect.FHIR_JSON
                                 lastUpdated = organizationDetails.lastUpdated.ToString("yyyy-MM-ddTHH:mm:sszzz"),
                                 profile = new[]
                                 {
-                                    "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Organization-1"
+                                    "http://fhir.nhs.net/StructureDefinition/gpconnect-organization-1"
                                 }
                             },
                             identifier = new[]
@@ -210,7 +210,7 @@ namespace GP_Connect.FHIR_JSON
                     lastUpdated = organizationDetails.lastUpdated.ToString("yyyy-MM-ddTHH:mm:sszzz"),
                     profile = new[]
                                   {
-                                      "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Organization-1"
+                                      "http://fhir.nhs.net/StructureDefinition/gpconnect-organization-1"
                                   }
                                           },
                                           identifier = new[]

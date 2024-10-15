@@ -725,6 +725,44 @@ namespace GP_Connect.FHIR_JSON.AppointmentManagement
             return json;
         }
 
+        public dynamic InvalidResourceFoundWhenPastAppointmentAccessJSON(string text)
+        {
+            var operationOutcome = new
+            {
+                resourceType = "OperationOutcome",
+                meta = new
+                {
+                    profile = new[]
+            {
+                    "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1"
+                }
+                },
+                issue = new[]
+{
+                new
+                {
+                    severity = "error",
+                    code = "invalid",
+                    details = new
+                    {
+                        coding = new[]
+                        {
+                            new
+                            {
+                                system = "https://fhir.nhs.uk/STU3/CodeSystem/Spine-ErrorOrWarningCode-1",
+                                code = "INVALID_RESOURCE",
+                                display = "Submitted resource is not valid."
+                            }
+                        }
+                    },
+                    diagnostics = text
+                }
+            }
+            };
+            return operationOutcome;
+        }
+
+
         #endregion
     }
 }

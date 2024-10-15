@@ -4,7 +4,7 @@ namespace GP_Connect.Service.AccessRecordHTML
 {
     public interface IServiceAccessRecordHTML
     {
-        ResponseAccessHTML GetAccessHTMLRecord(RequestAccessHTMLDTO htmlDetails);
+        dynamic GetAccessHTMLRecord(RequestAccessHTMLDTO htmlDetails);
 
     }
 }
