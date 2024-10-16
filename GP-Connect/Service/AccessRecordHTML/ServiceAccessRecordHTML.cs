@@ -202,6 +202,13 @@ namespace GP_Connect.Service.AccessRecordHTML
                                 }
                             }
                         }
+                        else
+                        {
+                            if (htmlDetails.parameter[i].name == "timePeriod")
+                            {
+                                timePeriodExist = true;
+                            }
+                        }
                     }
                    
                 }
@@ -912,7 +919,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
-                            var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> "+ GPtransferBanner + " <h1>Encounters</h1><div class=\"date-banner\"> "+datefilterBanner+" <p>No 'Encounters' data is recorded for this patient.</p></div>";
+                            var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> "+ GPtransferBanner + " <h1>Encounters</h1>"+datefilterBanner+" <p>No 'Encounters' data is recorded for this patient.</p></div>";
                             var finalObj = CreateEncounterJSONByUsingRecord(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                             return finalObj;
                 }
@@ -964,7 +971,7 @@ namespace GP_Connect.Service.AccessRecordHTML
             }
             else if(encounterList.Count == 0)
             {
-                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ GPtransferBanner + " <div class=\"date-banner\"><p>No 'Encounters' data is recorded for this patient.</p></div>";
+                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ GPtransferBanner + datefilterBanner  + " <div class=\"date-banner\"><p>No 'Encounters' data is recorded for this patient.</p></div>";
             }
 
             return div;
@@ -1174,7 +1181,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 else
                 {
                   
-                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Problems and Issues</h1> <div><h2>Active Problems and Issues</h2> "+GPtransferBanner+ " <div class=\"date-banner\"><p>Date filter not applied</p></div><p>No 'Active Problems and Issues' data is recorded for this patient.</p></div><div><h2>Major Inactive Problems and Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Major Inactive Problems and Issues' data is recorded for this patient.</p></div><div><h2>Other Inactive Problems and Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Other Inactive Problems and Issues' data is recorded for this patient.</p></div></div>";
+                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\">"+GPtransferBanner+ datefilterBanner + "<h1>Problems and Issues</h1> <div><h2>Active Problems and Issues</h2>  <div class=\"date-banner\"><p>Date filter not applied</p></div><p>No 'Active Problems and Issues' data is recorded for this patient.</p></div><div><h2>Major Inactive Problems and Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Major Inactive Problems and Issues' data is recorded for this patient.</p></div><div><h2>Other Inactive Problems and Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Other Inactive Problems and Issues' data is recorded for this patient.</p></div></div>";
                         var finalObj = MakeProblemAndIssueCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                         return finalObj;
                     
@@ -1747,7 +1754,7 @@ namespace GP_Connect.Service.AccessRecordHTML
             {
                 
                     var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Observations</h1> "+GPtransferBanner+" <div class=\"date-banner\"> "+ datefilterBanner + " <p>No 'Observations' data is recorded for this patient.</p></div>";
-                    var finalObj = MakeReferralCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                    var finalObj = MakeObservationObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 
             }
@@ -3347,6 +3354,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     acuteMedicationDiv += "<td>" + item.DaysDuration + "</td>";
                     acuteMedicationDiv += "<td class=\"date-column\">" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
                     acuteMedicationDiv += "<td>" + item.AdditionalInformation + "</td>";
+                    acuteMedicationDiv += "</tr>";
                 }
             }
             return acuteMedicationDiv;
