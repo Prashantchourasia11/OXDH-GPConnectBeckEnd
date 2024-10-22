@@ -968,9 +968,9 @@ namespace GP_Connect.Controllers
          [FromHeader(Name = "Ssp-To")][Required] string SspTo = "918999198993",
          [FromHeader(Name = "Ssp-InteractionID")][Required] string SspInterctionId = "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1",
          [FromHeader(Name = "Authorization")][Required] string Authorization = "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM",
-         [FromQuery(Name = "start")] string start = "ge2024-08-20",
-         [FromQuery(Name = "end")] string end = "le2024-08-30",
-         [FromQuery(Name = "Status ")] string Status = "free",
+         [FromQuery(Name = "start")] string start = "2024-08-20",
+         [FromQuery(Name = "end")] string end = "2024-08-30",
+         [FromQuery(Name = "status ")] string status = "free",
          [FromQuery(Name = "_Include ")] string _Include = "Slot:schedule",
          [FromQuery(Name = "_include:recurse")] string _includerecurse = "--",
          [FromQuery(Name = "searchFilter")] string searchFilter = "--"
@@ -982,6 +982,10 @@ namespace GP_Connect.Controllers
                 var queryParams = QueryHelpers.ParseQuery(Request.QueryString.Value);
                 var ods = "";
                 var orgType = "";
+                status = queryParams.ContainsKey("status") ? queryParams["status"].ToString() : null;
+                start = queryParams.ContainsKey("start") ? queryParams["start"].ToString() : null;
+                end = queryParams.ContainsKey("end") ? queryParams["end"].ToString() : null;
+                _includerecurse = queryParams.ContainsKey("_include:recurse") ? queryParams["_include:recurse"].ToString() : null;
 
                 dynamic searchFilter1 = queryParams.ContainsKey("searchFilter") ? queryParams["searchFilter"].ToString() : "";
                 string[] searchFileters = searchFilter1.Split(',');
@@ -1008,15 +1012,55 @@ namespace GP_Connect.Controllers
                     }
                 }
 
-                var result = serviceAppointment.GetFreeSlot(start, end, Status, _Include, fullUrl,ods,orgType);
+                var result = serviceAppointment.GetFreeSlot(start, end, status, _Include, fullUrl,ods,orgType,_includerecurse);
 
 
-                return new JsonResult(result)
+
+                Response.Headers.Add("Cache-Control", "no-store");
+
+                if (result[1] != "")
+                {
+                    try { Response.Headers.Add("ETag", "W/\"" + result[1] + "\""); } catch (Exception) { }
+                }
+
+                if (result[2] == "404")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 404
+                    };
+                }
+                if (result[2] == "422")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 422
+                    };
+                }
+                if (result[2] == "400")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 400
+                    };
+                }
+                if (result[2] == "409")
+                {
+                    return new JsonResult(result[0])
+                    {
+                        ContentType = "application/fhir+json",
+                        StatusCode = 409
+                    };
+                }
+                return new JsonResult(result[0])
                 {
                     ContentType = "application/fhir+json",
                     StatusCode = 200
                 };
-              
+
             }
             catch (Exception ex)
             {

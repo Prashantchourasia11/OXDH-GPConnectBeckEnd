@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Swagger.Net;
 using System;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Policy;
 
@@ -42,19 +43,141 @@ namespace GP_Connect.Service.AppointmentManagement
 
         #region Method
 
-        public dynamic GetFreeSlot(string fromDate, string toDate, string status, string _include,string fullUrl,string ods,string orgType)
+        public dynamic GetFreeSlot(string fromDate, string toDate, string status, string _include,string fullUrl,string ods,string orgType,string _includerecurse)
         {
             try
             {
-                if(status == "free")
+                dynamic[] finaljson = new dynamic[3];
+                AppointmentByAppoIDDetails abai = new AppointmentByAppoIDDetails();
+
+                if(status == null)
+                {
+                    finaljson[0] = abai.BadRequestJSON("Status query is missing.");
+                    finaljson[1] = "";
+                    finaljson[2] = "400";
+                    return finaljson;
+                }
+                else if (status == "free")
                 {
                     status = "101";
                 }
-                fromDate = fromDate.Replace("ge", "");
-                toDate = toDate.Replace("le", "");
+                else
+                {
+                    finaljson[0] = abai.InvalidParameterJSON("Slot status must be free, can't search by :" +status);
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
 
+                if(fromDate == null)
+                {
+                    finaljson[0] = abai.BadRequestJSON("From date is missing.");
+                    finaljson[1] = "";
+                    finaljson[2] = "400";
+                    return finaljson;
+                }
 
-                var freeSlotxml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false' top='1000'>
+                if (toDate == null)
+                {
+                    finaljson[0] = abai.BadRequestJSON("To date is missing.");
+                    finaljson[1] = "";
+                    finaljson[2] = "400";
+                    return finaljson;
+                }
+
+                if (fromDate != "")
+                {
+                    if(fromDate.Contains("ge"))
+                    {
+                        fromDate = fromDate.Replace("ge", "");
+                        if(fromDate.Length < 10)
+                        {
+                            finaljson[0] = abai.InvalidParameterJSON("From date is invalid.");
+                            finaljson[1] = "";
+                            finaljson[2] = "422";
+                            return finaljson;
+                        }
+                        var checkerFromDate = ConvertToProperDateFormat(fromDate,"start");
+                        if (checkerFromDate == "Invalid_date_format")
+                        {
+                            finaljson[0] = abai.InvalidParameterJSON("From date is invalid.");
+                            finaljson[1] = "";
+                            finaljson[2] = "422";
+                            return finaljson;
+                        }
+                    }
+                    else
+                    {
+                        finaljson[0] = abai.InvalidParameterJSON("From date is invalid.");
+                        finaljson[1] = "";
+                        finaljson[2] = "422";
+                        return finaljson;
+                    }
+                }
+                else
+                {
+                    finaljson[0] = abai.InvalidParameterJSON("From date is invalid.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
+                if (toDate != "")
+                {
+                    if (toDate.Contains("le"))
+                    {
+                        toDate = toDate.Replace("le", "");
+                        var checkertoDate = ConvertToProperDateFormat(toDate, "start");
+                        if (checkertoDate == "Invalid_date_format")
+                        {
+                            finaljson[0] = abai.InvalidParameterJSON("To date is invalid.");
+                            finaljson[1] = "";
+                            finaljson[2] = "422";
+                            return finaljson;
+                        }
+                    }
+                    else
+                    {
+                        finaljson[0] = abai.InvalidParameterJSON("To date is invalid.");
+                        finaljson[1] = "";
+                        finaljson[2] = "422";
+                        return finaljson;
+                    }
+                }
+                else
+                {
+                    finaljson[0] = abai.InvalidParameterJSON("To date is invalid.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+
+             
+                if(DateTime.Parse(fromDate) > DateTime.Parse(toDate))
+                {
+                    finaljson[0] = abai.InvalidParameterJSON("From date is always less than to date.");
+                    finaljson[1] = "";
+                    finaljson[2] = "422";
+                    return finaljson;
+                }
+                else
+                {
+                    var totalDays = (DateTime.Parse(toDate) - DateTime.Parse(fromDate)).TotalDays;
+                    if(totalDays <= 14)
+                    {
+
+                    }
+                    else
+                    {
+                        finaljson[0] = abai.InvalidParameterJSON("The gap between the start date and the end date must not exceed 14 days.");
+                        finaljson[1] = "";
+                        finaljson[2] = "422";
+                        return finaljson;
+                    }
+                }
+                
+
+                var freeSlotxml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false' top='5000'>
                                      <entity name='msemr_slot'>
                                        <attribute name='msemr_slotid' />
                                        <attribute name='msemr_name' />
@@ -252,12 +375,39 @@ namespace GP_Connect.Service.AppointmentManagement
                 var locationJSON = GetGPLocationJSON(GPLocationIdUniqueValue);
                 var organizationJSON = GetOrganizationJSON(OrganizationIdUniqueValue);
 
+                if(_includerecurse != null)
+                {
+                    if(_includerecurse == "Schedule:actor:Practitioner,Schedule:actor:Location,Location:managingOrganization")
+                    {
+
+                    }
+                    else if(_includerecurse.Contains("Practitioner") && _includerecurse.Contains("Location"))
+                    {
+
+                    }
+                    else if(_includerecurse.Contains("Practitioner"))
+                    {
+                        locationJSON = "";
+                    }
+                    else if(_includerecurse.Contains("Location"))
+                    {
+                        practitionerJSON = "";
+                    }
+
+
+
+
+                }
+              
+
                 var result = CreateFinalJSONForSlot(slotListJSON, scheduleJSON, practitionerJSON, locationJSON, organizationJSON);
 
 
+                finaljson[0] = result;
+                finaljson[1] = "";
+                finaljson[2] = "200";
+                return finaljson;
 
-
-                return result; 
             }
             catch(Exception ex)
             {
@@ -1851,13 +2001,14 @@ namespace GP_Connect.Service.AppointmentManagement
                         foreach (var record in AnswerCollection.Entities)
                         {
                             AppointmentLocationDTO locationDetails = GetLocationDTO();
+                            locationDetails.resource.meta.profile[0] = "https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Location-1";
                             locationDetails.resource.id = record.Attributes.Contains("bcrm_gpcsequencenumber") ? record["bcrm_gpcsequencenumber"].ToString() : string.Empty;
                             locationDetails.resource.meta.versionId = record.Attributes.Contains("bcrm_gpc_versionid") ? record["bcrm_gpc_versionid"].ToString() : string.Empty;
                             locationDetails.resource.name = record.Attributes.Contains("bcrm_gpc_name") ? record["bcrm_gpc_name"].ToString() : string.Empty;
                             locationDetails.resource.address.line[0] = record.Attributes.Contains("bcrm_gpc_address_line") ? record["bcrm_gpc_address_line"].ToString() : string.Empty;
                             locationDetails.resource.address.postalCode = record.Attributes.Contains("bcrm_gpc_address_postalcode") ? record["bcrm_gpc_address_postalcode"].ToString() : string.Empty;
                             dynamic organizationId = record.Attributes.Contains("organization.bcrm_gpc_sequence_number") ? record["organization.bcrm_gpc_sequence_number"] : string.Empty;
-                            locationDetails.resource.managingOrganization.reference = "managingOrganization/" + organizationId.Value;
+                            locationDetails.resource.managingOrganization.reference = "Organization/" + organizationId.Value;
 
                             appointmentDetailsDTO.Add(locationDetails);
                         }
@@ -1938,14 +2089,14 @@ namespace GP_Connect.Service.AppointmentManagement
                 FinalJSONofSearchSlotDTO1 FinalJSONofSearchSlotDTO1 = new FinalJSONofSearchSlotDTO1();
                 FinalJSONofSearchSlotDTO1.resourceType = "Bundle";
                 FinalJSONofSearchSlotDTO1.type = "searchset";
-
+             
                 var slotJSON = JsonConvert.DeserializeObject<List<SlotDTO>>(slots);
                 var scheduleJSON = JsonConvert.DeserializeObject<List<ScheduleDTO>>(schedules);
-                var practitionerJSON = JsonConvert.DeserializeObject<List<AppointmentPractitionerDTO>>(practioners);
-                var locationJSON = JsonConvert.DeserializeObject<List<AppointmentLocationDTO>>(locations);
+                
+                
                 var organizationJSON = JsonConvert.DeserializeObject<List<AppointmentOrganizationDTO>>(organizations);
 
-                var totalObj = slotJSON.Count + scheduleJSON.Count + practitionerJSON.Count + locationJSON.Count + organizationJSON.Count;
+                // var totalObj = slotJSON.Count + scheduleJSON.Count + practitionerJSON.Count + locationJSON.Count + organizationJSON.Count;
 
                 List<object> mainList = new List<object>();
 
@@ -1957,14 +2108,25 @@ namespace GP_Connect.Service.AppointmentManagement
                 {
                     mainList.Add(scheduleJSON[i]);
                 }
-                for (int i = 0; i < practitionerJSON.Count; i++)
+
+                if(practioners != "")
                 {
-                    mainList.Add(practitionerJSON[i]);
+                    var practitionerJSON = JsonConvert.DeserializeObject<List<AppointmentPractitionerDTO>>(practioners);
+                    for (int i = 0; i < practitionerJSON.Count; i++)
+                    {
+                        mainList.Add(practitionerJSON[i]);
+                    }
                 }
-                for (int i = 0; i < locationJSON.Count; i++)
+                
+                if(locations != "")
                 {
-                    mainList.Add(locationJSON[i]);
+                    var locationJSON = JsonConvert.DeserializeObject<List<AppointmentLocationDTO>>(locations);
+                    for (int i = 0; i < locationJSON.Count; i++)
+                    {
+                        mainList.Add(locationJSON[i]);
+                    }
                 }
+               
                 for (int i = 0; i < organizationJSON.Count; i++)
                 {
                     mainList.Add(organizationJSON[i]);
@@ -2330,6 +2492,65 @@ namespace GP_Connect.Service.AppointmentManagement
             }
             return new EntityCollection();
         }
+
+
+        #region ConvertDateFormat
+
+        public static string ConvertToProperDateFormat(string inputDate, string type)
+        {
+            DateTime parsedDate;
+
+            // Define the different input formats
+            string[] dateFormats = {
+                                    
+                                      "yyyy-MM-ddTHH:mm:sszzz",   // Full date, time, and time zone offset (e.g., 2015-10-23T16:38:32+05:30)
+                                      "yyyy-MM-dd"
+                                  };
+
+            // Attempt to parse the input date with the formats provided
+            if (DateTime.TryParseExact(inputDate, dateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
+            {
+                if (type.ToLower() == "start")
+                {
+                    // Return the start of the provided date
+                    if (inputDate.Length == 4) // Year only
+                    {
+                        return new DateTime(parsedDate.Year, 1, 1).ToString("yyyy-MM-dd");
+                    }
+                    else if (inputDate.Length == 7) // Year and Month
+                    {
+                        return new DateTime(parsedDate.Year, parsedDate.Month, 1).ToString("yyyy-MM-dd");
+                    }
+                    else // Full date
+                    {
+                        return parsedDate.ToString("yyyy-MM-dd");
+                    }
+                }
+                else if (type.ToLower() == "end")
+                {
+                    // Return the end of the provided date
+                    if (inputDate.Length == 4) // Year only
+                    {
+                        return new DateTime(parsedDate.Year, 12, 31).ToString("yyyy-MM-dd");
+                    }
+                    else if (inputDate.Length == 7) // Year and Month
+                    {
+                        return new DateTime(parsedDate.Year, parsedDate.Month, DateTime.DaysInMonth(parsedDate.Year, parsedDate.Month)).ToString("yyyy-MM-dd");
+                    }
+                    else // Full date
+                    {
+                        return parsedDate.ToString("yyyy-MM-dd");
+                    }
+                }
+            }
+
+            // If parsing fails, return "Invalid_date_format"
+            return "Invalid_date_format";
+        }
+
+
+
+        #endregion
 
         #endregion
     }

@@ -763,6 +763,42 @@ namespace GP_Connect.FHIR_JSON.AppointmentManagement
             return operationOutcome;
         }
 
+        public dynamic BadRequestJSON(string text)
+        {
+            var operationOutcome = new
+            {
+                resourceType = "OperationOutcome",
+                meta = new
+                {
+                    profile = new[]
+            {
+                    "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1"
+                }
+                },
+                issue = new[]
+{
+                new
+                {
+                    severity = "error",
+                    code = "invalid",
+                    details = new
+                    {
+                        coding = new[]
+                        {
+                            new
+                            {
+                                system = "https://fhir.nhs.uk/STU3/CodeSystem/Spine-ErrorOrWarningCode-1",
+                                code = "BAD_REQUEST",
+                                display = "BAD_REQUEST"
+                            }
+                        }
+                    },
+                    diagnostics = text
+                }
+            }
+            };
+            return operationOutcome;
+        }
 
         #endregion
     }

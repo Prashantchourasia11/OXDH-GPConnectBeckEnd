@@ -75,7 +75,7 @@ namespace GP_Connect.Controllers
             try
             {
                
-                var res = sam.GetFreeSlot(Start, End, Status, _Include,"","","");
+                var res = sam.GetFreeSlot(Start, End, Status, _Include,"","","","");
                 return Ok(res);
             }
             catch (Exception ex)
