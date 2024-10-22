@@ -129,6 +129,7 @@ namespace GP_Connect.FHIR_JSON.AppointmentManagement
 
         public string GetJSONBYCancelAppointmentId(AppointmentByIdDTO appDetails)
         {
+
             var appointmentIdJson = @"{
                                ""resourceType"": ""Appointment"",
                                ""id"": """ + appDetails.appointmnetId + @""",
@@ -218,7 +219,7 @@ namespace GP_Connect.FHIR_JSON.AppointmentManagement
                                  }
                                ],
                                ""created"": """ + appDetails.createdOn.ToString("yyyy-MM-ddTHH:mm:sszzz") + @""",
-                               ""comment"": """ + appDetails.comments + @""",
+                               ""comment"": " + appDetails.comments + @",
                                ""participant"": [
                                  {
                                    ""actor"": {

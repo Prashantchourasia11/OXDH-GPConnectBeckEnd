@@ -134,21 +134,21 @@ namespace GP_Connect.Service.AppointmentManagement
 
                 if(AnswerCollection.Entities.Count > 0 && orgType != "")
                 {
-                    EntityCollection answerCollectionCorrect = new EntityCollection();
-                    foreach (var record in AnswerCollection.Entities)
-                    {
-                        if (record.Attributes.Contains("organisation.bcrm_clinictype"))
+                        EntityCollection answerCollectionCorrect = new EntityCollection();
+                        foreach (var record in AnswerCollection.Entities)
                         {
-                           
-                                    dynamic orType = record.Attributes.Contains("organisation.bcrm_clinictype") ? record.FormattedValues["organisation.bcrm_clinictype"].ToString().ToUpper() : "";
-                            if (orgType.ToString().ToUpper() == orType)
+                            if (record.Attributes.Contains("organisation.bcrm_clinictype"))
                             {
-                                answerCollectionCorrect.Entities.Add(record);
+
+                                dynamic orType = record.Attributes.Contains("organisation.bcrm_clinictype") ? record.FormattedValues["organisation.bcrm_clinictype"].ToString().ToUpper() : "";
+                                if (orgType.ToString().ToUpper() == orType)
+                                {
+                                    answerCollectionCorrect.Entities.Add(record);
+                                }
                             }
+
                         }
-                               
-                    }
-                    AnswerCollection = answerCollectionCorrect;
+                        AnswerCollection = answerCollectionCorrect;
                 }
 
                 if(AnswerCollection.Entities.Count > 50)
@@ -203,6 +203,16 @@ namespace GP_Connect.Service.AppointmentManagement
 
                         slotDetail.resource.extension[0].url = "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-GPConnect-DeliveryChannel-2";
                         slotDetail.resource.extension[0].valueCode = record.Attributes.Contains("bcrm_preferredcontactmethod") ? record.FormattedValues["bcrm_preferredcontactmethod"].ToString() : "";
+
+                        if(slotDetail.resource.extension[0].valueCode.Contains("Telephone"))
+                        {
+                            slotDetail.resource.extension[0].valueCode = "Telephone";
+                        }
+
+                        if (slotDetail.resource.extension[0].valueCode.Contains("Video"))
+                        {
+                            slotDetail.resource.extension[0].valueCode = "Video";
+                        }
 
                         dynamic service = record.Attributes.Contains("schedule.bcrm_service") ? record["schedule.bcrm_service"] : string.Empty;
                         slotDetail.resource.serviceType[0].text = service.Value.Name;
@@ -279,10 +289,13 @@ namespace GP_Connect.Service.AppointmentManagement
                 }
                 if (!BookAppointmentDTOString.Contains("\"resourceType\": \"Organization\""))
                 {
-                    finaljson[0] = abai.InvalidResourceFoundJSON("Booking organization object is mandatory object.");
-                    finaljson[1] = "";
-                    finaljson[2] = "422";
-                    return finaljson;
+                    if (!BookAppointmentDTOString.Contains("\"resourceType\":\"Organization\""))
+                    {
+                        finaljson[0] = abai.InvalidResourceFoundJSON("Booking organization object is mandatory object.");
+                        finaljson[1] = "";
+                        finaljson[2] = "422";
+                        return finaljson;
+                    }
                 }
 
                 if (BookAppointmentDTOString.Contains("http://hl7.org/fhir/stu3/valueset-c80-practice-codes"))
@@ -348,9 +361,9 @@ namespace GP_Connect.Service.AppointmentManagement
                     finaljson[2] = "422";
                     return finaljson;
                 }
-                if (bookAppointment.contained[0].name == null)
+                if (bookAppointment.contained[0].name == null || bookAppointment.contained[0].name == "")
                 {
-                    finaljson[0] = abai.InvalidResourceFoundJSON("Please check json may be start,end or status field is not present.");
+                    finaljson[0] = abai.InvalidResourceFoundJSON("Organization name should not be empty.");
                     finaljson[1] = "";
                     finaljson[2] = "422";
                     return finaljson;
@@ -595,6 +608,17 @@ namespace GP_Connect.Service.AppointmentManagement
                     appDetails.organizationType = record.Attributes.Contains("organisation.bcrm_clinictype") ? record.FormattedValues["organisation.bcrm_clinictype"].ToString() : "";
                     appDetails.DeleiveryChannel = record.Attributes.Contains("bcrm_preferredcontactmethod") ? record.FormattedValues["bcrm_preferredcontactmethod"].ToString() : "";
 
+                    if (appDetails.DeleiveryChannel.Contains("Telephone"))
+                    {
+                        appDetails.DeleiveryChannel = "Telephone";
+                    }
+
+                    if (appDetails.DeleiveryChannel.Contains("Video"))
+                    {
+                        appDetails.DeleiveryChannel = "Video";
+                    }
+
+
                     dynamic organizationSequence = record.Attributes.Contains("organisation.bcrm_gpc_sequence_number") ? record["organisation.bcrm_gpc_sequence_number"] : "";
                     appDetails.organizationId = organizationSequence.Value.ToString();
 
@@ -631,6 +655,15 @@ namespace GP_Connect.Service.AppointmentManagement
                         return finaljson;
                     }
 
+                    if(appDetails.comments == "")
+                    {
+                        appDetails.comments = null;
+                    }
+                    if (appDetails.Description == "")
+                    {
+                        appDetails.Description = null;
+                    }
+
                     AppointmentByAppoIDDetails app = new AppointmentByAppoIDDetails();
 
                     var result = "";
@@ -641,6 +674,16 @@ namespace GP_Connect.Service.AppointmentManagement
                     else
                     {
                         result = app.GetJSONBYAppointmentId(appDetails);
+                    }
+
+                    if (result.Contains("\"comment\": \"\""))
+                    {
+                       result =  result.Replace("\"comment\": \"\",", "");
+                    }
+
+                    if (result.Contains("\"description\": \"\""))
+                    {
+                        result = result.Replace("\"description\": \"\",", "");
                     }
 
                     var res = JsonConvert.DeserializeObject<AppointmentGetByReverseDTO>(result);

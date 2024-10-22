@@ -674,7 +674,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     var activeAllergyDiv = makeActiveAllergyList(allergyList);
                     var inActiveAllergyDiv = makeInActiveAllergyList(allergyList);
 
-                    var finalAllergyString = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Allergies and Adverse Reactions</h1> " + GPtransferBanner + " <div> <p> Content banner </p> </div> <div> <h2>Current Allergies and Adverse Reactions</h2> <div> <p> Content banner </p> </div> <div> <p> Exclusion banner </p> </div> <table id=\"all-tab-curr\"> <thead> <tr> <th>Start Date</th> <th>Details</th> </tr> </thead> <tbody> " + activeAllergyDiv + " </tbody>  </table> </div> <div> <h2>Historical Allergies and Adverse Reactions</h2> <div> <p> Content banner </p> </div> <div> <p> Exclusion banner </p> </div> <table id=\"all-tab-hist\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Details</th> </tr> </thead> <tbody> " + inActiveAllergyDiv + " </tbody> </table> </div> </div>";
+                    var finalAllergyString = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Allergies and Adverse Reactions</h1> " + GPtransferBanner + " <div> <h2>Current Allergies and Adverse Reactions</h2>  <div> <p> Exclusion banner </p> </div> <table id=\"all-tab-curr\"> <thead> <tr> <th>Start Date</th> <th>Details</th> </tr> </thead> <tbody> " + activeAllergyDiv + " </tbody>  </table> </div> <div> <h2>Historical Allergies and Adverse Reactions</h2>  <div> <p> Exclusion banner </p> </div> <table id=\"all-tab-hist\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Details</th> </tr> </thead> <tbody> " + inActiveAllergyDiv + " </tbody> </table> </div> </div>";
 
                     var allergyJSON = MakeAllergyCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, finalAllergyString);
                     return allergyJSON;
@@ -919,7 +919,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
-                            var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> "+ GPtransferBanner + " <h1>Encounters</h1>"+datefilterBanner+" <p>No 'Encounters' data is recorded for this patient.</p></div>";
+                            var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> "+ GPtransferBanner + " <h1>Encounters</h1>"+datefilterBanner+ " <div class=\"content-banner\"><p> This content is already checked by clinician  </p> </div>  <p>No 'Encounters' data is recorded for this patient.</p></div>";
                             var finalObj = CreateEncounterJSONByUsingRecord(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                             return finalObj;
                 }
@@ -963,7 +963,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 tableTD += "</tr>";
             }
 
-            string div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Encounters</h1> "+ GPtransferBanner + " <div class=\"content-banner\"> <p> Content banner </p> </div>  " + datefilterBanner+" <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> " + tableTD + "  </tbody> </table> </div> ";
+            string div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Encounters</h1> "+ GPtransferBanner + datefilterBanner+"  <table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> " + tableTD + "  </tbody> </table> </div> ";
            
             if(encounterList.Count == 0 && startDate != "" && endDate != "")
             {
@@ -971,7 +971,7 @@ namespace GP_Connect.Service.AccessRecordHTML
             }
             else if(encounterList.Count == 0)
             {
-                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ GPtransferBanner + datefilterBanner  + " <div class=\"date-banner\"><p>No 'Encounters' data is recorded for this patient.</p></div>";
+                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ GPtransferBanner + datefilterBanner  + " <div class=\"content-banner\"><p> This content is already checked by clinician  </p> </div> <div class=\"date-banner\"><p>No 'Encounters' data is recorded for this patient.</p></div>";
             }
 
             return div;
@@ -1173,7 +1173,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                         otherInavtiveString = "<p>No 'Other Inactive Problems and Issues' data is recorded for this patient.</p";
                     }
 
-                    var finalDiv = "<div> <h1>Problems and Issues</h1> "+ GPtransferBanner + " <div class=\"content-banner\"> <p> Content banner </p> </div> <div> <h2>Active Problems and Issues</h2> <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"date-banner\"><p>Date filter not applied</p></div>  <table id=\"prb-tab-act\"> <thead> <tr> <th>Start Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ activeProbString + " </tbody> </table> </div> <div> <h2>Major Inactive Problems and Issues</h2> <div class=\"content-banner\"> <p> Content banner </p> </div> "+datefilterBanner+"  <table id=\"prb-tab-majinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ majorInactiveString + " </tbody> </table> </div> <div> <h2>Other Inactive Problems and Issues</h2> <div class=\"content-banner\"> <p> Content banner </p> </div> "+datefilterBanner+" <table id=\"prb-tab-othinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ otherInavtiveString + "  </tbody> </table> </div> </div>";
+                    var finalDiv = "<div> <h1>Problems and Issues</h1> "+ GPtransferBanner + " <div> <h2>Active Problems and Issues</h2> <div class=\"date-banner\"><p>Date filter not applied</p></div>  <table id=\"prb-tab-act\"> <thead> <tr> <th>Start Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ activeProbString + " </tbody> </table> </div> <div> <h2>Major Inactive Problems and Issues</h2>  "+datefilterBanner+"  <table id=\"prb-tab-majinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ majorInactiveString + " </tbody> </table> </div> <div> <h2>Other Inactive Problems and Issues</h2>  "+datefilterBanner+" <table id=\"prb-tab-othinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ otherInavtiveString + "  </tbody> </table> </div> </div>";
                     var res = MakeProblemAndIssueCompositionObject(patientSequenceNumber,organizationSequenceNumber,organizationName,finalDiv);
                     return res;
 
@@ -1522,14 +1522,14 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if(referralList.Count > 0)
                 {
                     var res = makeReferralDiv(referralList);
-                    var htmlcontent = "<div> <h1>Referrals</h1> "+datefilterBanner+ GPtransferBanner + "  <div class=\"content-banner\"> <p> Content banner </p> </div>  <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"ref-tab\"> <thead> <tr> <th>Date</th> <th>From</th> <th>To</th> <th>Priority</th> <th>Details</th> </tr> </thead> <tbody> " + res+" </tbody> </table> </div>";
+                    var htmlcontent = "<div> <h1>Referrals</h1> "+GPtransferBanner + datefilterBanner + "   <table id=\"ref-tab\"> <thead> <tr> <th>Date</th> <th>From</th> <th>To</th> <th>Priority</th> <th>Details</th> </tr> </thead> <tbody> " + res+" </tbody> </table> </div>";
                     var finalObj = MakeReferralCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 }
                 else
                 {
                     
-                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Referrals</h1>  "+datefilterBanner+ GPtransferBanner +" <div class=\"date-banner\"> <p>No 'Referrals' data is recorded for this patient.</p></div>";
+                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Referrals</h1>  "+ GPtransferBanner + datefilterBanner + " <div class=\"date-banner\"> <p>No 'Referrals' data is recorded for this patient.</p></div>";
                         var finalObj = MakeReferralCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                         return finalObj;
                     
@@ -1744,7 +1744,7 @@ namespace GP_Connect.Service.AccessRecordHTML
             if (observationList.Count > 0)
             {
                var res = makeObservationhtmlContents(observationList);
-               var htmlContent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Observations</h1> " + GPtransferBanner+" <div class=\"content-banner\"> <p> Content banner </p> </div> "+datefilterBanner+" <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"obs-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Value</th> <th>Range</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
+               var htmlContent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Observations</h1> " + GPtransferBanner + datefilterBanner+"  <table id=\"obs-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Value</th> <th>Range</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
 
                var finalObj = MakeObservationObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlContent);
                return finalObj;
@@ -1933,13 +1933,13 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if(immunizationList.Count > 0)
                 {
                     var res = makeImmunizationHtmlContent(immunizationList);
-                    var htmlContent = "<div> <h1>Immunisations</h1> "+GPtransferBanner+" <div class=\"content-banner\"> <p> Content banner </p> </div> <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"imm-tab\"> <thead> <tr> <th>Date</th> <th>Vaccination</th> <th>Part</th> <th>Contents</th> <th>Details</th> </tr> </thead> <tbody> "+ res + " </tbody> </table> </div>";    
+                    var htmlContent = "<div> <h1>Immunisations</h1> "+GPtransferBanner+"  <table id=\"imm-tab\"> <thead> <tr> <th>Date</th> <th>Vaccination</th> <th>Part</th> <th>Contents</th> <th>Details</th> </tr> </thead> <tbody> "+ res + " </tbody> </table> </div>";    
                     var finalObj = MakeImmunizationCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlContent);
                     return finalObj;
                 }
                 else
                 {
-                    var htmlContent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Immunisations</h1> "+GPtransferBanner+" <p>No 'Immunisations' data is recorded for this patient.</p></div>";
+                    var htmlContent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Immunisations</h1> "+GPtransferBanner+ " <div class=\"exclusion-banner\"> <p> Items excluded due to confidentiality and/or patient preferences. </p> </div> <p>No 'Immunisations' data is recorded for this patient.</p></div>";
                     var finalObj = MakeImmunizationCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlContent);
                     return finalObj;
                 }
@@ -2150,7 +2150,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if (administractorList.Count > 0)
                 {
                     var res = MakeAdministractorDiv(administractorList);
-                    var htmlcontent = "<div> <h1>Administrative Items</h1> "+ datefilterBanner + "  <div class=\"content-banner\"> <p> Content banner </p> </div> "+ GPtransferBanner + " <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"adm-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
+                    var htmlcontent = "<div> <h1>Administrative Items</h1> "+ datefilterBanner +  GPtransferBanner + "  <table id=\"adm-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
                     //  var htmlcontent = "<div> <h1>Administrative Items</h1>  "+ datefilterBanner + " <table id=\"adm-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> " + res + " </tbody> </table> </div>";
                    // var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Administrative Items</h1>"+datefilterBanner+"<table id=\"adm-tab\"><thead><tr><th>Date</th><th>Entry</th><th>Details</th></tr></thead><tbody>"+res+"</tbody></table></div>";
                     var finalObj = MakeAdministractorCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
@@ -2360,7 +2360,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if (clinicalItemList.Count > 0)
                 {
                     var res = makehtmlcontentofclinicalitems(clinicalItemList);
-                    var htmlcontent = "<div> <h1>Clinical Items</h1> "+ GPtransferBanner +" <div class=\"content-banner\"> <p> Content banner </p> </div> "+ datefilterBanner + " <div class=\"exclusion-banner\"> <p> Exclusion banner </p> </div> <table id=\"cli-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
+                    var htmlcontent = "<div> <h1>Clinical Items</h1> "+ GPtransferBanner + datefilterBanner + " <div class=\"exclusion-banner\"> <p> </p> </div> <table id=\"cli-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
                     var finalObj = MakeClinicalItemCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 }
@@ -2662,15 +2662,15 @@ namespace GP_Connect.Service.AccessRecordHTML
 
                 foreach (var item in medicationList) 
                 {
-                  if(item.startDate >= DateTime.Now.AddYears(-1) && item.startDate <= DateTime.Now && item.type.ToLower().ToString() == "acute")
+                  if(item.startDate.AddDays(-1) >= DateTime.Now.AddYears(-1) && item.startDate <= DateTime.Now && item.type.ToLower().ToString() == "acute")
                     {
                         acuteMedicationDiv += "<tr>";
                         acuteMedicationDiv += "<td>" + item.type + "</td>";
-                        acuteMedicationDiv += "<td  class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                        acuteMedicationDiv += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
                         acuteMedicationDiv += "<td>" + item.MedicationItem + "</td>";
                         acuteMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
                         acuteMedicationDiv += "<td>" + item.Quantity + "</td>";
-                        acuteMedicationDiv += "<td>" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
+                        acuteMedicationDiv += "<td class=\"date-column\">" + (item.endDate.Year == 1 ? "" : item.endDate.ToString("dd-MMM-yyyy")) + "</td>";
                         acuteMedicationDiv += "<td>" + item.DaysDuration + "</td>";
                         acuteMedicationDiv += "<td><b>" + item.AdditionalInformation + "</b></td>";
                         acuteMedicationDiv += "</tr>";
@@ -2679,14 +2679,14 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         repeatMedicationDiv += "<tr>";
                         repeatMedicationDiv += "<td>" + item.type + "</td>";
-                        repeatMedicationDiv += "<td  class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                        repeatMedicationDiv += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
                         repeatMedicationDiv += "<td>" + item.MedicationItem + "</td>";
                         repeatMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
                         repeatMedicationDiv += "<td>" + item.Quantity + "</td>";
-                        repeatMedicationDiv += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                        repeatMedicationDiv += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
                         repeatMedicationDiv += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
                         repeatMedicationDiv += "<td>" + item.MaxIssues + "</td>";
-                        repeatMedicationDiv += "<td class=\"date-column\">" + item.ReviewDate.ToString("dd-MMM-yyyy") + "</td>";
+                        repeatMedicationDiv += "<td class=\"date-column\">" + (item.ReviewDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.ReviewDate.ToString("dd-MMM-yyyy")) + "</td>";
                         repeatMedicationDiv += "<td><b>" + item.AdditionalInformation + "</b></td>";
                         repeatMedicationDiv += "</tr>";
                     }
@@ -2694,11 +2694,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         discountinuedReapeatMedication += "<tr>";
                         discountinuedReapeatMedication += "<td>" + item.type + "</td>";
-                        discountinuedReapeatMedication += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                        discountinuedReapeatMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
                         discountinuedReapeatMedication += "<td>" + item.MedicationItem + "</td>";
                         discountinuedReapeatMedication += "<td>" + item.DosageInstruction + "</td>";
                         discountinuedReapeatMedication += "<td>" + item.Quantity + "</td>";
-                        discountinuedReapeatMedication += "<td class=\"date-column\">" + item.DiscountinuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                        discountinuedReapeatMedication += "<td class=\"date-column\">" + (item.DiscountinuedDate.Year == 1 ? "" : item.DiscountinuedDate.ToString("dd-MMM-yyyy")) + "</td>";
                         discountinuedReapeatMedication += "<td>" + item.DiscountinuedReason + "</td>";
                         discountinuedReapeatMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
                         discountinuedReapeatMedication += "</tr>";
@@ -2714,11 +2714,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                             allMedication += "</tr>";
                             allMedication += "<tr>";
                             allMedication += "<td>" + item.type + "</td>";
-                            allMedication += "<td  class=\"date-column\"> " + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allMedication += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
                             allMedication += "<td>" + item.MedicationItem + "</td>";
                             allMedication += "<td>" + item.DosageInstruction + "</td>";
                             allMedication += "<td>" + item.Quantity + "</td>";
-                            allMedication += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
                             allMedication += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
                             allMedication += "<td>" + item.DiscountinuedReason + "</td>";
                             allMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
@@ -2734,11 +2734,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                             allMedication += "</tr>";
                             allMedication += "<tr>";
                             allMedication += "<td>" + item.type + "</td>";
-                            allMedication += "<td  class=\"date-column\"> " + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allMedication += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
                             allMedication += "<td>" + item.MedicationItem + "</td>";
                             allMedication += "<td>" + item.DosageInstruction + "</td>";
                             allMedication += "<td>" + item.Quantity + "</td>";
-                            allMedication += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
                             allMedication += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
                             allMedication += "<td>" + item.DiscountinuedReason + "</td>";
                             allMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
@@ -2748,7 +2748,7 @@ namespace GP_Connect.Service.AccessRecordHTML
 
                     if (startDate != "" && endDate != "")
                     {
-                        if (item.LastIssuedDate.ToString() != "01-01-0001 00:00:00" && item.DiscountinuedReason != string.Empty && item.startDate > DateTime.Parse(startDate) && item.startDate < DateTime.Parse(endDate))
+                        if (!item.LastIssuedDate.ToString().Contains("0001") && item.DiscountinuedReason != string.Empty && item.startDate > DateTime.Parse(startDate) && item.startDate < DateTime.Parse(endDate))
                         {
                             allmedicationIssue += "<tr>";
                             allmedicationIssue += "<td colspan='7' class='med-item-column'><strong>" + item.MedicationItem + "</strong></td>";
@@ -2756,11 +2756,10 @@ namespace GP_Connect.Service.AccessRecordHTML
 
                             allmedicationIssue += "<tr>";
                             allmedicationIssue += "<td>" + item.type + "</td>";
-                            allmedicationIssue += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allmedicationIssue += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
                             allmedicationIssue += "<td>" + item.MedicationItem + "</td>";
                             allmedicationIssue += "<td>" + item.DosageInstruction + "</td>";
                             allmedicationIssue += "<td>" + item.Quantity + "</td>";
-                            allmedicationIssue += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
                             allmedicationIssue += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
                             allmedicationIssue += "<td>" + item.DiscountinuedReason + "</td>";
                             allmedicationIssue += "<td><b>" + item.AdditionalInformation + "</b></td>";
@@ -2769,7 +2768,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     }
                     else
                     {
-                        if (item.LastIssuedDate.ToString() != "01-01-0001 00:00:00" && item.DiscountinuedReason != string.Empty)
+                        if (!item.LastIssuedDate.ToString().Contains("0001") && item.DiscountinuedReason != string.Empty)
                         {
                             allmedicationIssue += "<tr>";
                             allmedicationIssue += "<td colspan='7' class='med-item-column'><strong>" + item.MedicationItem + "</strong></td>";
@@ -2777,13 +2776,11 @@ namespace GP_Connect.Service.AccessRecordHTML
 
                             allmedicationIssue += "<tr>";
                             allmedicationIssue += "<td>" + item.type + "</td>";
-                            allmedicationIssue += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
+                            allmedicationIssue += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
                             allmedicationIssue += "<td>" + item.MedicationItem + "</td>";
                             allmedicationIssue += "<td>" + item.DosageInstruction + "</td>";
                             allmedicationIssue += "<td>" + item.Quantity + "</td>";
-                            allmedicationIssue += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
-                            allmedicationIssue += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
-                            allmedicationIssue += "<td>" + item.DiscountinuedReason + "</td>";
+                            allmedicationIssue += "<td>" + item.DaysDuration + "</td>";
                             allmedicationIssue += "<td><b>" + item.AdditionalInformation + "</b></td>";
                             allmedicationIssue += "</tr>";
                         }
@@ -2809,7 +2806,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
-                    repeatMedicationDivTable = "<table id=\"med-tab-curr-rep\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Max Issues</th> <th>Review Date</th> <th>Additional Information</th> </tr> </thead> <tbody> " + repeatMedicationDiv+" </tbody> </table><p>No 'Current Repeat Medication' data is recorded for this patient.</p>";
+                    repeatMedicationDivTable = "<table id=\"med-tab-curr-rep\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Max Issues</th> <th>Review Date</th> <th>Additional Information</th> </tr> </thead> <tbody> " + repeatMedicationDiv+" </tbody> </table>";
                 }
 
 
@@ -2849,8 +2846,8 @@ namespace GP_Connect.Service.AccessRecordHTML
 
 
                 var htmlcontent = "<div> <h1>Medications</h1> <div> "+ GPtransferBanner + " <h2>Acute Medication (Last 12 Months)</h2> " + bannerNotAppliedDefined  + acuteMedicationDivTable + "</div>" +
-                    "<div> <h2>Current Repeat Medication</h2> " + bannerNotAppliedDefined  + " <div class=\"content-banner\">  <p> The Review Date is that set for each Repeat Course. Reviews may be conducted according to a diary event which differs from the dates shown </p> </div> " + repeatMedicationDivTable+" </div> " +
-                    "<div> <h2>Discontinued Repeat Medication</h2> " + bannerNotAppliedDefined + " <div class=\"content-banner\"> <p>All repeat medication ended by a clinician action</p> <p> All repeat medication ended by a clinician action </p>  </div> " + discountinuedReapeatMedicationTable+" </div> " +
+                    "<div> <h2>Current Repeat Medication</h2> " + bannerNotAppliedDefined  + " <div class=\"content-banner\">  <p> The Review Date is that set for each Repeat Course. Reviews may be conducted according to a diary event which differs from the dates shown </p> </div>  <div class=\"exclusion-banner\"> <p> Items excluded due to confidentiality and/or patient preferences. </p> </div>" + repeatMedicationDivTable+" </div> " +
+                    "<div> <h2>Discontinued Repeat Medication</h2> " + bannerNotAppliedDefined + " <div class=\"content-banner\"> <p> All repeat medication ended by a clinician action </p>  </div> " + discountinuedReapeatMedicationTable+" </div> " +
                     "<div> <h2>All Medication</h2> "+datefilterBanner+ allMedicationTable+ "  </div>" +
                     "<div> <h2>All Medication Issues</h2> "+datefilterBanner+ allmedicationIssueTable + " </div> </div>";
  
@@ -3077,8 +3074,7 @@ namespace GP_Connect.Service.AccessRecordHTML
 
                     var finalhtmlcontentofsummary = "<div> <h1>Summary</h1> "+GPtransferBanner+" <div> <h2>Emergency Codes</h2> "+ emergenercyTableHtml + "  </div> <div> <h2>Last 3 Encounters</h2> " + encounterlasthtml + "  </div> <div> <h2>Active Problems and Issues</h2> " + activeProblemhtml + " </div> <div> <h2>Major Inactive Problems and Issues</h2> "+ manjorInavtiveProblemhtml + "  </div> <div> <h2>Current Allergies and Adverse Reactions</h2> "+ currentallergyandadversehtml+ " </div> <div> <h2>Acute Medication (Last 12 Months)</h2> " + acutemedicationhtml + " </div> <div> <h2>Current Repeat Medication</h2> "+ currentrepeatmedicatipon + " </div> </div>";
 
-                 //   var checkdemo = "<div> <h1>Summary</h1> <div> <h2>Emergency Codes</h2> <div class=\"content-banner\"> <p>This section is enabled in response to a national health event to highlight specific codes from across the patient record, further details may be available in other parts of the record.</p> </div> <table id=\"cli-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> <th>Location of further information</th> </tr> </thead> <tbody> <tr> <td>10-Jul-2024</td> <td>Severe acute respiratory syndrome coronavirus 2 detected (finding)</td> <td>This is big problem.</td> <td>Problems and Issues</td> </tr> </tbody> </table> </div> <div> <h2>Last 3 Encounters</h2> <div class=\"gptransfer-banner\"> <p>This is transfer banner GP2GP. written by OXDH.</p> </div> <div class=\"content-banner\"> <p>This is content banner written by OXDH.</p> </div> <div class=\"date-banner\"> <p>This is date banner written by OXDH.</p> </div> <div class=\"exclusion-banner\"> <p>This is exclusive banner written by OXDH.</p> </div> <table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> <tr> <td>07-Jun-2016</td> <td>Dianna Lancaster - Patient Encounter</td> <td>Encounter with patient</td> </tr> </tbody> </table> </div> <div> <h2>Active Problems and Issues</h2> <div class=\"content-banner\"> <p>This is content banner written by OXDH.</p> </div> <div class=\"date-banner\"> <p>This is date banner written by OXDH.</p> </div> <div class=\"exclusion-banner\"> <p>This is exclusive banner written by OXDH.</p> </div> <table id=\"prb-tab-act\"> <thead> <tr> <th>Start Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> <tr> <td>01-Jun-2017</td> <td>Past Medical History</td> <td>Minor</td> <td></td> </tr> </tbody> </table> </div> <div> <h2>Major Inactive Problems and Issues</h2> <table id=\"prb-tab-majinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> <tr> <td>11-Jun-2015</td> <td>08-Oct-2015</td> <td>Urinary tract infectious disease (disorder)</td> <td>Major</td> <td></td> </tr> </tbody> </table> </div> <div> <h2>Current Allergies and Adverse Reactions</h2> <div class=\"content-banner\"> <p>This is content banner written by OXDH.</p> </div> <div class=\"exclusion-banner\"> <p>This is exclusive banner written by OXDH.</p> </div> <table id=\"all-tab-curr\"> <thead> <tr> <th>Start Date</th> <th>Details</th> </tr> </thead> <tbody> <tr> <td>28-May-2024</td> <td>Allergy to nut</td> </tr> </tbody> </table> </div> <div> <h2>Acute Medication (Last 12 Months)</h2> <div> <p>Scheduled End Date is not always captured in the source; where it was not recorded, the displayed date is calculated from start date and days duration.</p> </div> <table id=\"med-tab-acu-med\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Scheduled End Date</th> <th>Days Duration</th> <th>Additional Information</th> </tr> </thead> <tbody> </tbody> </table> </div> <div> <h2>Current Repeat Medication</h2> <div class=\"content-banner\"> <p>This is content banner written by OXDH.</p> </div> <div class=\"exclusion-banner\"> <p>This is exclusive banner written by OXDH.</p> </div> <table id=\"med-tab-curr-rep\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Max Issues</th> <th>Review Date</th> <th>Additional Information</th> </tr> </thead> <tbody> <tr> <td>Repeat</td> <td>07-Oct-2015</td> <td>Acetylcysteine 600mg tablets | 41980111000001109</td> <td>5 Oral tablet 1 times a Day for 10 Days</td> <td>50</td> <td>01-Jan-0001</td> <td>1</td> <td></td> <td>01-Jan-0001</td> <td></td> </tr> </tbody> </table> </div> </div>";
-
+                
                     var finalObj = MakeSummaryCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, finalhtmlcontentofsummary);
                     return finalObj;
                 }

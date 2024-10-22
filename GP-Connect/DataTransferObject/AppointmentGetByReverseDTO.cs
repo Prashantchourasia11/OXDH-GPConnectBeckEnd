@@ -1,4 +1,6 @@
-﻿namespace GP_Connect.DataTransferObject
+﻿using System.Text.Json.Serialization;
+
+namespace GP_Connect.DataTransferObject
 {
 
     public class AppointmentGetByReverseDTOActor
@@ -70,14 +72,21 @@
         public string status { get; set; }
         public AppointmentGetByReverseDTOServiceCategory serviceCategory { get; set; }
         public List<AppointmentGetByReverseDTOServiceType> serviceType { get; set; }
-        public string description { get; set; }
+        
         public DateTime start { get; set; }
         public DateTime end { get; set; }
         public List<AppointmentGetByReverseDTOSlot> slot { get; set; }
         public DateTime created { get; set; }
-        public string comment { get; set; }
+
         public List<AppointmentGetByReverseDTOParticipant> participant { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string comment { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string description { get; set; }
     }
+
 
     public class AppointmentGetByReverseDTOServiceCategory
     {
@@ -154,5 +163,21 @@
         public string url { get; set; }
         public string valueString { get; set; }
     }
-
+    public class AppointmentGetByReverseWithoutCommentsDTO
+    {
+        public string resourceType { get; set; }
+        public string id { get; set; }
+        public AppointmentGetByReverseDTOMeta meta { get; set; }
+        public List<AppointmentGetByReverseDTOContained> contained { get; set; }
+        public List<object> extension { get; set; }
+        public string status { get; set; }
+        public AppointmentGetByReverseDTOServiceCategory serviceCategory { get; set; }
+        public List<AppointmentGetByReverseDTOServiceType> serviceType { get; set; }
+        public string description { get; set; }
+        public DateTime start { get; set; }
+        public DateTime end { get; set; }
+        public List<AppointmentGetByReverseDTOSlot> slot { get; set; }
+        public DateTime created { get; set; }
+        public List<AppointmentGetByReverseDTOParticipant> participant { get; set; }
+    }
 }
