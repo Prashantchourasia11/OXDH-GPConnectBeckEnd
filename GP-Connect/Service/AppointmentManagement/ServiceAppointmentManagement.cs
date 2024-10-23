@@ -1330,22 +1330,29 @@ namespace GP_Connect.Service.AppointmentManagement
 
                     if (bookAppointment.comment != "")
                     { 
-                        if (comments.ToString().ToLower() != bookAppointment.comment.ToString().ToLower())
+                        if(bookAppointment.comment != null)
                         {
-                            finaljson[0] = abai.InvalidResourceFoundJSON("You can't be update comment");
-                            finaljson[1] = "";
-                            finaljson[2] = "422";
-                            return finaljson;
+                            if (comments.ToString().ToLower() != bookAppointment.comment.ToString().ToLower())
+                            {
+                                finaljson[0] = abai.InvalidResourceFoundJSON("You can't be update comment");
+                                finaljson[1] = "";
+                                finaljson[2] = "422";
+                                return finaljson;
+                            }
                         }
+                      
                     }
                     if (bookAppointment.description != "")
                     {
-                        if (description.ToString().ToLower() != bookAppointment.description.ToString().ToLower())
+                        if (bookAppointment.description != null)
                         {
-                            finaljson[0] = abai.InvalidResourceFoundJSON("You can't be update description");
-                            finaljson[1] = "";
-                            finaljson[2] = "422";
-                            return finaljson;
+                            if (description.ToString().ToLower() != bookAppointment.description.ToString().ToLower())
+                            {
+                                finaljson[0] = abai.InvalidResourceFoundJSON("You can't be update description");
+                                finaljson[1] = "";
+                                finaljson[2] = "422";
+                                return finaljson;
+                            }
                         }
                     }
                     if (record.Attributes.Contains("scheduledstart"))
