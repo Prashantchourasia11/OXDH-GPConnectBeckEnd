@@ -1191,21 +1191,28 @@ namespace GP_Connect.Service.AppointmentManagement
                             var comments = bookAppointment.comment;
                             var description = bookAppointment.description;
                             var updatedversion = int.Parse(versionNumber) + 1;
-                            if(comments.Length > 499)
+                            if(comments != null)
                             {
-                                finaljson[0] = abai.InvalidResourceFoundJSON("Comments too long");
-                                finaljson[1] = versionNumber;
-                                finaljson[2] = "422";
-                                return finaljson;
+                                if (comments.Length > 499)
+                                {
+                                    finaljson[0] = abai.InvalidResourceFoundJSON("Comments too long");
+                                    finaljson[1] = versionNumber;
+                                    finaljson[2] = "422";
+                                    return finaljson;
+                                }
                             }
-
-                            if(description.Length > 100)
+                            
+                            if(description != null)
                             {
-                                finaljson[0] = abai.InvalidResourceFoundJSON("Description too long.");
-                                finaljson[1] = versionNumber;
-                                finaljson[2] = "422";
-                                return finaljson;
+                                if (description.Length > 100)
+                                {
+                                    finaljson[0] = abai.InvalidResourceFoundJSON("Description too long.");
+                                    finaljson[1] = versionNumber;
+                                    finaljson[2] = "422";
+                                    return finaljson;
+                                }
                             }
+                           
 
                             Entity GPConnectAppointment = new Entity("appointment", new Guid(appLookup));
                             GPConnectAppointment["bcrm_notes"] = comments;
