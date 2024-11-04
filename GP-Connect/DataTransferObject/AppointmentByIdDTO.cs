@@ -29,5 +29,7 @@
 
         public string CancellationReson {  get; set; }  
 
+        public string slotList { get; set; }    
+
     }
 }

@@ -32,6 +32,15 @@ namespace GP_Connect.DataTransferObject
         public List<AppointmentGetByReverseDTOTelecom> telecom { get; set; }
     }
 
+    public class AppointmentGetByReverseDTOContainedNotIncludeType
+    {
+        public string resourceType { get; set; }
+        public string id { get; set; }
+        public AppointmentGetByReverseDTOContainetMeta meta { get; set; }
+        public List<AppointmentGetByReverseDTOIdentifier> identifier { get; set; }
+        public string name { get; set; }
+        public List<AppointmentGetByReverseDTOTelecom> telecom { get; set; }
+    }
 
 
     public class AppointmentGetByReverseDTOExtension
@@ -163,21 +172,28 @@ namespace GP_Connect.DataTransferObject
         public string url { get; set; }
         public string valueString { get; set; }
     }
-    public class AppointmentGetByReverseWithoutCommentsDTO
+    public class AppointmentGetByReverseDTOWithoutType
     {
         public string resourceType { get; set; }
         public string id { get; set; }
         public AppointmentGetByReverseDTOMeta meta { get; set; }
-        public List<AppointmentGetByReverseDTOContained> contained { get; set; }
+        public List<AppointmentGetByReverseDTOContainedNotIncludeType> contained { get; set; }
         public List<object> extension { get; set; }
         public string status { get; set; }
         public AppointmentGetByReverseDTOServiceCategory serviceCategory { get; set; }
         public List<AppointmentGetByReverseDTOServiceType> serviceType { get; set; }
-        public string description { get; set; }
+
         public DateTime start { get; set; }
         public DateTime end { get; set; }
         public List<AppointmentGetByReverseDTOSlot> slot { get; set; }
         public DateTime created { get; set; }
+
         public List<AppointmentGetByReverseDTOParticipant> participant { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string comment { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string description { get; set; }
     }
 }
