@@ -79,7 +79,7 @@ namespace GP_Connect.FHIR_JSON.AccessHTML
             return operationOutcome;
         }
 
-        public dynamic INVALIDCONTENTJSON(string text)
+        public dynamic BADREQUESTJSON(string text)
         {
             var operationOutcome = new
             {
@@ -104,8 +104,8 @@ namespace GP_Connect.FHIR_JSON.AccessHTML
                             new
                             {
                                 system = "http://fhir.nhs.net/ValueSet/gpconnect-error-or-warning-code-1",
-                                code = "INVALID_CONTENT",
-                                display = "INVALID_CONTENT"
+                                code = "BAD_REQUEST",
+                                display = "BAD_REQUEST"
                             }
                         }
                     },

@@ -323,7 +323,7 @@ namespace GP_Connect.FHIR_JSON.AppointmentManagement
                                         {
                                             { "system", "https://fhir.nhs.uk/ValueSet/gpconnect-error-or-warning-code-1" },
                                             { "code", "INVALID_PARAMETER" },
-                                            { "display", "Invalid Parameter" }
+                                            { "display", "Submitted parameter is not valid." }
                                         }
                                     }
                                 }
@@ -405,7 +405,7 @@ namespace GP_Connect.FHIR_JSON.AppointmentManagement
                                         {
                                             { "system", "https://fhir.nhs.uk/ValueSet/gpconnect-error-or-warning-code-1" },
                                             { "code", "INVALID_PARAMETER" },
-                                            { "display", "Invalid Parameter" }
+                                            { "display", "Submitted parameter is not valid." }
                                         }
                                     }
                                 }
@@ -483,7 +483,7 @@ namespace GP_Connect.FHIR_JSON.AppointmentManagement
                                         {
                                             { "system", "https://fhir.nhs.uk/ValueSet/gpconnect-error-or-warning-code-1" },
                                             { "code", "INVALID_PARAMETER" },
-                                            { "display", "Invalid Parameter" }
+                                            { "display", "Submitted parameter is not valid." }
                                         }
                                     }
                                 }
@@ -560,7 +560,7 @@ namespace GP_Connect.FHIR_JSON.AppointmentManagement
                             {
                                 system = "https://fhir.nhs.uk/STU3/CodeSystem/Spine-ErrorOrWarningCode-1",
                                 code = "INVALID_RESOURCE",
-                                display = "Invalid Resource"
+                                display = "Submitted resource is not valid."
                             }
                         }
                     },
@@ -712,7 +712,7 @@ namespace GP_Connect.FHIR_JSON.AppointmentManagement
                                         {
                                             { "system", "https://fhir.nhs.uk/ValueSet/gpconnect-error-or-warning-code-1" },
                                             { "code", "INVALID_PARAMETER" },
-                                            { "display", "Invalid Parameter" }
+                                            { "display", "Submitted parameter is not valid." }
                                         }
                                     }
                                 }

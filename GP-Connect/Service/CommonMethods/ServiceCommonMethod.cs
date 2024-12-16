@@ -8,6 +8,7 @@ using Microsoft.Xrm.Sdk.Query;
 using Nancy.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using System.Drawing.Drawing2D;
 using System.Text.RegularExpressions;
 
 namespace GP_Connect.Service.CommonMethods
@@ -332,6 +333,82 @@ namespace GP_Connect.Service.CommonMethods
                 return new List<object>();
             }
         }
+        public dynamic GetAllDetailsByNHSNumber(string nhsNumber)
+        {
+           try
+            {
+                dynamic[] finaljson = new dynamic[3];
+
+                var PatientSequenceNumber = "";
+                var PractitionerSequenceNumber = "";
+                var OrganizationSequenceNumber = "";
+                var OrganizationName= "";
+
+                var contXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
+                                <entity name='contact'>
+                                  <attribute name='fullname' />
+                                  <attribute name='telephone1' />
+                                  <attribute name='contactid' />
+                                  <attribute name='bcrm_gpc_sequence_number' />
+                                  <order attribute='fullname' descending='false' />
+                                  <filter type='and'>
+                                    <condition attribute='bcrm_nhsnumber' operator='eq' value='" + nhsNumber + @"' />
+                                  </filter>
+                                   <link-entity name='bcrm_staff' from='bcrm_staffid' to='bcrm_gpc_generalpractioner' visible='false' link-type='outer' alias='practitioner'>
+                                        <attribute name='bcrm_gpc_sequence_number' />
+                                      </link-entity>
+                                      <link-entity name='bcrm_clinic' from='bcrm_clinicid' to='bcrm_gpc_manangingorganisation' visible='false' link-type='outer' alias='organization'>
+                                        <attribute name='bcrm_gpc_sequence_number' />
+                                         <attribute name='bcrm_name' />
+                                      </link-entity>
+                                </entity>
+                              </fetch>";
+
+                EntityCollection AnswerCollection = _crmServiceClient.RetrieveMultiple(new FetchExpression(contXml));
+                if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
+                {
+                    var record = AnswerCollection.Entities[0];
+
+                    if (record.Attributes.Contains("bcrm_gpc_sequence_number"))
+                    {
+                        PatientSequenceNumber = record["bcrm_gpc_sequence_number"].ToString();
+                    }
+                    if (record.Attributes.Contains("practitioner.bcrm_gpc_sequence_number"))
+                    {
+                        dynamic PractitionerDetails = record["practitioner.bcrm_gpc_sequence_number"];
+                        PractitionerSequenceNumber = PractitionerDetails.Value;
+
+                    }
+                    if (record.Attributes.Contains("organization.bcrm_name"))
+                    {
+                        dynamic OrganizationDetails = record["organization.bcrm_name"];
+                        OrganizationName = OrganizationDetails.Value;
+
+                    }
+                    if (record.Attributes.Contains("organization.bcrm_gpc_sequence_number"))
+                    {
+                        dynamic OrganizatiomnDetails = record["organization.bcrm_gpc_sequence_number"];
+                        OrganizationSequenceNumber = OrganizatiomnDetails.Value;
+
+                    }
+
+                    
+                }
+                finaljson[0] = PatientSequenceNumber;
+                finaljson[1] = OrganizationName;
+                finaljson[2] = OrganizationSequenceNumber;
+                return finaljson;
+            }
+            catch(Exception ex)
+            {
+                dynamic[] finaljson = new dynamic[3];
+                finaljson[0] = "";
+                finaljson[1] = "";
+                finaljson[2] = "";
+                return finaljson;
+            }
+        }
+
         #endregion
 
         #region Internal-Method

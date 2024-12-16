@@ -42,7 +42,7 @@ namespace GP_Connect.Service.AccessRecordHTML
 
                 if (htmlDetails.resourceType == null )
                 {
-                    finaljson[0] = ahd.INVALIDCONTENTJSON("Failed to parse request body as JSON resource. Error was: Failed to parse JSON content, error was: Did not find any content to parse");
+                    finaljson[0] = ahd.BADREQUESTJSON("Failed to parse request body as JSON resource. Error was: Failed to parse JSON content, error was: Did not find any content to parse");
                     finaljson[1] = "";
                     finaljson[2] = "400";
                     return finaljson;
@@ -77,7 +77,7 @@ namespace GP_Connect.Service.AccessRecordHTML
 
                     if (htmlDetails.parameter[0].name != "recordSection")
                     {
-                        finaljson[0] = ahd.INVALIDPARAMETERJSON("Invalid Parameter");
+                        finaljson[0] = ahd.BADREQUESTJSON("Invalid Parameter");
                         finaljson[1] = "";
                         finaljson[2] = "400";
                         return finaljson;
@@ -125,7 +125,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                           
                             if(htmlDetails.parameter[i].valueIdentifier.system != "http://fhir.nhs.net/Id/nhs-number")
                             {
-                                finaljson[0] = ahd.INVALIDIDENTIFIERSYSTEMJSON("NHS number in body doesn't match the header");
+                                finaljson[0] = ahd.INVALIDNHSNUMBERJSON("NHS number in body doesn't match the header");
                                 finaljson[1] = "";
                                 finaljson[2] = "400";
                                 return finaljson;
@@ -153,7 +153,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                         {
                             if(recordExist == true)
                             {
-                                finaljson[0] = ahd.INVALIDIDENTIFIERSYSTEMJSON("Multiple Sections Added");
+                                finaljson[0] = ahd.BADREQUESTJSON("Multiple Sections Added");
                                 finaljson[1] = "";
                                 finaljson[2] = "400";
                                 return finaljson;
@@ -189,7 +189,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                         {
                             if (i == htmlDetails.parameter.Count - 1 && timePeriodExist == false)
                             {
-                                finaljson[0] = ahd.INVALIDPARAMETERJSON("Missing Parameter : " + htmlDetails.parameter[i].name);
+                                finaljson[0] = ahd.INVALIDPARAMETERJSON("Missing Parameter : timePeriod ");
                                 finaljson[1] = "";
                                 finaljson[2] = "422";
                                 return finaljson;
@@ -307,7 +307,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 {
                     if (timePeriod == true)
                     {
-                        finaljson[0] = ahd.INVALIDPARAMETERJSON("Invalid Parameter Send.");
+                        finaljson[0] = ahd.BADREQUESTJSON("Invalid Parameter Send.");
                         finaljson[1] = "";
                         finaljson[2] = "400";
                         return finaljson;
@@ -477,7 +477,7 @@ namespace GP_Connect.Service.AccessRecordHTML
             {
                 dynamic[] finaljson = new dynamic[3];
                 AccessHTMLDetails ahd = new AccessHTMLDetails();
-                finaljson[0] = ahd.INVALIDCONTENTJSON("Failed to parse request body as JSON resource. Error was: Failed to parse JSON content, error was: Did not find any content to parse");
+                finaljson[0] = ahd.BADREQUESTJSON("Failed to parse request body as JSON resource. Error was: Failed to parse JSON content, error was: Did not find any content to parse");
                 finaljson[1] = "";
                 finaljson[2] = "400";
                 return finaljson;
@@ -682,9 +682,14 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
-                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\">"+GPtransferBanner+"<h1>Allergies and Adverse Reactions</h1><div><h2>Current Allergies and Adverse Reactions</h2><p>No 'Current Allergies and Adverse Reactions' data is recorded for this patient.</p></div><div><h2>Historical Allergies and Adverse Reactions</h2><p>No 'Historical Allergies and Adverse Reactions' data is recorded for this patient.</p></div></div>";
-                        var finalObj = MakeAllergyCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
-                        return finalObj;
+                    ServiceCommonMethod scm = new ServiceCommonMethod();
+                    var patientDetails = scm.GetAllDetailsByNHSNumber(nhsNumber);
+                    patientSequenceNumber = patientDetails[0];
+                    organizationName = patientDetails[1];
+                    organizationSequenceNumber = patientDetails[2];
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\">"+GPtransferBanner+"<h1>Allergies and Adverse Reactions</h1><div><h2>Current Allergies and Adverse Reactions</h2><p>No 'Current Allergies and Adverse Reactions' data is recorded for this patient.</p></div><div><h2>Historical Allergies and Adverse Reactions</h2><p>No 'Historical Allergies and Adverse Reactions' data is recorded for this patient.</p></div></div>";
+                    var finalObj = MakeAllergyCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                    return finalObj;
                 }
 
             }
@@ -911,7 +916,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                         encounterDetailsList.Add(encounterDetails);
                     }
                 }
-                if (encounterDetailsList.Count >= 0)
+                if (encounterDetailsList.Count > 0)
                 {
                     var divString = CreateEncounterHTMLDivByJSON( nhsNumber ,encounterDetailsList,startDate,endDate);
                     var finalobject = CreateEncounterJSONByUsingRecord(patientSequenceNumber, organizationSequenceNumber, organizationName, divString);
@@ -919,9 +924,15 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
-                            var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> "+ GPtransferBanner + " <h1>Encounters</h1>"+datefilterBanner+ " <div class=\"content-banner\"><p> This content is already checked by clinician  </p> </div>  <p>No 'Encounters' data is recorded for this patient.</p></div>";
-                            var finalObj = CreateEncounterJSONByUsingRecord(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
-                            return finalObj;
+                    ServiceCommonMethod scm = new ServiceCommonMethod();
+                    var patientDetails = scm.GetAllDetailsByNHSNumber(nhsNumber);
+                    patientSequenceNumber = patientDetails[0];
+                    organizationName = patientDetails[1];
+                    organizationSequenceNumber = patientDetails[2];
+
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> "+ GPtransferBanner + " <h1>Encounters</h1>"+datefilterBanner+ "   <p>No 'Encounters' data is recorded for this patient.</p></div>";
+                    var finalObj = CreateEncounterJSONByUsingRecord(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                    return finalObj;
                 }
                 
             }
@@ -963,15 +974,15 @@ namespace GP_Connect.Service.AccessRecordHTML
                 tableTD += "</tr>";
             }
 
-            string div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Encounters</h1> "+ GPtransferBanner + datefilterBanner+"  <table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> " + tableTD + "  </tbody> </table> </div> ";
+            string div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Encounters</h1> "+ GPtransferBanner + "<div class=\"content-banner\"><p> This content is already checked by clinician  </p> </div>" + datefilterBanner+"  <table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> " + tableTD + "  </tbody> </table> </div> ";
            
             if(encounterList.Count == 0 && startDate != "" && endDate != "")
             {
-                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ GPtransferBanner + " <div class=\"date-banner\"><p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "' to '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p></div><p>No 'Encounters' data is recorded for this patient.</p></div>";
+                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ GPtransferBanner + " <div class=\"content-banner\"><p> This content is already checked by clinician  </p> </div> <div class=\"date-banner\"><p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "' to '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p></div><p>No 'Encounters' data is recorded for this patient.</p></div>";
             }
             else if(encounterList.Count == 0)
             {
-                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ GPtransferBanner + datefilterBanner  + " <div class=\"content-banner\"><p> This content is already checked by clinician  </p> </div> <div class=\"date-banner\"><p>No 'Encounters' data is recorded for this patient.</p></div>";
+                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ GPtransferBanner + "<div class=\"content-banner\"><p> </p> </div>" + datefilterBanner  + " <div><p>No 'Encounters' data is recorded for this patient.</p></div>";
             }
 
             return div;
@@ -1172,18 +1183,28 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         otherInavtiveString = "<p>No 'Other Inactive Problems and Issues' data is recorded for this patient.</p";
                     }
+                    else
+                    {
+                        otherInavtiveString = "<table id=\"prb-tab-othinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> " + otherInavtiveString + "  </tbody> </table>";
+                    }
 
-                    var finalDiv = "<div> <h1>Problems and Issues</h1> "+ GPtransferBanner + " <div> <h2>Active Problems and Issues</h2> <div class=\"date-banner\"><p>Date filter not applied</p></div>  <table id=\"prb-tab-act\"> <thead> <tr> <th>Start Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ activeProbString + " </tbody> </table> </div> <div> <h2>Major Inactive Problems and Issues</h2>  "+datefilterBanner+"  <table id=\"prb-tab-majinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ majorInactiveString + " </tbody> </table> </div> <div> <h2>Other Inactive Problems and Issues</h2>  "+datefilterBanner+" <table id=\"prb-tab-othinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ otherInavtiveString + "  </tbody> </table> </div> </div>";
+
+                    var finalDiv = "<div> <h1>Problems and Issues</h1> "+ GPtransferBanner + " <div> <h2>Active Problems and Issues</h2> <div class=\"date-banner\"><p>Date filter not applied</p></div>  <table id=\"prb-tab-act\"> <thead> <tr> <th>Start Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ activeProbString + " </tbody> </table> </div> <div> <h2>Major Inactive Problems and Issues</h2>  "+datefilterBanner+"  <table id=\"prb-tab-majinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ majorInactiveString + " </tbody> </table> </div> <div> <h2>Other Inactive Problems and Issues</h2>  "+datefilterBanner+ otherInavtiveString +"  </div> </div>";
                     var res = MakeProblemAndIssueCompositionObject(patientSequenceNumber,organizationSequenceNumber,organizationName,finalDiv);
                     return res;
 
                 }
                 else
                 {
-                  
-                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\">"+GPtransferBanner+ datefilterBanner + "<h1>Problems and Issues</h1> <div><h2>Active Problems and Issues</h2>  <div class=\"date-banner\"><p>Date filter not applied</p></div><p>No 'Active Problems and Issues' data is recorded for this patient.</p></div><div><h2>Major Inactive Problems and Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Major Inactive Problems and Issues' data is recorded for this patient.</p></div><div><h2>Other Inactive Problems and Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Other Inactive Problems and Issues' data is recorded for this patient.</p></div></div>";
-                        var finalObj = MakeProblemAndIssueCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
-                        return finalObj;
+                    ServiceCommonMethod scm = new ServiceCommonMethod();
+                    var patientDetails = scm.GetAllDetailsByNHSNumber(nhsNumber);
+                    patientSequenceNumber = patientDetails[0];
+                    organizationName = patientDetails[1];
+                    organizationSequenceNumber = patientDetails[2];
+
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\">"+GPtransferBanner+  "<h1>Problems and Issues</h1> <div><h2>Active Problems and Issues</h2>  <div class=\"date-banner\"><p>Date filter not applied</p></div><p>No 'Active Problems and Issues' data is recorded for this patient.</p></div><div><h2>Major Inactive Problems and Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Major Inactive Problems and Issues' data is recorded for this patient.</p></div><div><h2>Other Inactive Problems and Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Other Inactive Problems and Issues' data is recorded for this patient.</p></div></div>";
+                    var finalObj = MakeProblemAndIssueCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                    return finalObj;
                     
                 }
 
@@ -1528,10 +1549,15 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
-                    
-                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Referrals</h1>  "+ GPtransferBanner + datefilterBanner + " <div class=\"date-banner\"> <p>No 'Referrals' data is recorded for this patient.</p></div>";
-                        var finalObj = MakeReferralCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
-                        return finalObj;
+                    ServiceCommonMethod scm = new ServiceCommonMethod();
+                    var patientDetails = scm.GetAllDetailsByNHSNumber(nhsNumber);
+                    patientSequenceNumber = patientDetails[0];
+                    organizationName = patientDetails[1];
+                    organizationSequenceNumber = patientDetails[2];
+
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Referrals</h1>  "+ GPtransferBanner + datefilterBanner + " <div class=\"date-banner\"> <p>No 'Referrals' data is recorded for this patient.</p></div>";
+                    var finalObj = MakeReferralCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                    return finalObj;
                     
                 }
             }
@@ -1752,10 +1778,15 @@ namespace GP_Connect.Service.AccessRecordHTML
             }
             else
             {
-                
-                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Observations</h1> "+GPtransferBanner+" <div class=\"date-banner\"> "+ datefilterBanner + " <p>No 'Observations' data is recorded for this patient.</p></div>";
-                    var finalObj = MakeObservationObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
-                    return finalObj;
+                ServiceCommonMethod scm = new ServiceCommonMethod();
+                var patientDetails = scm.GetAllDetailsByNHSNumber(nhsNumber);
+                patientSequenceNumber = patientDetails[0];
+                organizationName = patientDetails[1];
+                organizationSequenceNumber = patientDetails[2];
+
+                var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Observations</h1> "+GPtransferBanner+" <div class=\"date-banner\"> "+ datefilterBanner + " <p>No 'Observations' data is recorded for this patient.</p></div>";
+                var finalObj = MakeObservationObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                return finalObj;
                 
             }
         }
@@ -1939,6 +1970,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
+                    ServiceCommonMethod scm = new ServiceCommonMethod();
+                    var patientDetails = scm.GetAllDetailsByNHSNumber(nhsNumber);
+                    patientSequenceNumber = patientDetails[0];
+                    organizationName = patientDetails[1];
+                    organizationSequenceNumber = patientDetails[2];
                     var htmlContent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Immunisations</h1> "+GPtransferBanner+ " <div class=\"exclusion-banner\"> <p> Items excluded due to confidentiality and/or patient preferences. </p> </div> <p>No 'Immunisations' data is recorded for this patient.</p></div>";
                     var finalObj = MakeImmunizationCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlContent);
                     return finalObj;
@@ -2158,10 +2194,14 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
-                   
-                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Administrative Items</h1>"+ GPtransferBanner + " <div class=\"date-banner\"> "+datefilterBanner+"  <p>No 'Administrative Items' data is recorded for this patient.</p></div>";
-                        var finalObj = MakeAdministractorCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
-                        return finalObj;
+                    ServiceCommonMethod scm = new ServiceCommonMethod();
+                    var patientDetails = scm.GetAllDetailsByNHSNumber(nhsNumber);
+                    patientSequenceNumber = patientDetails[0];
+                    organizationName = patientDetails[1];
+                    organizationSequenceNumber = patientDetails[2];
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Administrative Items</h1>"+ GPtransferBanner + " <div class=\"date-banner\"> "+datefilterBanner+"  <p>No 'Administrative Items' data is recorded for this patient.</p></div>";
+                    var finalObj = MakeAdministractorCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                    return finalObj;
                 }
             }
             catch (Exception) 
@@ -2360,15 +2400,20 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if (clinicalItemList.Count > 0)
                 {
                     var res = makehtmlcontentofclinicalitems(clinicalItemList);
-                    var htmlcontent = "<div> <h1>Clinical Items</h1> "+ GPtransferBanner + datefilterBanner + " <div class=\"exclusion-banner\"> <p> </p> </div> <table id=\"cli-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
+                    var htmlcontent = "<div> <h1>Clinical Items</h1> "+ GPtransferBanner + "<div class=\"content-banner\"> <p> </p> </div>" + datefilterBanner + " <div class=\"exclusion-banner\"> <p> </p> </div> <table id=\"cli-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
                     var finalObj = MakeClinicalItemCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 }
                 else
                 {
-                        var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Clinical Items</h1> "+ GPtransferBanner + " <div class=\"date-banner\"> "+datefilterBanner+"  <p>No 'Clinical Items' data is recorded for this patient.</p></div>";
-                        var finalObj = MakeClinicalItemCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
-                        return finalObj;
+                    ServiceCommonMethod scm = new ServiceCommonMethod();
+                    var patientDetails = scm.GetAllDetailsByNHSNumber(nhsNumber);
+                    patientSequenceNumber = patientDetails[0];
+                    organizationName = patientDetails[1];
+                    organizationSequenceNumber = patientDetails[2];
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Clinical Items</h1> "+ GPtransferBanner + " <div class=\"date-banner\"> "+datefilterBanner+"  <p>No 'Clinical Items' data is recorded for this patient.</p></div>";
+                    var finalObj = MakeClinicalItemCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
+                    return finalObj;
                 }
             }
             catch (Exception ) 
@@ -2527,6 +2572,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         <attribute name='bcrm_directions' />
                                         <attribute name='bcrm_quantityvalue' />
                                         <attribute name='bcrm_drugenddate' />
+                                        <attribute name='bcrm_dosageunit' />
                                         <attribute name='bcrm_expectedsupplyvalue' />
                                         <attribute name='bcrm_additionalinformation' />
                                         <attribute name='bcrm_lastissueddate' />
@@ -2575,11 +2621,17 @@ namespace GP_Connect.Service.AccessRecordHTML
                             organizationName = organizationRecord.Value;
                         }
 
+                        var doseUnit = record.Attributes.Contains("bcrm_dosageunit") ? record.FormattedValues["bcrm_dosageunit"].ToString() : string.Empty;
                         medicationRecord.MedicationItem = record.Attributes.Contains("bcrm_name") ? record["bcrm_name"].ToString() : string.Empty;
                         if (record.Attributes.Contains("bcrm_drugstartdate")) { medicationRecord.startDate = (DateTime)record.Attributes["bcrm_drugstartdate"]; }
                         medicationRecord.type = record.Attributes.Contains("bcrm_type") ? record.FormattedValues["bcrm_type"].ToString() : string.Empty;
                         medicationRecord.DosageInstruction = record.Attributes.Contains("bcrm_directions") ? record["bcrm_directions"].ToString() : string.Empty;
                         medicationRecord.Quantity = record.Attributes.Contains("bcrm_quantityvalue") ? record["bcrm_quantityvalue"].ToString() : string.Empty;
+
+                        if(medicationRecord.Quantity != string.Empty)
+                        {
+                            medicationRecord.Quantity = medicationRecord.Quantity +" "+ GetMeasuringQuantityDrugUsingName(medicationRecord.MedicationItem);
+                        }
 
                         if (record.Attributes.Contains("bcrm_drugenddate")) { medicationRecord.endDate = (DateTime)record.Attributes["bcrm_drugenddate"]; }
                         if (record.Attributes.Contains("bcrm_lastissueddate")) { medicationRecord.LastIssuedDate = (DateTime)record.Attributes["bcrm_lastissueddate"]; }
@@ -2607,6 +2659,12 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
+                    ServiceCommonMethod scm = new ServiceCommonMethod();
+                    var patientDetails = scm.GetAllDetailsByNHSNumber(nhsNumber);
+                    patientSequenceNumber = patientDetails[0];
+                    organizationName = patientDetails[1];
+                    organizationSequenceNumber = patientDetails[2];
+
                     var htmlcontenmt = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Medications</h1> "+GPtransferBanner +"<div><h2>Acute Medication (Last 12 Months)</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Acute Medication (Last 12 Months)' data is recorded for this patient.</p></div><div><h2>Current Repeat Medication</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Current Repeat Medication' data is recorded for this patient.</p></div><div><h2>Discontinued Repeat Medication</h2><div class=\"content-banner\"><p>All repeat medication ended by a clinician action</p></div><div class=\"date-banner\"><p>Date filter not applied</p></div><p>No 'Discontinued Repeat Medication' data is recorded for this patient.</p></div><div><h2>All Medication</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'All Medication' data is recorded for this patient.</p></div><div><h2>All Medication Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'All Medication Issues' data is recorded for this patient.</p></div></div>";
                     var finalObj = MakeMedicationCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontenmt);
                     return finalObj;
@@ -2845,9 +2903,9 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
 
 
-                var htmlcontent = "<div> <h1>Medications</h1> <div> "+ GPtransferBanner + " <h2>Acute Medication (Last 12 Months)</h2> " + bannerNotAppliedDefined  + acuteMedicationDivTable + "</div>" +
-                    "<div> <h2>Current Repeat Medication</h2> " + bannerNotAppliedDefined  + " <div class=\"content-banner\">  <p> The Review Date is that set for each Repeat Course. Reviews may be conducted according to a diary event which differs from the dates shown </p> </div>  <div class=\"exclusion-banner\"> <p> Items excluded due to confidentiality and/or patient preferences. </p> </div>" + repeatMedicationDivTable+" </div> " +
-                    "<div> <h2>Discontinued Repeat Medication</h2> " + bannerNotAppliedDefined + " <div class=\"content-banner\"> <p> All repeat medication ended by a clinician action </p>  </div> " + discountinuedReapeatMedicationTable+" </div> " +
+                var htmlcontent = "<div> <h1>Medications</h1> <div> "+ GPtransferBanner + " <h2>Acute Medication (Last 12 Months)</h2> " + acuteMedicationDivTable + "</div>" +
+                    "<div> <h2>Current Repeat Medication</h2> <div class=\"content-banner\">  <p> The Review Date is that set for each Repeat Course. Reviews may be conducted according to a diary event which differs from the dates shown </p> </div>  <div class=\"exclusion-banner\"> <p> Items excluded due to confidentiality and/or patient preferences. </p> </div>" + repeatMedicationDivTable+" </div> " +
+                    "<div> <h2>Discontinued Repeat Medication</h2> <div class=\"content-banner\"> <p> All repeat medication ended by a clinician action </p>  </div> " + discountinuedReapeatMedicationTable+" </div> " +
                     "<div> <h2>All Medication</h2> "+datefilterBanner+ allMedicationTable+ "  </div>" +
                     "<div> <h2>All Medication Issues</h2> "+datefilterBanner+ allmedicationIssueTable + " </div> </div>";
  
@@ -3100,7 +3158,6 @@ namespace GP_Connect.Service.AccessRecordHTML
                         htmlContent += "<td>" + item.description + "</td>";
                         htmlContent += "<td>" + item.locationoffurtherInformation + "</td>";
                         htmlContent += "</tr>";
-                    
                 }
                 return htmlContent;
             }
@@ -3347,8 +3404,8 @@ namespace GP_Connect.Service.AccessRecordHTML
                     acuteMedicationDiv += "<td>" + item.MedicationItem + "</td>";
                     acuteMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
                     acuteMedicationDiv += "<td>" + item.Quantity + "</td>";
+                    acuteMedicationDiv += "<td class=\"date-column\">" + (item.endDate.Year == 1 ? "" : item.endDate.ToString("dd-MMM-yyyy")) + "</td>";
                     acuteMedicationDiv += "<td>" + item.DaysDuration + "</td>";
-                    acuteMedicationDiv += "<td class=\"date-column\">" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
                     acuteMedicationDiv += "<td>" + item.AdditionalInformation + "</td>";
                     acuteMedicationDiv += "</tr>";
                 }
@@ -3369,10 +3426,10 @@ namespace GP_Connect.Service.AccessRecordHTML
                     repeatMedicationDiv += "<td>" + item.MedicationItem + "</td>";
                     repeatMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
                     repeatMedicationDiv += "<td>" + item.Quantity + "</td>";
-                    repeatMedicationDiv += "<td class=\"date-column\">" + item.LastIssuedDate.ToString("dd-MMM-yyyy") + "</td>";
+                    repeatMedicationDiv += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
                     repeatMedicationDiv += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
                     repeatMedicationDiv += "<td>" + item.MaxIssues + "</td>";
-                    repeatMedicationDiv += "<td class=\"date-column\">" + item.ReviewDate.ToString("dd-MMM-yyyy") + "</td>";
+                    repeatMedicationDiv += "<td class=\"date-column\">" + (item.ReviewDate.Year == 1 ? item.startDate.AddDays(10).ToString("dd-MMM-yyyy") : item.ReviewDate.ToString("dd-MMM-yyyy")) + "</td>";
                     repeatMedicationDiv += "<td>" + item.AdditionalInformation + "</td>";
                     repeatMedicationDiv += "</tr>";
                 }
@@ -3449,6 +3506,76 @@ namespace GP_Connect.Service.AccessRecordHTML
                 return null;
             }
 
+        }
+
+        internal string GetMeasuringQuantityDrugUsingName(string name)
+        {
+            try
+            {
+                switch (name.ToLower()) // Convert to lowercase for case-insensitive matching
+                {
+                    case string s when s.Contains("tablet"):
+                        return "tablets";
+                    case string s when s.Contains("capsule"):
+                        return "capsules";
+                    case string s when s.Contains("gram"):
+                        return "grams";
+                    case string s when s.Contains("ml"):
+                        return "mls";
+                    case string s when s.Contains("sachet"):
+                        return "sachets";
+                    case string s when s.Contains("strip"):
+                        return "strips";
+                    case string s when s.Contains("needle"):
+                        return "needles";
+                    case string s when s.Contains("ampoule"):
+                        return "ampoules";
+                    case string s when s.Contains("drop"):
+                        return "drops";
+                    case string s when s.Contains("bottle"):
+                        return "bottles";
+                    case string s when s.Contains("suppository"):
+                        return "suppositories";
+                    case string s when s.Contains("spray"):
+                        return "sprays";
+                    case string s when s.Contains("tube"):
+                        return "tubes";
+                    case string s when s.Contains("patch"):
+                        return "patches";
+                    case string s when s.Contains("cartridge"):
+                        return "cartridges";
+                    case string s when s.Contains("lozenge"):
+                        return "lozenges";
+                    case string s when s.Contains("vial"):
+                        return "vials";
+                    case string s when s.Contains("inhaler"):
+                        return "inhalers";
+                    case string s when s.Contains("cream"):
+                        return "creams";
+                    case string s when s.Contains("ointment"):
+                        return "ointments";
+                    case string s when s.Contains("syringe"):
+                        return "syringes";
+                    case string s when s.Contains("powder"):
+                        return "powders";
+                    case string s when s.Contains("solution"):
+                        return "solutions";
+                    case string s when s.Contains("pellet"):
+                        return "pellets";
+                    case string s when s.Contains("kit"):
+                        return "kits";
+                    case string s when s.Contains("suppositories"):
+                        return "suppositories";
+                    case string s when s.Contains("solid"):
+                        return "gram";
+                    default:
+                        return ""; // Return the original name if no match is found
+                }
+            }
+            catch(Exception ex)
+            {
+                return "";
+            }
         }
 
         #endregion

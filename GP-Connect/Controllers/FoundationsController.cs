@@ -989,6 +989,7 @@ namespace GP_Connect.Controllers
 
                 dynamic searchFilter1 = queryParams.ContainsKey("searchFilter") ? queryParams["searchFilter"].ToString() : "";
                 string[] searchFileters = searchFilter1.Split(',');
+                var clientCertificate = HttpContext.Connection.ClientCertificate;
 
 
                 if (searchFileters.Length != 0)
