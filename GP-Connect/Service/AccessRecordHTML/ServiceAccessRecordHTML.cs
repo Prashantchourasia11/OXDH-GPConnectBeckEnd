@@ -19,6 +19,7 @@ namespace GP_Connect.Service.AccessRecordHTML
 
         IOrganizationService _crmServiceClient = null;
         CRM_connection crmCon = new CRM_connection();
+        BannerDTO bannerDTO = new BannerDTO();
 
         #endregion
 
@@ -356,6 +357,7 @@ namespace GP_Connect.Service.AccessRecordHTML
 
                 ServiceCommonMethod scm = new ServiceCommonMethod();
                 var patientDetails = scm.GetAllDetailsOfPatientByPatientIdUsedForHTMLACCESS(nhsNumber);
+                bannerDTO = GetAllBannerContent(nhsNumber);
 
                 finalResponse.entry = patientDetails;
 
@@ -601,12 +603,9 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
-                var GPtransferBanner = "";
+               
 
-                if (nhsNumber == "9651260211")
-                {
-                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
-                }
+
 
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
@@ -674,7 +673,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     var activeAllergyDiv = makeActiveAllergyList(allergyList);
                     var inActiveAllergyDiv = makeInActiveAllergyList(allergyList);
 
-                    var finalAllergyString = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Allergies and Adverse Reactions</h1> " + GPtransferBanner + " <div> <h2>Current Allergies and Adverse Reactions</h2>  <div> <p> Exclusion banner </p> </div> <table id=\"all-tab-curr\"> <thead> <tr> <th>Start Date</th> <th>Details</th> </tr> </thead> <tbody> " + activeAllergyDiv + " </tbody>  </table> </div> <div> <h2>Historical Allergies and Adverse Reactions</h2>  <div> <p> Exclusion banner </p> </div> <table id=\"all-tab-hist\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Details</th> </tr> </thead> <tbody> " + inActiveAllergyDiv + " </tbody> </table> </div> </div>";
+                    var finalAllergyString = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Allergies and Adverse Reactions</h1> " + bannerDTO.GpTransferBanner + bannerDTO.AllergiesandAdverseReactionsContentBanner + " <div> <h2>Current Allergies and Adverse Reactions</h2>  "+bannerDTO.CurrentAllergiesandAdverseReactionsContentBanner+ bannerDTO.CurrentAllergiesandAdverseReactionsExclusiveBanner +" <table id=\"all-tab-curr\"> <thead> <tr> <th>Start Date</th> <th>Details</th> </tr> </thead> <tbody> " + activeAllergyDiv + " </tbody>  </table> </div> <div> <h2>Historical Allergies and Adverse Reactions</h2>  "+bannerDTO.HistoricalAllergiesandAdverseReactionsContentBanner+ bannerDTO.HistoricalAllergiesandAdverseReactionsExclusiveBanner +" <table id=\"all-tab-hist\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Details</th> </tr> </thead> <tbody> " + inActiveAllergyDiv + " </tbody> </table> </div> </div>";
 
                     var allergyJSON = MakeAllergyCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, finalAllergyString);
                     return allergyJSON;
@@ -687,7 +686,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     patientSequenceNumber = patientDetails[0];
                     organizationName = patientDetails[1];
                     organizationSequenceNumber = patientDetails[2];
-                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\">"+GPtransferBanner+"<h1>Allergies and Adverse Reactions</h1><div><h2>Current Allergies and Adverse Reactions</h2><p>No 'Current Allergies and Adverse Reactions' data is recorded for this patient.</p></div><div><h2>Historical Allergies and Adverse Reactions</h2><p>No 'Historical Allergies and Adverse Reactions' data is recorded for this patient.</p></div></div>";
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\">"+bannerDTO.GpTransferBanner+"<h1>Allergies and Adverse Reactions</h1><div><h2>Current Allergies and Adverse Reactions</h2><p>No 'Current Allergies and Adverse Reactions' data is recorded for this patient.</p></div><div><h2>Historical Allergies and Adverse Reactions</h2><p>No 'Historical Allergies and Adverse Reactions' data is recorded for this patient.</p></div></div>";
                     var finalObj = MakeAllergyCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 }
@@ -822,13 +821,8 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
-                var GPtransferBanner = "";
-
-                if (nhsNumber == "9651260211")
-                {
-                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
-                }
-
+             
+              
                 var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
 
                 if (startDate != "" && endDate != "")
@@ -930,7 +924,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     organizationName = patientDetails[1];
                     organizationSequenceNumber = patientDetails[2];
 
-                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> "+ GPtransferBanner + " <h1>Encounters</h1>"+datefilterBanner+ "   <p>No 'Encounters' data is recorded for this patient.</p></div>";
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> "+ bannerDTO.GpTransferBanner + bannerDTO.EncounterContentBanner + datefilterBanner + bannerDTO.EncounterExclusiveBanner + "   <p>No 'Encounters' data is recorded for this patient.</p></div>";
                     var finalObj = CreateEncounterJSONByUsingRecord(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 }
@@ -943,12 +937,7 @@ namespace GP_Connect.Service.AccessRecordHTML
         }
         internal string CreateEncounterHTMLDivByJSON(string nhsNumber,List<EncounterDetailsDTO> encounterList,string startDate,string endDate)
         {
-            var GPtransferBanner = "";
-
-            if (nhsNumber == "9651260211")
-            {
-                GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
-            }
+         
 
             var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
 
@@ -974,15 +963,15 @@ namespace GP_Connect.Service.AccessRecordHTML
                 tableTD += "</tr>";
             }
 
-            string div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Encounters</h1> "+ GPtransferBanner + "<div class=\"content-banner\"><p> This content is already checked by clinician  </p> </div>" + datefilterBanner+"  <table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> " + tableTD + "  </tbody> </table> </div> ";
+            string div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Encounters</h1> "+ bannerDTO.GpTransferBanner + bannerDTO.EncounterContentBanner + datefilterBanner+ bannerDTO.EncounterExclusiveBanner +"  <table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> " + tableTD + "  </tbody> </table> </div> ";
            
             if(encounterList.Count == 0 && startDate != "" && endDate != "")
             {
-                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ GPtransferBanner + " <div class=\"content-banner\"><p> This content is already checked by clinician  </p> </div> <div class=\"date-banner\"><p>For the period '" + DateTime.Parse(startDate).ToString("dd-MMM-yyyy") + "' to '" + DateTime.Parse(endDate).ToString("dd-MMM-yyyy") + "'</p></div><p>No 'Encounters' data is recorded for this patient.</p></div>";
+                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ bannerDTO.GpTransferBanner + bannerDTO.EncounterContentBanner + datefilterBanner + bannerDTO.EncounterExclusiveBanner + "<p>No 'Encounters' data is recorded for this patient.</p></div>";
             }
             else if(encounterList.Count == 0)
             {
-                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> "+ GPtransferBanner + "<div class=\"content-banner\"><p> </p> </div>" + datefilterBanner  + " <div><p>No 'Encounters' data is recorded for this patient.</p></div>";
+                div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> " + bannerDTO.GpTransferBanner + bannerDTO.EncounterContentBanner + datefilterBanner + bannerDTO.EncounterExclusiveBanner + " <div><p>No 'Encounters' data is recorded for this patient.</p></div>";
             }
 
             return div;
@@ -1066,13 +1055,7 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
-                var GPtransferBanner = "";
-
-                if (nhsNumber == "9651260211")
-                {
-                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
-                }
-
+               
                 var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
 
                 if (startDate != "" && endDate != "")
@@ -1189,7 +1172,10 @@ namespace GP_Connect.Service.AccessRecordHTML
                     }
 
 
-                    var finalDiv = "<div> <h1>Problems and Issues</h1> "+ GPtransferBanner + " <div> <h2>Active Problems and Issues</h2> <div class=\"date-banner\"><p>Date filter not applied</p></div>  <table id=\"prb-tab-act\"> <thead> <tr> <th>Start Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ activeProbString + " </tbody> </table> </div> <div> <h2>Major Inactive Problems and Issues</h2>  "+datefilterBanner+"  <table id=\"prb-tab-majinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ majorInactiveString + " </tbody> </table> </div> <div> <h2>Other Inactive Problems and Issues</h2>  "+datefilterBanner+ otherInavtiveString +"  </div> </div>";
+                    var finalDiv = @"<div> <h1>Problems and Issues</h1> "+ bannerDTO.GpTransferBanner + bannerDTO.ProblemsandIssuesContentBanner + "" +
+                        " <div> <h2>Active Problems and Issues</h2> "+bannerDTO.ActiveProblemsandIssuesContentBanner+" <div class=\"date-banner\"><p>Date filter not applied</p></div> "+bannerDTO.ActiveProblemsandIssuesExclusiveBanner+" <table id=\"prb-tab-act\"> <thead> <tr> <th>Start Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> " + activeProbString + " </tbody> </table>" +
+                        "</div> <div> <h2>Major Inactive Problems and Issues</h2>"+ bannerDTO.MajorInactiveProblemsandIssuesContentBanner + datefilterBanner+ bannerDTO.MajorInactiveProblemsandIssuesExclusiveBanner +"  <table id=\"prb-tab-majinact\"> <thead> <tr> <th>Start Date</th> <th>End Date</th> <th>Entry</th> <th>Significance</th> <th>Details</th> </tr> </thead> <tbody> "+ majorInactiveString + " </tbody> </table>" +
+                        " </div> <div> <h2>Other Inactive Problems and Issues</h2>  " + bannerDTO.OtherInactiveProblemsandIssuesContentBanner + datefilterBanner + bannerDTO.OtherInactiveProblemsandIssuesExclusiveBanner + otherInavtiveString +"  </div> </div>";
                     var res = MakeProblemAndIssueCompositionObject(patientSequenceNumber,organizationSequenceNumber,organizationName,finalDiv);
                     return res;
 
@@ -1202,7 +1188,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     organizationName = patientDetails[1];
                     organizationSequenceNumber = patientDetails[2];
 
-                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\">"+GPtransferBanner+  "<h1>Problems and Issues</h1> <div><h2>Active Problems and Issues</h2>  <div class=\"date-banner\"><p>Date filter not applied</p></div><p>No 'Active Problems and Issues' data is recorded for this patient.</p></div><div><h2>Major Inactive Problems and Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Major Inactive Problems and Issues' data is recorded for this patient.</p></div><div><h2>Other Inactive Problems and Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Other Inactive Problems and Issues' data is recorded for this patient.</p></div></div>";
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\">"+bannerDTO.GpTransferBanner+  "<h1>Problems and Issues</h1> <div><h2>Active Problems and Issues</h2>  <div class=\"date-banner\"><p>Date filter not applied</p></div><p>No 'Active Problems and Issues' data is recorded for this patient.</p></div><div><h2>Major Inactive Problems and Issues</h2>"+datefilterBanner+"<p>No 'Major Inactive Problems and Issues' data is recorded for this patient.</p></div><div><h2>Other Inactive Problems and Issues</h2>"+datefilterBanner+"<p>No 'Other Inactive Problems and Issues' data is recorded for this patient.</p></div></div>";
                     var finalObj = MakeProblemAndIssueCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                     
@@ -1440,12 +1426,7 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
-                var GPtransferBanner = "";
-
-                if (nhsNumber == "9651260211")
-                {
-                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
-                }
+               
 
                 var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
 
@@ -1543,7 +1524,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if(referralList.Count > 0)
                 {
                     var res = makeReferralDiv(referralList);
-                    var htmlcontent = "<div> <h1>Referrals</h1> "+GPtransferBanner + datefilterBanner + "   <table id=\"ref-tab\"> <thead> <tr> <th>Date</th> <th>From</th> <th>To</th> <th>Priority</th> <th>Details</th> </tr> </thead> <tbody> " + res+" </tbody> </table> </div>";
+                    var htmlcontent = "<div> <h1>Referrals</h1> "+bannerDTO.GpTransferBanner + bannerDTO.ReferralsContentBanner + datefilterBanner + bannerDTO.ReferralsExclusiveBanner + "   <table id=\"ref-tab\"> <thead> <tr> <th>Date</th> <th>From</th> <th>To</th> <th>Priority</th> <th>Details</th> </tr> </thead> <tbody> " + res+" </tbody> </table> </div>";
                     var finalObj = MakeReferralCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 }
@@ -1555,7 +1536,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     organizationName = patientDetails[1];
                     organizationSequenceNumber = patientDetails[2];
 
-                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Referrals</h1>  "+ GPtransferBanner + datefilterBanner + " <div class=\"date-banner\"> <p>No 'Referrals' data is recorded for this patient.</p></div>";
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Referrals</h1>  "+ bannerDTO.GpTransferBanner + datefilterBanner + " <p>No 'Referrals' data is recorded for this patient.</p></div>";
                     var finalObj = MakeReferralCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                     
@@ -1667,12 +1648,7 @@ namespace GP_Connect.Service.AccessRecordHTML
 
         public object GetObservationObject(string nhsNumber, string startDate, string endDate)
         {
-            var GPtransferBanner = "";
-
-            if (nhsNumber == "9651260211")
-            {
-                GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
-            }
+          
 
             var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
 
@@ -1770,7 +1746,7 @@ namespace GP_Connect.Service.AccessRecordHTML
             if (observationList.Count > 0)
             {
                var res = makeObservationhtmlContents(observationList);
-               var htmlContent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Observations</h1> " + GPtransferBanner + datefilterBanner+"  <table id=\"obs-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Value</th> <th>Range</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
+               var htmlContent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Observations</h1> " + bannerDTO.GpTransferBanner + bannerDTO.ObservationsContentBanner +datefilterBanner+ bannerDTO.ObservationsExclusiveBanner+"  <table id=\"obs-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Value</th> <th>Range</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
 
                var finalObj = MakeObservationObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlContent);
                return finalObj;
@@ -1784,7 +1760,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 organizationName = patientDetails[1];
                 organizationSequenceNumber = patientDetails[2];
 
-                var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Observations</h1> "+GPtransferBanner+" <div class=\"date-banner\"> "+ datefilterBanner + " <p>No 'Observations' data is recorded for this patient.</p></div>";
+                var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Observations</h1> " + bannerDTO.GpTransferBanner + bannerDTO.ObservationsContentBanner + datefilterBanner + bannerDTO.ObservationsExclusiveBanner + " <p>No 'Observations' data is recorded for this patient.</p></div>";
                 var finalObj = MakeObservationObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                 return finalObj;
                 
@@ -1891,13 +1867,7 @@ namespace GP_Connect.Service.AccessRecordHTML
             try
             {
 
-                var GPtransferBanner = "";
-
-                if (nhsNumber == "9651260211")
-                {
-                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
-                }
-
+              
 
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
@@ -1964,7 +1934,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if(immunizationList.Count > 0)
                 {
                     var res = makeImmunizationHtmlContent(immunizationList);
-                    var htmlContent = "<div> <h1>Immunisations</h1> "+GPtransferBanner+"  <table id=\"imm-tab\"> <thead> <tr> <th>Date</th> <th>Vaccination</th> <th>Part</th> <th>Contents</th> <th>Details</th> </tr> </thead> <tbody> "+ res + " </tbody> </table> </div>";    
+                    var htmlContent = "<div> <h1>Immunisations</h1> "+bannerDTO.GpTransferBanner + bannerDTO.ImmunisationsContentBanner + bannerDTO.ImmunisationsExclusiveBanner +"  <table id=\"imm-tab\"> <thead> <tr> <th>Date</th> <th>Vaccination</th> <th>Part</th> <th>Contents</th> <th>Details</th> </tr> </thead> <tbody> "+ res + " </tbody> </table> </div>";    
                     var finalObj = MakeImmunizationCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlContent);
                     return finalObj;
                 }
@@ -1975,7 +1945,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     patientSequenceNumber = patientDetails[0];
                     organizationName = patientDetails[1];
                     organizationSequenceNumber = patientDetails[2];
-                    var htmlContent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Immunisations</h1> "+GPtransferBanner+ " <div class=\"exclusion-banner\"> <p> Items excluded due to confidentiality and/or patient preferences. </p> </div> <p>No 'Immunisations' data is recorded for this patient.</p></div>";
+                    var htmlContent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Immunisations</h1> "+bannerDTO.GpTransferBanner+ bannerDTO.ImmunisationsContentBanner + bannerDTO.ImmunisationsExclusiveBanner+ " <div class=\"exclusion-banner\"> <p> Items excluded due to confidentiality and/or patient preferences. </p> </div> <p>No 'Immunisations' data is recorded for this patient.</p></div>";
                     var finalObj = MakeImmunizationCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlContent);
                     return finalObj;
                 }
@@ -2091,13 +2061,7 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
-                var GPtransferBanner = "";
-
-                if (nhsNumber == "9651260211")
-                {
-                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
-                }
-
+             
 
                 var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
 
@@ -2186,7 +2150,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if (administractorList.Count > 0)
                 {
                     var res = MakeAdministractorDiv(administractorList);
-                    var htmlcontent = "<div> <h1>Administrative Items</h1> "+ datefilterBanner +  GPtransferBanner + "  <table id=\"adm-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
+                    var htmlcontent = "<div> <h1>Administrative Items</h1> "+ bannerDTO.GpTransferBanner + bannerDTO.AdministrativeItemsContentBanner + datefilterBanner  + bannerDTO.AdministrativeItemsExclusiveBanner +"  <table id=\"adm-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
                     //  var htmlcontent = "<div> <h1>Administrative Items</h1>  "+ datefilterBanner + " <table id=\"adm-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> " + res + " </tbody> </table> </div>";
                    // var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Administrative Items</h1>"+datefilterBanner+"<table id=\"adm-tab\"><thead><tr><th>Date</th><th>Entry</th><th>Details</th></tr></thead><tbody>"+res+"</tbody></table></div>";
                     var finalObj = MakeAdministractorCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
@@ -2199,7 +2163,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     patientSequenceNumber = patientDetails[0];
                     organizationName = patientDetails[1];
                     organizationSequenceNumber = patientDetails[2];
-                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Administrative Items</h1>"+ GPtransferBanner + " <div class=\"date-banner\"> "+datefilterBanner+"  <p>No 'Administrative Items' data is recorded for this patient.</p></div>";
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Administrative Items</h1>"+ bannerDTO.GpTransferBanner + datefilterBanner+"  <p>No 'Administrative Items' data is recorded for this patient.</p></div>";
                     var finalObj = MakeAdministractorCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 }
@@ -2305,12 +2269,7 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
-                var GPtransferBanner = "";
-
-                if (nhsNumber == "9651260211")
-                {
-                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
-                }
+              
 
                 var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
 
@@ -2400,7 +2359,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if (clinicalItemList.Count > 0)
                 {
                     var res = makehtmlcontentofclinicalitems(clinicalItemList);
-                    var htmlcontent = "<div> <h1>Clinical Items</h1> "+ GPtransferBanner + "<div class=\"content-banner\"> <p> </p> </div>" + datefilterBanner + " <div class=\"exclusion-banner\"> <p> </p> </div> <table id=\"cli-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> "+res+" </tbody> </table> </div>";
+                    var htmlcontent = "<div> <h1>Clinical Items</h1> " + bannerDTO.GpTransferBanner + bannerDTO.ClinicalItemContentBanner + datefilterBanner + bannerDTO.ClinicalItemExclusiveBanner + "<table id=\"cli-tab\"> <thead> <tr> <th>Date</th> <th>Entry</th> <th>Details</th> </tr> </thead> <tbody> " +res+" </tbody> </table> </div>";
                     var finalObj = MakeClinicalItemCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 }
@@ -2411,7 +2370,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     patientSequenceNumber = patientDetails[0];
                     organizationName = patientDetails[1];
                     organizationSequenceNumber = patientDetails[2];
-                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Clinical Items</h1> "+ GPtransferBanner + " <div class=\"date-banner\"> "+datefilterBanner+"  <p>No 'Clinical Items' data is recorded for this patient.</p></div>";
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Clinical Items</h1> " + bannerDTO.GpTransferBanner + bannerDTO.ClinicalItemContentBanner + datefilterBanner + bannerDTO.ClinicalItemExclusiveBanner + "< p>No 'Clinical Items' data is recorded for this patient.</p></div>";
                     var finalObj = MakeClinicalItemCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 }
@@ -2526,12 +2485,7 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
-                var GPtransferBanner = "";
-
-                if (nhsNumber == "9651260211")
-                {
-                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
-                }
+               
 
                 var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
 
@@ -2665,7 +2619,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     organizationName = patientDetails[1];
                     organizationSequenceNumber = patientDetails[2];
 
-                    var htmlcontenmt = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Medications</h1> "+GPtransferBanner +"<div><h2>Acute Medication (Last 12 Months)</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Acute Medication (Last 12 Months)' data is recorded for this patient.</p></div><div><h2>Current Repeat Medication</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Current Repeat Medication' data is recorded for this patient.</p></div><div><h2>Discontinued Repeat Medication</h2><div class=\"content-banner\"><p>All repeat medication ended by a clinician action</p></div><div class=\"date-banner\"><p>Date filter not applied</p></div><p>No 'Discontinued Repeat Medication' data is recorded for this patient.</p></div><div><h2>All Medication</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'All Medication' data is recorded for this patient.</p></div><div><h2>All Medication Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'All Medication Issues' data is recorded for this patient.</p></div></div>";
+                    var htmlcontenmt = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Medications</h1> "+bannerDTO.GpTransferBanner +"<div><h2>Acute Medication (Last 12 Months)</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Acute Medication (Last 12 Months)' data is recorded for this patient.</p></div><div><h2>Current Repeat Medication</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'Current Repeat Medication' data is recorded for this patient.</p></div><div><h2>Discontinued Repeat Medication</h2><div class=\"content-banner\"><p>All repeat medication ended by a clinician action</p></div><div class=\"date-banner\"><p>Date filter not applied</p></div><p>No 'Discontinued Repeat Medication' data is recorded for this patient.</p></div><div><h2>All Medication</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'All Medication' data is recorded for this patient.</p></div><div><h2>All Medication Issues</h2><div class=\"date-banner\"><p>All relevant items</p></div><p>No 'All Medication Issues' data is recorded for this patient.</p></div></div>";
                     var finalObj = MakeMedicationCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontenmt);
                     return finalObj;
                 }
@@ -2681,13 +2635,10 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
-                var GPtransferBanner = "";
+               
                 var bannerNotAppliedDefined = "<div class=\"date-banner\"><p>Date filter not applied</p></div>";
+               
 
-                if (nhsNumber == "9651260211")
-                {
-                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
-                }
 
                 var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
 
@@ -2864,7 +2815,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
-                    repeatMedicationDivTable = "<table id=\"med-tab-curr-rep\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Max Issues</th> <th>Review Date</th> <th>Additional Information</th> </tr> </thead> <tbody> " + repeatMedicationDiv+" </tbody> </table>";
+                    repeatMedicationDivTable = "  <table id=\"med-tab-curr-rep\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Max Issues</th> <th>Review Date</th> <th>Additional Information</th> </tr> </thead> <tbody> " + repeatMedicationDiv+" </tbody> </table> ";
                 }
 
 
@@ -2874,7 +2825,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
-                    discountinuedReapeatMedicationTable = "<table id=\"med-tab-dis-rep\"> <thead> <tr> <th>Type</th> <th>Last Issued Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Discontinued Date</th> <th>Discontinuation Reason</th> <th>Additional Information</th> </tr> </thead> <tbody> " + discountinuedReapeatMedication+" </tbody> </table>";
+                    discountinuedReapeatMedicationTable = " <table id=\"med-tab-dis-rep\"> <thead> <tr> <th>Type</th> <th>Last Issued Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Discontinued Date</th> <th>Discontinuation Reason</th> <th>Additional Information</th> </tr> </thead> <tbody> " + discountinuedReapeatMedication+" </tbody> </table> ";
                 }
 
 
@@ -2885,7 +2836,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
-                    allMedicationTable = "<table id=\"med-tab-all-sum\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Discontinuation Details</th> <th>Additional Information</th> </tr> </thead> <tbody> " + allMedication+" </tbody> </table> ";
+                    allMedicationTable = " <table id=\"med-tab-all-sum\"> <thead> <tr> <th>Type</th> <th>Start Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Last Issued Date</th> <th>Number of Prescriptions Issued</th> <th>Discontinuation Details</th> <th>Additional Information</th> </tr> </thead> <tbody> " + allMedication+" </tbody> </table>  ";
                 }
 
                 if (allmedicationIssue == "")
@@ -2894,7 +2845,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
                 else
                 {
-                    allmedicationIssueTable = "<table id=\"med-tab-all-iss\"> <thead> <tr> <th>Type</th> <th>Issue Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Days Duration</th> <th>Additional Information</th> </tr> </thead> <tbody> "+allmedicationIssue+" </tbody> </table>";
+                    allmedicationIssueTable = "  <table id=\"med-tab-all-iss\"> <thead> <tr> <th>Type</th> <th>Issue Date</th> <th>Medication Item</th> <th>Dosage Instruction</th> <th>Quantity</th> <th>Days Duration</th> <th>Additional Information</th> </tr> </thead> <tbody> "+allmedicationIssue+" </tbody> </table> ";
                 }
 
                 if(startDate == "" || endDate == "")
@@ -2903,11 +2854,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                 }
 
 
-                var htmlcontent = "<div> <h1>Medications</h1> <div> "+ GPtransferBanner + " <h2>Acute Medication (Last 12 Months)</h2> " + acuteMedicationDivTable + "</div>" +
-                    "<div> <h2>Current Repeat Medication</h2> <div class=\"content-banner\">  <p> The Review Date is that set for each Repeat Course. Reviews may be conducted according to a diary event which differs from the dates shown </p> </div>  <div class=\"exclusion-banner\"> <p> Items excluded due to confidentiality and/or patient preferences. </p> </div>" + repeatMedicationDivTable+" </div> " +
-                    "<div> <h2>Discontinued Repeat Medication</h2> <div class=\"content-banner\"> <p> All repeat medication ended by a clinician action </p>  </div> " + discountinuedReapeatMedicationTable+" </div> " +
-                    "<div> <h2>All Medication</h2> "+datefilterBanner+ allMedicationTable+ "  </div>" +
-                    "<div> <h2>All Medication Issues</h2> "+datefilterBanner+ allmedicationIssueTable + " </div> </div>";
+                var htmlcontent = "<div> <h1>Medications</h1> "+ bannerDTO.GpTransferBanner + bannerDTO.MedicationsContentBanner + "<div> <h2>Acute Medication (Last 12 Months)</h2>  " + bannerDTO.AcuteMedicationContentBanner + bannerDTO.AcuteMedicationExclusiveBanner + acuteMedicationDivTable  + "</div>" +
+                    "<div> <h2>Current Repeat Medication</h2> " +bannerDTO.CurrentRepeatMedicationContentBanner + bannerDTO.CurrentRepeatMedicationExclusiveBanner +  repeatMedicationDivTable + "</div>" +
+                    "<div> <h2>Discontinued Repeat Medication</h2>" +bannerDTO.DiscontinuedRepeatMedicationContentBanner + bannerDTO.DiscontinuedRepeatMedicationExclusiveBanner + discountinuedReapeatMedicationTable + "</div>" +
+                    "<div> <h2>All Medication</h2> " +bannerDTO.AllMedicationContentBanner +datefilterBanner+ bannerDTO.AllMedicationExclusiveBanner + allMedicationTable+ "</div>" +
+                    "<div> <h2>All Medication Issues</h2> " + bannerDTO.AllMedicationIssueContentBanner + datefilterBanner+ bannerDTO.AllMedicationIssueExclusiveBanner + allmedicationIssueTable + " </div> </div>";
  
                 return htmlcontent;
 
@@ -2990,6 +2941,8 @@ namespace GP_Connect.Service.AccessRecordHTML
 
         }
 
+        
+
         #endregion
 
         #region Summary
@@ -2998,12 +2951,7 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
-                var GPtransferBanner = "";
-
-                if (nhsNumber == "9651260211")
-                {
-                    GPtransferBanner = "<div class=\"gptransfer-banner\"><p>Patient record transfer from previous GP practice not yet complete; information recorded before " + DateTime.UtcNow.AddDays(-7).ToString("dd-MMM-yyyy") + " may be missing</p></div>";
-                }
+                
 
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
@@ -3130,7 +3078,7 @@ namespace GP_Connect.Service.AccessRecordHTML
 
                     }
 
-                    var finalhtmlcontentofsummary = "<div> <h1>Summary</h1> "+GPtransferBanner+" <div> <h2>Emergency Codes</h2> "+ emergenercyTableHtml + "  </div> <div> <h2>Last 3 Encounters</h2> " + encounterlasthtml + "  </div> <div> <h2>Active Problems and Issues</h2> " + activeProblemhtml + " </div> <div> <h2>Major Inactive Problems and Issues</h2> "+ manjorInavtiveProblemhtml + "  </div> <div> <h2>Current Allergies and Adverse Reactions</h2> "+ currentallergyandadversehtml+ " </div> <div> <h2>Acute Medication (Last 12 Months)</h2> " + acutemedicationhtml + " </div> <div> <h2>Current Repeat Medication</h2> "+ currentrepeatmedicatipon + " </div> </div>";
+                    var finalhtmlcontentofsummary = "<div> <h1>Summary</h1> "+bannerDTO.GpTransferBanner+" <div> <h2>Emergency Codes</h2> "+ emergenercyTableHtml + "  </div> <div> <h2>Last 3 Encounters</h2>  " + bannerDTO.EncounterContentBanner + bannerDTO.EncounterExclusiveBanner+  encounterlasthtml + "  </div> <div> <h2>Active Problems and Issues</h2> " +bannerDTO.ActiveProblemsandIssuesContentBanner+ bannerDTO.ActiveProblemsandIssuesExclusiveBanner +  activeProblemhtml + " </div> <div> <h2>Major Inactive Problems and Issues</h2> "+ bannerDTO.MajorInactiveProblemsandIssuesContentBanner + bannerDTO.MajorInactiveProblemsandIssuesExclusiveBanner  +manjorInavtiveProblemhtml + "  </div> <div> <h2>Current Allergies and Adverse Reactions</h2> " + bannerDTO.CurrentAllergiesandAdverseReactionsContentBanner + bannerDTO.CurrentAllergiesandAdverseReactionsExclusiveBanner  +currentallergyandadversehtml+ " </div> <div> <h2>Acute Medication (Last 12 Months)</h2> " + bannerDTO.AcuteMedicationContentBanner + bannerDTO.AcuteMedicationExclusiveBanner + acutemedicationhtml + " </div> <div> <h2>Current Repeat Medication</h2> "+ bannerDTO.CurrentRepeatMedicationContentBanner + bannerDTO.CurrentRepeatMedicationExclusiveBanner + currentrepeatmedicatipon + " </div> </div>";
 
                 
                     var finalObj = MakeSummaryCompositionObject(patientSequenceNumber, organizationSequenceNumber, organizationName, finalhtmlcontentofsummary);
@@ -3507,7 +3455,6 @@ namespace GP_Connect.Service.AccessRecordHTML
             }
 
         }
-
         internal string GetMeasuringQuantityDrugUsingName(string name)
         {
             try
@@ -3642,6 +3589,184 @@ namespace GP_Connect.Service.AccessRecordHTML
 
         #endregion
 
+        #region Get All Banner
+
+        internal BannerDTO GetAllBannerContent(string nhsNumber)
+        {
+            try
+            {
+                BannerDTO bannerDTO = new BannerDTO();
+
+                var bannerXML = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
+                                       <entity name='bcrm_patientaccesshtmlbanner'>
+                                         <attribute name='bcrm_patientaccesshtmlbannerid' />
+                                         <attribute name='bcrm_name' />
+                                         <attribute name='createdon' />
+                                         <attribute name='statuscode' />
+                                         <attribute name='statecode' />
+                                         <attribute name='bcrm_referralsexclusionbanner' />
+                                         <attribute name='bcrm_referralscontentbanner' />
+                                         <attribute name='overriddencreatedon' />
+                                         <attribute name='bcrm_problemsandissuescontentbanner' />
+                                         <attribute name='bcrm_patient' />
+                                         <attribute name='owningbusinessunit' />
+                                         <attribute name='ownerid' />
+                                         <attribute name='bcrm_otherinactiveproblemsandissuesexclusionbanne' />
+                                         <attribute name='bcrm_otherinactiveproblemsandissuescontentbanner' />
+                                         <attribute name='bcrm_observationsexclusionbanner' />
+                                         <attribute name='bcrm_observationscontentbanner' />
+                                         <attribute name='modifiedon' />
+                                         <attribute name='modifiedonbehalfby' />
+                                         <attribute name='modifiedby' />
+                                         <attribute name='bcrm_medicationscontentbanner' />
+                                         <attribute name='bcrm_majorinactiveproblemsandissuesexclusionbanne' />
+                                         <attribute name='bcrm_majorinactiveproblemsandissuescontentbanner' />
+                                         <attribute name='bcrm_immunisationsexclusionbanner' />
+                                         <attribute name='bcrm_immunisationscontentbanner' />
+                                         <attribute name='bcrm_historicalallergiesandadversereactionsexclusionb' />
+                                         <attribute name='bcrm_historicalallergiesandadversereactionscontentban' />
+                                         <attribute name='bcrm_encountersexclusionbanner' />
+                                         <attribute name='bcrm_encounterscontentbanner' />
+                                         <attribute name='bcrm_discontinuedrepeatmedicationexclusionbanner' />
+                                         <attribute name='bcrm_discontinuedrepeatmedicationcontentbanner' />
+                                         <attribute name='bcrm_currentallergiesandadversereactionsexclusionbanne' />
+                                         <attribute name='bcrm_currentallergiesandadversereactioncontentbanner' />
+                                         <attribute name='bcrm_currentrepeatmedicationexclusionbanner' />
+                                         <attribute name='bcrm_currentrepeatmedicationcontentbanner' />
+                                         <attribute name='createdonbehalfby' />
+                                         <attribute name='createdby' />
+                                         <attribute name='bcrm_clinicalitemsexclusionbanner' />
+                                         <attribute name='bcrm_clinicalitemscontentbanner' />
+                                         <attribute name='bcrm_allergiesandadversereactioncontentbanner' />
+                                         <attribute name='bcrm_allmedicationissuesexclusionbanner' />
+                                         <attribute name='bcrm_allmedicationissuescontentbanner' />
+                                         <attribute name='bcrm_allmedicationexclusionbanner' />
+                                         <attribute name='bcrm_allmedicationcontentbanner' />
+                                         <attribute name='bcrm_administrativeitemsexclusionbanner' />
+                                         <attribute name='bcrm_administrativeitemscontentbanner' />
+                                         <attribute name='bcrm_acutemedicationexclusionbanner' />
+                                         <attribute name='bcrm_acutemedicationcontentbanner' />
+                                         <attribute name='bcrm_activeproblemsandissuesexclusionbanner' />
+                                         <attribute name='bcrm_activeproblemsandissuescontentbanner' />
+                                         <order attribute='bcrm_name' descending='false' />
+                                         <link-entity name='contact' from='contactid' to='bcrm_patient' link-type='inner' alias='patient'>
+                                           <filter type='and'>
+                                             <condition attribute='bcrm_nhsnumber' operator='eq' value='" + nhsNumber + @"' />
+                                             <attribute name='bcrm_gptransferbanner' />
+                                           </filter>
+                                         </link-entity>
+                                       </entity>
+                                     </fetch>";
+                EntityCollection AnswerCollection = _crmServiceClient.RetrieveMultiple(new FetchExpression(bannerXML));
+                if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
+                {
+                    var record = AnswerCollection.Entities[0];
+                    bannerDTO.GpTransferBanner = record.Attributes.Contains("patient.bcrm_gptransferbanner") ? record["patient.bcrm_gptransferbanner"].ToString() : string.Empty;
+
+                    bannerDTO.EncounterContentBanner = record.Attributes.Contains("bcrm_encounterscontentbanner") ? record["bcrm_encounterscontentbanner"].ToString() : string.Empty;
+                    bannerDTO.EncounterExclusiveBanner = record.Attributes.Contains("bcrm_encountersexclusionbanner") ? record["bcrm_encountersexclusionbanner"].ToString() : string.Empty;
+                    bannerDTO.ClinicalItemContentBanner = record.Attributes.Contains("bcrm_clinicalitemscontentbanner") ? record["bcrm_clinicalitemsexclusionbanner"].ToString() : string.Empty;
+                    bannerDTO.ClinicalItemExclusiveBanner = record.Attributes.Contains("bcrm_problemsandissuescontentbanner") ? record["bcrm_problemsandissuescontentbanner"].ToString() : string.Empty; bannerDTO.EncounterContentBanner = record.Attributes.Contains("bcrm_gptransferbanner") ? record.FormattedValues["bcrm_gptransferbanner"].ToString() : string.Empty;
+                    bannerDTO.ProblemsandIssuesContentBanner = record.Attributes.Contains("bcrm_activeproblemsandissuescontentbanner") ? record["bcrm_activeproblemsandissuescontentbanner"].ToString() : string.Empty;
+                    bannerDTO.ActiveProblemsandIssuesContentBanner = record.Attributes.Contains("bcrm_activeproblemsandissuescontentbanner") ? record["bcrm_activeproblemsandissuescontentbanner"].ToString() : string.Empty;
+                    bannerDTO.ActiveProblemsandIssuesExclusiveBanner = record.Attributes.Contains("bcrm_activeproblemsandissuesexclusionbanner") ? record["bcrm_activeproblemsandissuesexclusionbanner"].ToString() : string.Empty;
+                    bannerDTO.MajorInactiveProblemsandIssuesContentBanner = record.Attributes.Contains("bcrm_majorinactiveproblemsandissuescontentbanner") ? record["bcrm_majorinactiveproblemsandissuescontentbanner"].ToString() : string.Empty;
+                    bannerDTO.MajorInactiveProblemsandIssuesExclusiveBanner = record.Attributes.Contains("bcrm_majorinactiveproblemsandissuesexclusionbanne") ? record["bcrm_majorinactiveproblemsandissuesexclusionbanne"].ToString() : string.Empty;
+                    bannerDTO.OtherInactiveProblemsandIssuesContentBanner = record.Attributes.Contains("bcrm_otherinactiveproblemsandissuescontentbanner") ? record["bcrm_otherinactiveproblemsandissuescontentbanner"].ToString() : string.Empty;
+                    bannerDTO.OtherInactiveProblemsandIssuesExclusiveBanner = record.Attributes.Contains("bcrm_otherinactiveproblemsandissuesexclusionbanne") ? record["bcrm_otherinactiveproblemsandissuesexclusionbanne"].ToString() : string.Empty;
+
+                    bannerDTO.AllergiesandAdverseReactionsContentBanner = record.Attributes.Contains("bcrm_allergiesandadversereactioncontentbanner") ? record["bcrm_allergiesandadversereactioncontentbanner"].ToString() : string.Empty;
+                    bannerDTO.CurrentAllergiesandAdverseReactionsContentBanner = record.Attributes.Contains("bcrm_currentallergiesandadversereactioncontentbanner") ? record["bcrm_currentallergiesandadversereactioncontentbanner"].ToString() : string.Empty;
+                    bannerDTO.CurrentAllergiesandAdverseReactionsExclusiveBanner = record.Attributes.Contains("bcrm_currentallergiesandadversereactionsexclusionbanne") ? record["bcrm_currentallergiesandadversereactionsexclusionbanne"].ToString() : string.Empty;
+                    bannerDTO.HistoricalAllergiesandAdverseReactionsContentBanner = record.Attributes.Contains("bcrm_historicalallergiesandadversereactionscontentban") ? record["bcrm_historicalallergiesandadversereactionscontentban"].ToString() : string.Empty;
+                    bannerDTO.HistoricalAllergiesandAdverseReactionsExclusiveBanner = record.Attributes.Contains("bcrm_historicalallergiesandadversereactionsexclusionb") ? record["bcrm_historicalallergiesandadversereactionsexclusionb"].ToString() : string.Empty;
+
+
+
+                    bannerDTO.MedicationsContentBanner = record.Attributes.Contains("bcrm_medicationscontentbanner") ? record["bcrm_medicationscontentbanner"].ToString() : string.Empty;
+                    bannerDTO.AcuteMedicationContentBanner = record.Attributes.Contains("bcrm_acutemedicationcontentbanner") ? record["bcrm_acutemedicationcontentbanner"].ToString() : string.Empty;
+                    bannerDTO.AcuteMedicationExclusiveBanner = record.Attributes.Contains("bcrm_acutemedicationexclusionbanner") ? record["bcrm_acutemedicationexclusionbanner"].ToString() : string.Empty;
+                    bannerDTO.CurrentRepeatMedicationContentBanner = record.Attributes.Contains("bcrm_currentrepeatmedicationcontentbanner") ? record["bcrm_currentrepeatmedicationcontentbanner"].ToString() : string.Empty;
+                    bannerDTO.CurrentRepeatMedicationExclusiveBanner = record.Attributes.Contains("bcrm_currentrepeatmedicationexclusionbanner") ? record["bcrm_currentrepeatmedicationexclusionbanner"].ToString() : string.Empty;
+                    bannerDTO.DiscontinuedRepeatMedicationContentBanner = record.Attributes.Contains("bcrm_discontinuedrepeatmedicationcontentbanner") ? record["bcrm_discontinuedrepeatmedicationcontentbanner"].ToString() : string.Empty;
+                    bannerDTO.DiscontinuedRepeatMedicationExclusiveBanner = record.Attributes.Contains("bcrm_discontinuedrepeatmedicationexclusionbanner") ? record["bcrm_discontinuedrepeatmedicationexclusionbanner"].ToString() : string.Empty;
+                    bannerDTO.AllMedicationContentBanner = record.Attributes.Contains("bcrm_allmedicationcontentbanner") ? record["bcrm_allmedicationcontentbanner"].ToString() : string.Empty;
+                    bannerDTO.AllMedicationExclusiveBanner = record.Attributes.Contains("bcrm_allmedicationexclusionbanner") ? record["bcrm_allmedicationexclusionbanner"].ToString() : string.Empty;
+                    bannerDTO.AllMedicationIssueContentBanner = record.Attributes.Contains("bcrm_allmedicationissuescontentbanner") ? record["bcrm_allmedicationissuescontentbanner"].ToString() : string.Empty;
+                    bannerDTO.AllMedicationIssueExclusiveBanner = record.Attributes.Contains("bcrm_allmedicationissuesexclusionbanner") ? record["bcrm_allmedicationissuesexclusionbanner"].ToString() : string.Empty;
+
+                    bannerDTO.ReferralsContentBanner = record.Attributes.Contains("bcrm_referralscontentbanner") ? record["bcrm_referralscontentbanner"].ToString() : string.Empty;
+                    bannerDTO.ReferralsExclusiveBanner = record.Attributes.Contains("bcrm_referralsexclusionbanner") ? record["bcrm_referralsexclusionbanner"].ToString() : string.Empty;
+
+                    bannerDTO.ObservationsContentBanner = record.Attributes.Contains("bcrm_observationscontentbanner") ? record["bcrm_observationscontentbanner"].ToString() : string.Empty;
+                    bannerDTO.ObservationsExclusiveBanner = record.Attributes.Contains("bcrm_observationsexclusionbanner") ? record["bcrm_observationsexclusionbanner"].ToString() : string.Empty;
+
+                    bannerDTO.ImmunisationsContentBanner = record.Attributes.Contains("bcrm_immunisationscontentbanner") ? record["bcrm_immunisationscontentbanner"].ToString() : string.Empty;
+                    bannerDTO.ImmunisationsExclusiveBanner = record.Attributes.Contains("bcrm_immunisationsexclusionbanner") ? record["bcrm_immunisationsexclusionbanner"].ToString() : string.Empty;
+
+                    bannerDTO.AdministrativeItemsContentBanner = record.Attributes.Contains("bcrm_administrativeitemscontentbanner") ? record["bcrm_administrativeitemscontentbanner"].ToString() : string.Empty;
+                    bannerDTO.AdministrativeItemsExclusiveBanner = record.Attributes.Contains("bcrm_administrativeitemsexclusionbanner") ? record["bcrm_administrativeitemsexclusionbanner"].ToString() : string.Empty;
+
+
+
+
+                    bannerDTO.EncounterContentBanner = WrapWithHtml(bannerDTO.EncounterContentBanner, "content-banner");
+                    bannerDTO.EncounterExclusiveBanner = WrapWithHtml(bannerDTO.EncounterExclusiveBanner, "exclusion-banner");
+                    bannerDTO.ClinicalItemContentBanner = WrapWithHtml(bannerDTO.ClinicalItemContentBanner, "content-banner");
+                    bannerDTO.ClinicalItemExclusiveBanner = WrapWithHtml(bannerDTO.ClinicalItemExclusiveBanner, "exclusion-banner");
+                    bannerDTO.ProblemsandIssuesContentBanner = WrapWithHtml(bannerDTO.ProblemsandIssuesContentBanner, "content-banner");
+                    bannerDTO.ActiveProblemsandIssuesContentBanner = WrapWithHtml(bannerDTO.ActiveProblemsandIssuesContentBanner, "content-banner");
+                    bannerDTO.ActiveProblemsandIssuesExclusiveBanner = WrapWithHtml(bannerDTO.ActiveProblemsandIssuesExclusiveBanner, "exclusion-banner");
+                    bannerDTO.MajorInactiveProblemsandIssuesContentBanner = WrapWithHtml(bannerDTO.MajorInactiveProblemsandIssuesContentBanner, "content-banner");
+                    bannerDTO.MajorInactiveProblemsandIssuesExclusiveBanner = WrapWithHtml(bannerDTO.MajorInactiveProblemsandIssuesExclusiveBanner, "exclusion-banner");
+                    bannerDTO.OtherInactiveProblemsandIssuesContentBanner = WrapWithHtml(bannerDTO.OtherInactiveProblemsandIssuesContentBanner, "content-banner");
+                    bannerDTO.OtherInactiveProblemsandIssuesExclusiveBanner = WrapWithHtml(bannerDTO.OtherInactiveProblemsandIssuesExclusiveBanner, "exclusion-banner");
+
+                    bannerDTO.AllergiesandAdverseReactionsContentBanner = WrapWithHtml(bannerDTO.AllergiesandAdverseReactionsContentBanner, "content-banner");
+                    bannerDTO.CurrentAllergiesandAdverseReactionsContentBanner = WrapWithHtml(bannerDTO.CurrentAllergiesandAdverseReactionsContentBanner, "content-banner");
+                    bannerDTO.CurrentAllergiesandAdverseReactionsExclusiveBanner = WrapWithHtml(bannerDTO.CurrentAllergiesandAdverseReactionsExclusiveBanner, "exclusion-banner");
+                    bannerDTO.HistoricalAllergiesandAdverseReactionsContentBanner = WrapWithHtml(bannerDTO.HistoricalAllergiesandAdverseReactionsContentBanner, "content-banner");
+                    bannerDTO.HistoricalAllergiesandAdverseReactionsExclusiveBanner = WrapWithHtml(bannerDTO.HistoricalAllergiesandAdverseReactionsExclusiveBanner, "exclusion-banner");
+
+                    bannerDTO.MedicationsContentBanner = WrapWithHtml(bannerDTO.MedicationsContentBanner, "content-banner");
+                    bannerDTO.AcuteMedicationContentBanner = WrapWithHtml(bannerDTO.AcuteMedicationContentBanner, "content-banner");
+                    bannerDTO.AcuteMedicationExclusiveBanner = WrapWithHtml(bannerDTO.AcuteMedicationExclusiveBanner, "exclusion-banner");
+                    bannerDTO.CurrentRepeatMedicationContentBanner = WrapWithHtml(bannerDTO.CurrentRepeatMedicationContentBanner, "content-banner");
+                    bannerDTO.CurrentRepeatMedicationExclusiveBanner = WrapWithHtml(bannerDTO.CurrentRepeatMedicationExclusiveBanner, "exclusion-banner");
+                    bannerDTO.DiscontinuedRepeatMedicationContentBanner = WrapWithHtml(bannerDTO.DiscontinuedRepeatMedicationContentBanner, "content-banner");
+                    bannerDTO.DiscontinuedRepeatMedicationExclusiveBanner = WrapWithHtml(bannerDTO.DiscontinuedRepeatMedicationExclusiveBanner, "exclusion-banner");
+                    bannerDTO.AllMedicationContentBanner = WrapWithHtml(bannerDTO.AllMedicationContentBanner, "content-banner");
+                    bannerDTO.AllMedicationExclusiveBanner = WrapWithHtml(bannerDTO.AllMedicationExclusiveBanner, "exclusion-banner");
+                    bannerDTO.AllMedicationIssueContentBanner = WrapWithHtml(bannerDTO.AllMedicationIssueContentBanner, "content-banner");
+                    bannerDTO.AllMedicationIssueExclusiveBanner = WrapWithHtml(bannerDTO.AllMedicationIssueExclusiveBanner, "exclusion-banner");
+
+                    bannerDTO.ReferralsContentBanner = WrapWithHtml(bannerDTO.ReferralsContentBanner, "content-banner");
+                    bannerDTO.ReferralsExclusiveBanner = WrapWithHtml(bannerDTO.ReferralsExclusiveBanner, "exclusion-banner");
+
+                    bannerDTO.ObservationsContentBanner = WrapWithHtml(bannerDTO.ObservationsContentBanner, "content-banner");
+                    bannerDTO.ObservationsExclusiveBanner = WrapWithHtml(bannerDTO.ObservationsExclusiveBanner, "exclusion-banner");
+
+                    bannerDTO.ImmunisationsContentBanner = WrapWithHtml(bannerDTO.ImmunisationsContentBanner, "content-banner");
+                    bannerDTO.ImmunisationsExclusiveBanner = WrapWithHtml(bannerDTO.ImmunisationsExclusiveBanner, "exclusion-banner");
+
+                    bannerDTO.AdministrativeItemsContentBanner = WrapWithHtml(bannerDTO.AdministrativeItemsContentBanner, "content-banner");
+                    bannerDTO.AdministrativeItemsExclusiveBanner = WrapWithHtml(bannerDTO.AdministrativeItemsExclusiveBanner, "exclusion-banner");
+
+                    bannerDTO.GpTransferBanner = WrapWithHtml(bannerDTO.GpTransferBanner, "gptransfer-banner");
+
+                }
+                return bannerDTO;
+            }
+            catch (Exception ex)
+            {
+                return new BannerDTO();
+            }
+        }
+        string WrapWithHtml(string value, string cssClass)
+        {
+            return !string.IsNullOrEmpty(value) ? $"<div class=\"{cssClass}\"><p>{value}</p></div>" : string.Empty;
+        }
+        #endregion
 
         #endregion
 

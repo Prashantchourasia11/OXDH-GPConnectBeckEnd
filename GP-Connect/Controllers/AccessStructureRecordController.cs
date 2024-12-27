@@ -1,8 +1,11 @@
 ﻿using GP_Connect.DataTransferObject;
 using GP_Connect.Service.AccessStructureRecord;
 using GP_Connect.Service.Foundation;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.SharePoint.Client;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
@@ -42,6 +45,8 @@ namespace GP_Connect.Controllers
         {
             try
             {
+           
+
                 var nhs_number = identifier.Substring(identifier.Length - Math.Min(10, identifier.Length));
                 //ServiceFoundation serviceFoundation = new ServiceFoundation();
                 //var result = serviceFoundation.FindAPatient(nhs_number,"");
@@ -104,6 +109,33 @@ namespace GP_Connect.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpPost]
+        [Route("checking")]
+        public ActionResult Checking([FromBody] object body)
+        {
+            try
+            {
+                // Convert body to string
+                string bodyString = body.ToString();
+
+                // Parse FHIR resource
+                var jsonParser = new FhirJsonParser();
+                var v1 = jsonParser.Parse<Resource>(bodyString);
+
+                return Ok(v1); // Optionally return the parsed resource
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
         #endregion
+    }
+    public class getdataDTO
+    {
+        public dynamic body { get; set; }
     }
 }
