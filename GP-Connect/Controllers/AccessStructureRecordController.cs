@@ -1,8 +1,7 @@
 ﻿using GP_Connect.DataTransferObject;
 using GP_Connect.Service.AccessStructureRecord;
 using GP_Connect.Service.Foundation;
-using Hl7.Fhir.Model;
-using Hl7.Fhir.Serialization;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.SharePoint.Client;
@@ -110,27 +109,7 @@ namespace GP_Connect.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("checking")]
-        public ActionResult Checking([FromBody] object body)
-        {
-            try
-            {
-                // Convert body to string
-                string bodyString = body.ToString();
-
-                // Parse FHIR resource
-                var jsonParser = new FhirJsonParser();
-                var v1 = jsonParser.Parse<Resource>(bodyString);
-
-                return Ok(v1); // Optionally return the parsed resource
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
+      
 
         #endregion
     }
