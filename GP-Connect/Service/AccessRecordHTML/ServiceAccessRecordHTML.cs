@@ -968,7 +968,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     organizationName = patientDetails[1];
                     organizationSequenceNumber = patientDetails[2];
 
-                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> "+ bannerDTO.GpTransferBanner + bannerDTO.EncounterContentBanner + datefilterBanner + bannerDTO.EncounterExclusiveBanner + "   <p>No 'Encounters' data is recorded for this patient.</p></div>";
+                    var htmlcontent = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h1>Encounters</h1> " + bannerDTO.GpTransferBanner + bannerDTO.EncounterContentBanner + datefilterBanner + bannerDTO.EncounterExclusiveBanner + "   <p>No 'Encounters' data is recorded for this patient.</p></div>";
                     var finalObj = CreateEncounterJSONByUsingRecord(patientSequenceNumber, organizationSequenceNumber, organizationName, htmlcontent);
                     return finalObj;
                 }
