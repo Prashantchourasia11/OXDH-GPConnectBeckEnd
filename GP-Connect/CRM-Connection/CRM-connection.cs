@@ -6,6 +6,7 @@ using System.Net;
 using System.ServiceModel;
 
 using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.Xrm.Tooling.Connector;
 
 namespace GP_Connect.CRM_Connection
 {
@@ -32,17 +33,27 @@ namespace GP_Connect.CRM_Connection
         #region Method
         public IOrganizationService crmconnection()
         {
-            ServiceClient service = new ServiceClient($@"AuthType=ClientSecret;url={organizationUri};ClientId={clientId};ClientSecret={clientSecret}");
-            //WhoAmIResponse whoAmIResponse = (WhoAmIResponse)service.Execute(new WhoAmIRequest());
-            //Console.WriteLine($"Connected with UserId: {whoAmIResponse.UserId}");
-            return service;
+            try
+            {
+                ServiceClient service = new ServiceClient($@"AuthType=ClientSecret;url={organizationUri};ClientId={clientId};ClientSecret={clientSecret}");
+                //WhoAmIResponse whoAmIResponse = (WhoAmIResponse)service.Execute(new WhoAmIRequest());
+                //Console.WriteLine($"Connected with UserId: {whoAmIResponse.UserId}");
+                return service;
+            }
+            catch (Exception ex)
+            {
+
+                return null;
+
+            }
+
         }
 
         public IOrganizationService crmconnectionOXVC()
         {
             try
             {
-
+              
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
              ServiceClient service = new ServiceClient($@"AuthType=ClientSecret;url={organizationUrioxvc};ClientId={clientIdoxvc};ClientSecret={clientSecretoxvc};SkipDiscovery=true;RequireNewInstance=true");
@@ -55,6 +66,13 @@ namespace GP_Connect.CRM_Connection
             {
                 return null;
             }
+        }
+        public IOrganizationService crmconnectionOXVC1()
+        {
+            ServiceClient service = new ServiceClient($@"AuthType=ClientSecret;url={organizationUrioxvc};ClientId={clientIdoxvc};ClientSecret={clientSecretoxvc}");
+            //WhoAmIResponse whoAmIResponse = (WhoAmIResponse)service.Execute(new WhoAmIRequest());
+            //Console.WriteLine($"Connected with UserId: {whoAmIResponse.UserId}");
+            return service;
         }
 
 

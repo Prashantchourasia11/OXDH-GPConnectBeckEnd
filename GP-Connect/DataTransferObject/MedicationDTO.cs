@@ -26,5 +26,17 @@
         public string DiscountinuedReason { get; set; }
 
         public string ControlledDrug { get; set; }
+
+
+        public string PrescribingAgencyType { get; set; }
+        public DateTime LastAutorizedDate { get; set; }
+        public string MedicationCancelledReason { get; set; }
+        public DateTime Medicationcancelleddate { get; set; }
+        public string linkedProblem { get; set; }
+        public string ReasonForMedication { get; set; }
+        public string OtherSupportingInformation { get; set; }
+
+
+
     }
 }

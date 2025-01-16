@@ -21,6 +21,8 @@ namespace GP_Connect.Service.AccessRecordHTML
         CRM_connection crmCon = new CRM_connection();
         BannerDTO bannerDTO = new BannerDTO();
 
+        public static string authorSequenceNumber = "";
+
         #endregion
 
         #region Constructor
@@ -70,7 +72,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 {
                     if (htmlDetails.parameter[0].name != "patientNHSNumber")
                     {
-                        finaljson[0] = ahd.INVALIDIDENTIFIERSYSTEMJSON("NHS number in body doesn't match the header");
+                        finaljson[0] = ahd.INVALIDNHSNUMBERJSON("NHS number in body doesn't match the header");
                         finaljson[1] = "";
                         finaljson[2] = "400";
                         return finaljson;
@@ -308,7 +310,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 {
                     if (timePeriod == true)
                     {
-                        finaljson[0] = ahd.BADREQUESTJSON("Invalid Parameter Send.");
+                        finaljson[0] = ahd.BADREQUESTJSON("timePeriod isn't a valid param for the section");
                         finaljson[1] = "";
                         finaljson[2] = "400";
                         return finaljson;
@@ -360,6 +362,8 @@ namespace GP_Connect.Service.AccessRecordHTML
                 bannerDTO = GetAllBannerContent(nhsNumber);
 
                 finalResponse.entry = patientDetails;
+
+                authorSequenceNumber = scm.GetPractitionerSeqNumberByNHSnumber(nhsNumber);
 
                 //var device = MakeDeviceJSON();
                 //finalResponse.entry.Add(ConvertToResource(device));
@@ -603,10 +607,6 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
-               
-
-
-
                 var patientSequenceNumber = "";
                 var organizationSequenceNumber = "";
                 var organizationName = "";
@@ -618,6 +618,9 @@ namespace GP_Connect.Service.AccessRecordHTML
                                      <attribute name='createdon' />
                                      <attribute name='statecode' />
                                      <attribute name='bcrm_enddate' />
+                                     <attribute name='bcrm_enddateday' />
+                                     <attribute name='bcrm_enddatemonth' />
+                                     <attribute name='bcrm_enddateyear' />
                                      <attribute name='bcrm_asserteddate' />
                                      <order attribute='bcrm_asserteddate' descending='true' />
                                      <link-entity name='contact' from='contactid' to='msemr_patient' link-type='inner' alias='patient'>
@@ -660,10 +663,25 @@ namespace GP_Connect.Service.AccessRecordHTML
                             dynamic organizationRecord = record["organization.bcrm_name"];
                             organizationName = organizationRecord.Value;
                         }
+                        var endDay = record.Attributes.Contains("bcrm_enddateday") ? record["bcrm_enddateday"].ToString() : "";
+                        var endMonth = record.Attributes.Contains("bcrm_enddatemonth") ? record["bcrm_enddatemonth"].ToString() : "";
+                        var endYear = record.Attributes.Contains("bcrm_enddateyear") ? record["bcrm_enddateyear"].ToString() : "";
+
+                        if (record.Attributes.Contains("bcrm_enddateday") &&
+                            record.Attributes.Contains("bcrm_enddatemonth") &&
+                            record.Attributes.Contains("bcrm_enddateyear"))
+                        {
+                            int day = int.Parse(record["bcrm_enddateday"].ToString());
+                            int month = int.Parse(record["bcrm_enddatemonth"].ToString());
+                            int year = int.Parse(record["bcrm_enddateyear"].ToString());
+
+                            allergyRecord.endDate = new DateTime(year, month, day);
+                        }
+
 
                         allergyRecord.allergyName = record.Attributes.Contains("msemr_name") ? record["msemr_name"].ToString() : string.Empty;
                         if (record.Attributes.Contains("bcrm_asserteddate")) { allergyRecord.startDate = (DateTime)record.Attributes["bcrm_asserteddate"]; }
-                        if (record.Attributes.Contains("bcrm_enddate")) { allergyRecord.endDate = (DateTime)record.Attributes["bcrm_enddate"]; }
+                       
                         allergyRecord.allergyStatus = record.Attributes.Contains("statecode") ? record.FormattedValues["statecode"].ToString() : "";
                         allergyList.Add(allergyRecord);
                     }
@@ -724,6 +742,9 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
+                // Sort the list by endDate descending
+                allergyList = allergyList.OrderByDescending(item => item.endDate).ToList();
+
                 var htmlContent = "";
                 foreach (var item in allergyList)
                 {
@@ -731,7 +752,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         htmlContent += "<tr>";
                         htmlContent += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
-                        htmlContent += "<td></td>";
+                        htmlContent += "<td class=\"date-column\">" + item.endDate.ToString("dd-MMM-yyyy") + "</td>";
                         htmlContent += "<td>" + item.allergyName + "</td>";
                         htmlContent += "</tr>";
                     }
@@ -760,13 +781,36 @@ namespace GP_Connect.Service.AccessRecordHTML
                     }
                 }
             },
-            { "date", DateTime.UtcNow },
+            { "date", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:sszzz")  },
+             { "type", new Dictionary<string, object>
+             {
+             { "coding", new List<Dictionary<string, string>>
+                 {
+                     new Dictionary<string, string>
+                     {
+                         { "system", "http://snomed.info/sct" },
+                         { "code", "425173008" },
+                         { "display", "record extract" }
+                     }
+                 }
+             },
+             { "text", "record extract" }
+             }
+             },
             { "title", "Patient Care Record" },
             { "status", "final" },
             { "subject", new Dictionary<string, string>
                 {
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
+            },
+            { "author", new List<Dictionary<string, string>>
+            {
+            new Dictionary<string, string>
+            {
+                { "reference", "Practitioner/" + authorSequenceNumber }
+            }
+            }
             },
             { "custodian", new Dictionary<string, string>
                 {
@@ -963,7 +1007,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                 tableTD += "</tr>";
             }
 
-            string div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Encounters</h1> "+ bannerDTO.GpTransferBanner + bannerDTO.EncounterContentBanner + datefilterBanner+ bannerDTO.EncounterExclusiveBanner +"  <table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> " + tableTD + "  </tbody> </table> </div> ";
+            string div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"> <h1>Encounters</h1> "+ bannerDTO.GpTransferBanner + bannerDTO.EncounterContentBanner + datefilterBanner+ bannerDTO.EncounterExclusiveBanner +"  <table id=\"enc-tab\"> <thead> <tr> <th>Date</th> <th>Title</th> <th>Details</th> </tr> </thead> <tbody> " + tableTD + "  </tbody> </table> </div>";
            
             if(encounterList.Count == 0 && startDate != "" && endDate != "")
             {
@@ -980,8 +1024,8 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
-                var composition = new Dictionary<string, object>
-        {
+            var composition = new Dictionary<string, object>
+            {
             { "resourceType", "Composition" },
             { "id", Guid.NewGuid().ToString() },
             { "meta", new Dictionary<string, object>
@@ -993,13 +1037,36 @@ namespace GP_Connect.Service.AccessRecordHTML
                     }
                 }
             },
-            { "date", DateTime.UtcNow },
+            { "date", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:sszzz") },
+            { "type", new Dictionary<string, object>
+            {
+            { "coding", new List<Dictionary<string, string>>
+                {
+                    new Dictionary<string, string>
+                    {
+                        { "system", "http://snomed.info/sct" },
+                        { "code", "425173008" },
+                        { "display", "record extract" }
+                    }
+                }
+            },
+            { "text", "record extract" }
+            }
+            },
             { "title", "Patient Care Record" },
             { "status", "final" },
             { "subject", new Dictionary<string, string>
                 {
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
+            },
+            { "author", new List<Dictionary<string, string>>
+            {
+            new Dictionary<string, string>
+            {
+                { "reference", "Practitioner/" + authorSequenceNumber }
+            }
+            }
             },
             { "custodian", new Dictionary<string, string>
                 {
@@ -1259,6 +1326,9 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
+                // Sort the list by endDate descending
+                problemIssueList = problemIssueList.OrderByDescending(item => item.endDate).ToList();
+
                 var htmlContent = "";
                 foreach (var item in problemIssueList)
                 {
@@ -1302,6 +1372,10 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
+                // Sort the list by endDate descending
+                problemIssueList = problemIssueList.OrderByDescending(item => item.endDate).ToList();
+
+
                 var htmlContent = "";
                 foreach (var item in problemIssueList)
                 {
@@ -1361,13 +1435,36 @@ namespace GP_Connect.Service.AccessRecordHTML
                     }
                 }
             },
-            { "date", DateTime.UtcNow },
+            { "date", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:sszzz") },
+            { "type", new Dictionary<string, object>
+            {
+            { "coding", new List<Dictionary<string, string>>
+                {
+                    new Dictionary<string, string>
+                    {
+                        { "system", "http://snomed.info/sct" },
+                        { "code", "425173008" },
+                        { "display", "record extract" }
+                    }
+                }
+            },
+            { "text", "record extract" }
+            }
+            },
             { "title", "Patient Care Record" },
             { "status", "final" },
             { "subject", new Dictionary<string, string>
                 {
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
+            },
+            { "author", new List<Dictionary<string, string>>
+            {
+            new Dictionary<string, string>
+            {
+                { "reference", "Practitioner/" + authorSequenceNumber }
+            }
+            }
             },
             { "custodian", new Dictionary<string, string>
                 {
@@ -1587,13 +1684,36 @@ namespace GP_Connect.Service.AccessRecordHTML
                     }
                 }
             },
-            { "date", DateTime.UtcNow },
+            { "date", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:sszzz") },
+            { "type", new Dictionary<string, object>
+            {
+            { "coding", new List<Dictionary<string, string>>
+                {
+                    new Dictionary<string, string>
+                    {
+                        { "system", "http://snomed.info/sct" },
+                        { "code", "425173008" },
+                        { "display", "record extract" }
+                    }
+                }
+            },
+            { "text", "record extract" }
+            }
+            },
             { "title", "Patient Care Record" },
             { "status", "final" },
             { "subject", new Dictionary<string, string>
                 {
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
+            },
+            { "author", new List<Dictionary<string, string>>
+            {
+            new Dictionary<string, string>
+            {
+                { "reference", "Practitioner/" + authorSequenceNumber }
+            }
+            }
             },
             { "custodian", new Dictionary<string, string>
                 {
@@ -1801,13 +1921,36 @@ namespace GP_Connect.Service.AccessRecordHTML
                     }
                 }
             },
-            { "date", DateTime.UtcNow },
+            { "date", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:sszzz") },
+            { "type", new Dictionary<string, object>
+            {
+            { "coding", new List<Dictionary<string, string>>
+                {
+                    new Dictionary<string, string>
+                    {
+                        { "system", "http://snomed.info/sct" },
+                        { "code", "425173008" },
+                        { "display", "record extract" }
+                    }
+                }
+            },
+            { "text", "record extract" }
+            }
+            },
             { "title", "Patient Care Record" },
             { "status", "final" },
             { "subject", new Dictionary<string, string>
                 {
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
+            },
+            { "author", new List<Dictionary<string, string>>
+            {
+            new Dictionary<string, string>
+            {
+                { "reference", "Practitioner/" + authorSequenceNumber }
+            }
+            }
             },
             { "custodian", new Dictionary<string, string>
                 {
@@ -1998,13 +2141,36 @@ namespace GP_Connect.Service.AccessRecordHTML
                     }
                 }
             },
-            { "date", DateTime.UtcNow },
+            { "date", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:sszzz") },
+            { "type", new Dictionary<string, object>
+            {
+            { "coding", new List<Dictionary<string, string>>
+                {
+                    new Dictionary<string, string>
+                    {
+                        { "system", "http://snomed.info/sct" },
+                        { "code", "425173008" },
+                        { "display", "record extract" }
+                    }
+                }
+            },
+            { "text", "record extract" }
+            }
+            },
             { "title", "Patient Care Record" },
             { "status", "final" },
             { "subject", new Dictionary<string, string>
                 {
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
+            },
+            { "author", new List<Dictionary<string, string>>
+            {
+            new Dictionary<string, string>
+            {
+                { "reference", "Practitioner/" + authorSequenceNumber }
+            }
+            }
             },
             { "custodian", new Dictionary<string, string>
                 {
@@ -2205,13 +2371,36 @@ namespace GP_Connect.Service.AccessRecordHTML
                     }
                 }
             },
-            { "date", DateTime.UtcNow },
+            { "date", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:sszzz") },
+            { "type", new Dictionary<string, object>
+            {
+            { "coding", new List<Dictionary<string, string>>
+                {
+                    new Dictionary<string, string>
+                    {
+                        { "system", "http://snomed.info/sct" },
+                        { "code", "425173008" },
+                        { "display", "record extract" }
+                    }
+                }
+            },
+            { "text", "record extract" }
+            }
+            },
             { "title", "Patient Care Record" },
             { "status", "final" },
             { "subject", new Dictionary<string, string>
                 {
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
+            },
+            { "author", new List<Dictionary<string, string>>
+            {
+            new Dictionary<string, string>
+            {
+                { "reference", "Practitioner/" + authorSequenceNumber }
+            }
+            }
             },
             { "custodian", new Dictionary<string, string>
                 {
@@ -2421,13 +2610,36 @@ namespace GP_Connect.Service.AccessRecordHTML
                     }
                 }
             },
-            { "date", DateTime.UtcNow },
+            { "date", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:sszzz") },
+            { "type", new Dictionary<string, object>
+            {
+            { "coding", new List<Dictionary<string, string>>
+                {
+                    new Dictionary<string, string>
+                    {
+                        { "system", "http://snomed.info/sct" },
+                        { "code", "425173008" },
+                        { "display", "record extract" }
+                    }
+                }
+            },
+            { "text", "record extract" }
+            }
+            },
             { "title", "Patient Care Record" },
             { "status", "final" },
             { "subject", new Dictionary<string, string>
                 {
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
+            },
+            { "author", new List<Dictionary<string, string>>
+            {
+            new Dictionary<string, string>
+            {
+                { "reference", "Practitioner/" + authorSequenceNumber }
+            }
+            }
             },
             { "custodian", new Dictionary<string, string>
                 {
@@ -2533,10 +2745,17 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         <attribute name='bcrm_numberofprescriptionsissued' />
                                         <attribute name='bcrm_maxissues' />
                                         <attribute name='bcrm_reviewdate' />
+                                        <attribute name='bcrm_prescribingagencytype' />
+                                        <attribute name='bcrm_lastauthoriseddate' />
+                                        <attribute name='bcrm_medicationcancelledreason' />
+                                        <attribute name='bcrm_medicationcancelleddate' />
+                                        <attribute name='bcrm_linkedproblem' />
+                                        <attribute name='bcrm_reasonforthemedication' />
+                                        <attribute name='bcrm_othersupportinginformation' />
                                         <attribute name='bcrm_controlleddrug' />
                                         <attribute name='bcrm_discontinueddate' />
                                         <attribute name='bcrm_discontinuationreason' />
-                                        <order attribute='createdon' descending='true' />
+                                        <order attribute='bcrm_drugstartdate' descending='true' />
                                         <link-entity name='contact' from='contactid' to='bcrm_contact' link-type='inner' alias='patient'>
                                          <attribute name='bcrm_gpc_sequence_number' />
                                           <filter type='and'>
@@ -2578,11 +2797,25 @@ namespace GP_Connect.Service.AccessRecordHTML
                         var doseUnit = record.Attributes.Contains("bcrm_dosageunit") ? record.FormattedValues["bcrm_dosageunit"].ToString() : string.Empty;
                         medicationRecord.MedicationItem = record.Attributes.Contains("bcrm_name") ? record["bcrm_name"].ToString() : string.Empty;
                         if (record.Attributes.Contains("bcrm_drugstartdate")) { medicationRecord.startDate = (DateTime)record.Attributes["bcrm_drugstartdate"]; }
+
+                        if(medicationRecord.startDate.Year == 1)
+                        {
+                            if (record.Attributes.Contains("createdon")) { medicationRecord.startDate = (DateTime)record.Attributes["createdon"]; }
+                        }
+
                         medicationRecord.type = record.Attributes.Contains("bcrm_type") ? record.FormattedValues["bcrm_type"].ToString() : string.Empty;
                         medicationRecord.DosageInstruction = record.Attributes.Contains("bcrm_directions") ? record["bcrm_directions"].ToString() : string.Empty;
                         medicationRecord.Quantity = record.Attributes.Contains("bcrm_quantityvalue") ? record["bcrm_quantityvalue"].ToString() : string.Empty;
 
-                        if(medicationRecord.Quantity != string.Empty)
+                        medicationRecord.PrescribingAgencyType = record.Attributes.Contains("bcrm_prescribingagencytype") ? record["bcrm_prescribingagencytype"].ToString() : string.Empty;
+                        medicationRecord.MedicationCancelledReason = record.Attributes.Contains("bcrm_medicationcancelledreason") ? record["bcrm_medicationcancelledreason"].ToString() : string.Empty;
+                        medicationRecord.linkedProblem = record.Attributes.Contains("bcrm_linkedproblem") ? record["bcrm_linkedproblem"].ToString() : string.Empty;
+                        medicationRecord.OtherSupportingInformation = record.Attributes.Contains("bcrm_othersupportinginformation") ? record["bcrm_othersupportinginformation"].ToString() : string.Empty;
+                        medicationRecord.ReasonForMedication = record.Attributes.Contains("bcrm_reasonforthemedication") ? record["bcrm_reasonforthemedication"].ToString() : string.Empty;
+                        if (record.Attributes.Contains("bcrm_lastauthoriseddate")) { medicationRecord.LastAutorizedDate = (DateTime)record.Attributes["bcrm_lastauthoriseddate"]; }
+                        if (record.Attributes.Contains("bcrm_medicationcancelleddate")) { medicationRecord.Medicationcancelleddate = (DateTime)record.Attributes["bcrm_medicationcancelleddate"]; }
+
+                        if (medicationRecord.Quantity != string.Empty)
                         {
                             medicationRecord.Quantity = medicationRecord.Quantity +" "+ GetMeasuringQuantityDrugUsingName(medicationRecord.MedicationItem);
                         }
@@ -2635,11 +2868,65 @@ namespace GP_Connect.Service.AccessRecordHTML
         {
             try
             {
-               
+               foreach(var item in medicationList)
+               {
+                    if(item.ControlledDrug != "")
+                    {
+                        item.AdditionalInformation = item.AdditionalInformation + "<b> CONTROLLED DRUG : </b>" + item.ControlledDrug + " <br>";
+                    }
+                    if (item.type.ToString().ToLower() == "acute" && item.MedicationCancelledReason != "")
+                    {
+                        item.AdditionalInformation = item.AdditionalInformation + "<b> CANCELLED DATE : </b>" + item.Medicationcancelleddate.ToString("dd-MMM-yyyy") + " CANCELLED REASON : "+item.MedicationCancelledReason+" <br>";
+                    }
+                    if (item.ReasonForMedication != "")
+                    {
+                        item.AdditionalInformation = item.AdditionalInformation + "<b> Reason for Medication : </b>" + item.ReasonForMedication + " <br>";
+                    }
+                    if (item.linkedProblem != "")
+                    {
+                        item.AdditionalInformation = item.AdditionalInformation + "<b> Linked Problem : </b>" + item.linkedProblem + " <br>";
+                    }
+                    if (item.OtherSupportingInformation != "")
+                    {
+                        item.AdditionalInformation = item.AdditionalInformation + "<b> Other supporting information : </b>" + item.OtherSupportingInformation + " <br>";
+                    }
+                    if (item.type.ToString().ToLower().Contains("repeat") && item.LastAutorizedDate.Year != 1)
+                    {
+                        item.AdditionalInformation = item.AdditionalInformation + "<b> Last Authorised : </b>" + item.LastAutorizedDate.ToString("dd-MMM-yyyy") + " <br>";
+                    }
+                    if (item.type.ToString().ToLower().Contains("repeat") && item.NumberOfPrescriptionIsuued != "")
+                    {
+                        item.AdditionalInformation = item.AdditionalInformation + "<b> Number issues authorised : </b>" + item.NumberOfPrescriptionIsuued + " <br>";
+                    }
+                    if (item.type == "")
+                    {
+                        if(item.PrescribingAgencyType.ToString().ToLower().Trim() == "acute")
+                        {
+                            item.type = "Acute – Unknown Prescriber";
+                        }
+                        else if (item.PrescribingAgencyType.ToString().ToLower().Trim() == "repeat")
+                        {
+                            item.type = "Repeat – Unknown Prescriber";
+                        }
+                        else if (item.PrescribingAgencyType.ToString().ToLower().Contains("acute"))
+                        {
+                            item.type = item.PrescribingAgencyType;
+                        }
+                        else if (item.PrescribingAgencyType.ToString().ToLower().Contains("repeat"))
+                        {
+                            item.type = item.PrescribingAgencyType;
+                        }
+                        else
+                        {
+                            item.type = "Acute – Unknown Prescriber";
+                        }
+                    }
+                }
+
+
+
                 var bannerNotAppliedDefined = "<div class=\"date-banner\"><p>Date filter not applied</p></div>";
                
-
-
                 var datefilterBanner = "<div class=\"date-banner\"><p>All relevant items</p></div>";
 
                 if (startDate != "" && endDate != "")
@@ -2671,7 +2958,7 @@ namespace GP_Connect.Service.AccessRecordHTML
 
                 foreach (var item in medicationList) 
                 {
-                  if(item.startDate.AddDays(-1) >= DateTime.Now.AddYears(-1) && item.startDate <= DateTime.Now && item.type.ToLower().ToString() == "acute")
+                  if(item.startDate.AddDays(-1) >= DateTime.Now.AddYears(-1) && item.startDate <= DateTime.Now && item.type.ToLower().ToString().Contains("acute"))
                     {
                         acuteMedicationDiv += "<tr>";
                         acuteMedicationDiv += "<td>" + item.type + "</td>";
@@ -2684,22 +2971,178 @@ namespace GP_Connect.Service.AccessRecordHTML
                         acuteMedicationDiv += "<td><b>" + item.AdditionalInformation + "</b></td>";
                         acuteMedicationDiv += "</tr>";
                     }
-                    if (item.type.ToLower().ToString() == "repeat" && item.DiscountinuedReason == string.Empty)
+                    if (item.type.ToLower().ToString().Contains("repeat") && item.DiscountinuedReason == string.Empty)
                     {
-                        repeatMedicationDiv += "<tr>";
-                        repeatMedicationDiv += "<td>" + item.type + "</td>";
-                        repeatMedicationDiv += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
-                        repeatMedicationDiv += "<td>" + item.MedicationItem + "</td>";
-                        repeatMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
-                        repeatMedicationDiv += "<td>" + item.Quantity + "</td>";
-                        repeatMedicationDiv += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
-                        repeatMedicationDiv += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
-                        repeatMedicationDiv += "<td>" + item.MaxIssues + "</td>";
-                        repeatMedicationDiv += "<td class=\"date-column\">" + (item.ReviewDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.ReviewDate.ToString("dd-MMM-yyyy")) + "</td>";
-                        repeatMedicationDiv += "<td><b>" + item.AdditionalInformation + "</b></td>";
-                        repeatMedicationDiv += "</tr>";
+                        if(item.startDate.Year != 1)
+                        {
+                            if(item.endDate.Year == 1)
+                            {
+                                repeatMedicationDiv += "<tr>";
+                                repeatMedicationDiv += "<td>" + item.type + "</td>";
+                                repeatMedicationDiv += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                repeatMedicationDiv += "<td>" + item.MedicationItem + "</td>";
+                                repeatMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
+                                repeatMedicationDiv += "<td>" + item.Quantity + "</td>";
+                                repeatMedicationDiv += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                repeatMedicationDiv += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
+                                repeatMedicationDiv += "<td>" + item.MaxIssues + "</td>";
+                                repeatMedicationDiv += "<td class=\"date-column\">" + (item.ReviewDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.ReviewDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                repeatMedicationDiv += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                                repeatMedicationDiv += "</tr>";
+                            }
+                            else if (item.startDate <= DateTime.UtcNow && DateTime.UtcNow <= item.endDate)
+                            {
+                                repeatMedicationDiv += "<tr>";
+                                repeatMedicationDiv += "<td>" + item.type + "</td>";
+                                repeatMedicationDiv += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                repeatMedicationDiv += "<td>" + item.MedicationItem + "</td>";
+                                repeatMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
+                                repeatMedicationDiv += "<td>" + item.Quantity + "</td>";
+                                repeatMedicationDiv += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                repeatMedicationDiv += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
+                                repeatMedicationDiv += "<td>" + item.MaxIssues + "</td>";
+                                repeatMedicationDiv += "<td class=\"date-column\">" + (item.ReviewDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.ReviewDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                repeatMedicationDiv += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                                repeatMedicationDiv += "</tr>";
+                            }
+                        }
                     }
-                    if (item.type.ToLower().ToString() == "repeat" && item.DiscountinuedReason != string.Empty)
+                 
+                    if(startDate != "" && endDate != "")
+                    {
+                        if (item.MedicationItem != string.Empty && item.startDate > DateTime.Parse(startDate) && item.startDate < DateTime.Parse(endDate))
+                        {
+                            
+
+                            allMedication += "<tr>";
+                            allMedication += "<td colspan='9' class='med-item-column'> <strong>" + item.MedicationItem + "</strong></td>";
+                            allMedication += "</tr>";
+                            allMedication += "<tr>";
+                            allMedication += "<td>" + item.type + "</td>";
+                            allMedication += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            allMedication += "<td>" + item.MedicationItem + "</td>";
+                            allMedication += "<td>" + item.DosageInstruction + "</td>";
+                            allMedication += "<td>" + item.Quantity + "</td>";
+                            if (item.type.ToString().ToLower() == "acute" || item.type.ToString().ToLower() == "repeat")
+                            {
+                                allMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            }
+                            else if (item.LastIssuedDate.Year == 1)
+                            {
+                                allMedication += "<td></td>";
+                            }
+                            else
+                            {
+                                allMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            }
+                            allMedication += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
+                            allMedication += "<td>" + item.DiscountinuedReason + "</td>";
+                            allMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                            allMedication += "</tr>";
+                        }
+                    }
+                    else
+                    {
+                        if(startDate != "" && endDate == "")
+                        {
+                            if(item.MedicationItem != string.Empty && item.startDate > DateTime.Parse(startDate) && item.startDate.Year != 1)
+                            {
+                                allMedication += "<tr>";
+                                allMedication += "<td colspan='9' class='med-item-column'> <strong>" + item.MedicationItem + "</strong></td>";
+                                allMedication += "</tr>";
+                                allMedication += "<tr>";
+                                allMedication += "<td>" + item.type + "</td>";
+                                allMedication += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                allMedication += "<td>" + item.MedicationItem + "</td>";
+                                allMedication += "<td>" + item.DosageInstruction + "</td>";
+                                allMedication += "<td>" + item.Quantity + "</td>";
+                                if (item.type.ToString().ToLower() == "acute" || item.type.ToString().ToLower() == "repeat")
+                                {
+                                    allMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                }
+                                else if (item.LastIssuedDate.Year == 1)
+                                {
+                                    allMedication += "<td></td>";
+                                }
+                                else
+                                {
+                                    allMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                }
+                                allMedication += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
+                                allMedication += "<td>" + item.DiscountinuedReason + "</td>";
+                                allMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                                allMedication += "</tr>";
+                            }
+                        }
+                        else if(startDate == "" && endDate != "")
+                        {
+                            if (item.MedicationItem != string.Empty && item.startDate < DateTime.Parse(endDate) && item.endDate.Year != 1)
+                            {
+                                allMedication += "<tr>";
+                                allMedication += "<td colspan='9' class='med-item-column'> <strong>" + item.MedicationItem + "</strong></td>";
+                                allMedication += "</tr>";
+                                allMedication += "<tr>";
+                                allMedication += "<td>" + item.type + "</td>";
+                                allMedication += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                allMedication += "<td>" + item.MedicationItem + "</td>";
+                                allMedication += "<td>" + item.DosageInstruction + "</td>";
+                                allMedication += "<td>" + item.Quantity + "</td>";
+                                if (item.type.ToString().ToLower() == "acute" || item.type.ToString().ToLower() == "repeat")
+                                {
+                                    allMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                }
+                                else if (item.LastIssuedDate.Year == 1)
+                                {
+                                    allMedication += "<td></td>";
+                                }
+                                else
+                                {
+                                    allMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                }
+                                allMedication += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
+                                allMedication += "<td>" + item.DiscountinuedReason + "</td>";
+                                allMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                                allMedication += "</tr>";
+                            }
+                        }
+                        else if (item.MedicationItem != string.Empty)
+                        {
+                            allMedication += "<tr>";
+                            allMedication += "<td colspan='9' class='med-item-column'> <strong>" + item.MedicationItem + "</strong></td>";
+                            allMedication += "</tr>";
+                            allMedication += "<tr>";
+                            allMedication += "<td>" + item.type + "</td>";
+                            allMedication += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            allMedication += "<td>" + item.MedicationItem + "</td>";
+                            allMedication += "<td>" + item.DosageInstruction + "</td>";
+                            allMedication += "<td>" + item.Quantity + "</td>";
+                            if (item.type.ToString().ToLower() == "acute" || item.type.ToString().ToLower() == "repeat")
+                            {
+                                allMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            }
+                            else if(item.LastIssuedDate.Year == 1)
+                            {
+                                allMedication += "<td></td>";
+                            }
+                            else
+                            {
+                                allMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            }
+                            allMedication += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
+                            allMedication += "<td>" + item.DiscountinuedReason + "</td>";
+                            allMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                            allMedication += "</tr>";
+                        }
+                    }
+
+                }
+
+                // Sort the list by LastIssuedDate descending
+                var medicationListDis = medicationList.OrderByDescending(item => item.LastIssuedDate).ToList();
+
+                foreach (var item in medicationListDis)
+                {
+                    if (item.type.ToLower().ToString().Contains("repeat") && item.DiscountinuedReason != string.Empty)
                     {
                         discountinuedReapeatMedication += "<tr>";
                         discountinuedReapeatMedication += "<td>" + item.type + "</td>";
@@ -2712,72 +3155,16 @@ namespace GP_Connect.Service.AccessRecordHTML
                         discountinuedReapeatMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
                         discountinuedReapeatMedication += "</tr>";
                     }
+                }
 
+                // Sort the list by Issue descending
+                var medicationListAllMedIssue = medicationList.OrderByDescending(item => item.startDate).ToList();
 
-                    if(startDate != "" && endDate != "")
-                    {
-                        if (item.MedicationItem != string.Empty && item.startDate > DateTime.Parse(startDate) && item.startDate < DateTime.Parse(endDate))
-                        {
-                            allMedication += "<tr>";
-                            allMedication += "<td colspan='7' class='med-item-column'> <strong>" + item.MedicationItem + "</strong></td>";
-                            allMedication += "</tr>";
-                            allMedication += "<tr>";
-                            allMedication += "<td>" + item.type + "</td>";
-                            allMedication += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
-                            allMedication += "<td>" + item.MedicationItem + "</td>";
-                            allMedication += "<td>" + item.DosageInstruction + "</td>";
-                            allMedication += "<td>" + item.Quantity + "</td>";
-                            allMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
-                            allMedication += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
-                            allMedication += "<td>" + item.DiscountinuedReason + "</td>";
-                            allMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
-                            allMedication += "</tr>";
-                        }
-                    }
-                    else
-                    {
-                        if (item.MedicationItem != string.Empty)
-                        {
-                            allMedication += "<tr>";
-                            allMedication += "<td colspan='7' class='med-item-column'> <strong>" + item.MedicationItem + "</strong></td>";
-                            allMedication += "</tr>";
-                            allMedication += "<tr>";
-                            allMedication += "<td>" + item.type + "</td>";
-                            allMedication += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
-                            allMedication += "<td>" + item.MedicationItem + "</td>";
-                            allMedication += "<td>" + item.DosageInstruction + "</td>";
-                            allMedication += "<td>" + item.Quantity + "</td>";
-                            allMedication += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
-                            allMedication += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
-                            allMedication += "<td>" + item.DiscountinuedReason + "</td>";
-                            allMedication += "<td><b>" + item.AdditionalInformation + "</b></td>";
-                            allMedication += "</tr>";
-                        }
-                    }
-
+                foreach (var item in medicationListAllMedIssue)
+                {
                     if (startDate != "" && endDate != "")
                     {
-                        if (!item.LastIssuedDate.ToString().Contains("0001") && item.DiscountinuedReason != string.Empty && item.startDate > DateTime.Parse(startDate) && item.startDate < DateTime.Parse(endDate))
-                        {
-                            allmedicationIssue += "<tr>";
-                            allmedicationIssue += "<td colspan='7' class='med-item-column'><strong>" + item.MedicationItem + "</strong></td>";
-                            allmedicationIssue += "</tr>";
-
-                            allmedicationIssue += "<tr>";
-                            allmedicationIssue += "<td>" + item.type + "</td>";
-                            allmedicationIssue += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
-                            allmedicationIssue += "<td>" + item.MedicationItem + "</td>";
-                            allmedicationIssue += "<td>" + item.DosageInstruction + "</td>";
-                            allmedicationIssue += "<td>" + item.Quantity + "</td>";
-                            allmedicationIssue += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
-                            allmedicationIssue += "<td>" + item.DiscountinuedReason + "</td>";
-                            allmedicationIssue += "<td><b>" + item.AdditionalInformation + "</b></td>";
-                            allmedicationIssue += "</tr>";
-                        }
-                    }
-                    else
-                    {
-                        if (!item.LastIssuedDate.ToString().Contains("0001") && item.DiscountinuedReason != string.Empty)
+                        if (!item.LastIssuedDate.ToString().Contains("0001") && (item.DiscountinuedReason != string.Empty || item.MedicationCancelledReason != string.Empty) && item.startDate > DateTime.Parse(startDate) && item.startDate < DateTime.Parse(endDate))
                         {
                             allmedicationIssue += "<tr>";
                             allmedicationIssue += "<td colspan='7' class='med-item-column'><strong>" + item.MedicationItem + "</strong></td>";
@@ -2794,12 +3181,71 @@ namespace GP_Connect.Service.AccessRecordHTML
                             allmedicationIssue += "</tr>";
                         }
                     }
+                    else
+                    {
+                        if(startDate != "" && endDate == "")
+                        {
+                            if (!item.LastIssuedDate.ToString().Contains("0001") && (item.DiscountinuedReason != string.Empty || item.MedicationCancelledReason != string.Empty) && item.startDate > DateTime.Parse(startDate) && item.startDate.Year != 1)
+                            {
+                                allmedicationIssue += "<tr>";
+                                allmedicationIssue += "<td colspan='7' class='med-item-column'><strong>" + item.MedicationItem + "</strong></td>";
+                                allmedicationIssue += "</tr>";
 
+                                allmedicationIssue += "<tr>";
+                                allmedicationIssue += "<td>" + item.type + "</td>";
+                                allmedicationIssue += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                allmedicationIssue += "<td>" + item.MedicationItem + "</td>";
+                                allmedicationIssue += "<td>" + item.DosageInstruction + "</td>";
+                                allmedicationIssue += "<td>" + item.Quantity + "</td>";
+                                allmedicationIssue += "<td>" + item.DaysDuration + "</td>";
+                                allmedicationIssue += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                                allmedicationIssue += "</tr>";
+                            }
+                        }
+                        else if(startDate == "" && endDate != "")
+                        {
+                            if(!item.LastIssuedDate.ToString().Contains("0001") && item.startDate < DateTime.Parse(endDate) && (item.DiscountinuedReason != string.Empty || item.MedicationCancelledReason != string.Empty))
+                            {
+                            allmedicationIssue += "<tr>";
+                            allmedicationIssue += "<td colspan='7' class='med-item-column'><strong>" + item.MedicationItem + "</strong></td>";
+                            allmedicationIssue += "</tr>";
 
-                        
+                            allmedicationIssue += "<tr>";
+                            allmedicationIssue += "<td>" + item.type + "</td>";
+                            allmedicationIssue += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            allmedicationIssue += "<td>" + item.MedicationItem + "</td>";
+                            allmedicationIssue += "<td>" + item.DosageInstruction + "</td>";
+                            allmedicationIssue += "<td>" + item.Quantity + "</td>";
+                            allmedicationIssue += "<td>" + item.DaysDuration + "</td>";
+                            allmedicationIssue += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                            allmedicationIssue += "</tr>";
+                            }
+                        }
+                        else
+                        {
+                            if (!item.LastIssuedDate.ToString().Contains("0001") && (item.DiscountinuedReason != string.Empty || item.MedicationCancelledReason != string.Empty))
+                            {
+                                allmedicationIssue += "<tr>";
+                                allmedicationIssue += "<td colspan='7' class='med-item-column'><strong>" + item.MedicationItem + "</strong></td>";
+                                allmedicationIssue += "</tr>";
+
+                                allmedicationIssue += "<tr>";
+                                allmedicationIssue += "<td>" + item.type + "</td>";
+                                allmedicationIssue += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
+                                allmedicationIssue += "<td>" + item.MedicationItem + "</td>";
+                                allmedicationIssue += "<td>" + item.DosageInstruction + "</td>";
+                                allmedicationIssue += "<td>" + item.Quantity + "</td>";
+                                allmedicationIssue += "<td>" + item.DaysDuration + "</td>";
+                                allmedicationIssue += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                                allmedicationIssue += "</tr>";
+                            }
+                        }
+                    }
                 }
 
-                if(acuteMedicationDiv == "")
+
+
+                if (acuteMedicationDiv == "")
                 {
                     acuteMedicationDivTable = "<p>No 'Acute Medication (Last 12 Months)' data is recorded for this patient.</p>";
                 }
@@ -2886,13 +3332,36 @@ namespace GP_Connect.Service.AccessRecordHTML
                     }
                 }
             },
-            { "date", DateTime.UtcNow },
+            { "date", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:sszzz") },
+            { "type", new Dictionary<string, object>
+            {
+            { "coding", new List<Dictionary<string, string>>
+                {
+                    new Dictionary<string, string>
+                    {
+                        { "system", "http://snomed.info/sct" },
+                        { "code", "425173008" },
+                        { "display", "record extract" }
+                    }
+                }
+            },
+            { "text", "record extract" }
+            }
+            },
             { "title", "Patient Care Record" },
             { "status", "final" },
             { "subject", new Dictionary<string, string>
                 {
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
+            },
+            { "author", new List<Dictionary<string, string>>
+            {
+            new Dictionary<string, string>
+            {
+                { "reference", "Practitioner/" + authorSequenceNumber }
+            }
+            }
             },
             { "custodian", new Dictionary<string, string>
                 {
@@ -3291,6 +3760,15 @@ namespace GP_Connect.Service.AccessRecordHTML
                                         <attribute name='bcrm_reviewdate' />
                                         <attribute name='bcrm_discontinueddate' />
                                         <attribute name='bcrm_discontinuationreason' />
+                                        <attribute name='bcrm_prescribingagencytype' />
+                                        <attribute name='bcrm_lastauthoriseddate' />
+                                        <attribute name='bcrm_medicationcancelledreason' />
+                                        <attribute name='bcrm_medicationcancelleddate' />
+                                        <attribute name='bcrm_linkedproblem' />
+                                        <attribute name='bcrm_reasonforthemedication' />
+                                        <attribute name='bcrm_othersupportinginformation' />
+                                        <attribute name='bcrm_controlleddrug' />
+
                                         <order attribute='bcrm_name' descending='false' />
                                         <link-entity name='contact' from='contactid' to='bcrm_contact' link-type='inner' alias='patient'>
                                          <attribute name='bcrm_gpc_sequence_number' />
@@ -3320,6 +3798,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                     medicationRecord.DosageInstruction = record.Attributes.Contains("bcrm_directions") ? record["bcrm_directions"].ToString() : string.Empty;
                     medicationRecord.Quantity = record.Attributes.Contains("bcrm_quantityvalue") ? record["bcrm_quantityvalue"].ToString() : string.Empty;
 
+                    if (medicationRecord.Quantity != string.Empty)
+                    {
+                        medicationRecord.Quantity = medicationRecord.Quantity + " " + GetMeasuringQuantityDrugUsingName(medicationRecord.MedicationItem);
+                    }
+
                     if (record.Attributes.Contains("bcrm_drugenddate")) { medicationRecord.endDate = (DateTime)record.Attributes["bcrm_drugenddate"]; }
                     if (record.Attributes.Contains("bcrm_lastissueddate")) { medicationRecord.LastIssuedDate = (DateTime)record.Attributes["bcrm_lastissueddate"]; }
                     if (record.Attributes.Contains("bcrm_reviewdate")) { medicationRecord.ReviewDate = (DateTime)record.Attributes["bcrm_reviewdate"]; }
@@ -3331,6 +3814,22 @@ namespace GP_Connect.Service.AccessRecordHTML
                     medicationRecord.MaxIssues = record.Attributes.Contains("bcrm_maxissues") ? record["bcrm_maxissues"].ToString() : string.Empty;
 
                     medicationRecord.DiscountinuedReason = record.Attributes.Contains("bcrm_discontinuationreason") ? record["bcrm_discontinuationreason"].ToString() : string.Empty;
+
+                    medicationRecord.PrescribingAgencyType = record.Attributes.Contains("bcrm_prescribingagencytype") ? record["bcrm_prescribingagencytype"].ToString() : string.Empty;
+                    medicationRecord.MedicationCancelledReason = record.Attributes.Contains("bcrm_medicationcancelledreason") ? record["bcrm_medicationcancelledreason"].ToString() : string.Empty;
+                    medicationRecord.linkedProblem = record.Attributes.Contains("bcrm_linkedproblem") ? record["bcrm_linkedproblem"].ToString() : string.Empty;
+                    medicationRecord.OtherSupportingInformation = record.Attributes.Contains("bcrm_othersupportinginformation") ? record["bcrm_othersupportinginformation"].ToString() : string.Empty;
+                    medicationRecord.ReasonForMedication = record.Attributes.Contains("bcrm_reasonforthemedication") ? record["bcrm_reasonforthemedication"].ToString() : string.Empty;
+                    if (record.Attributes.Contains("bcrm_lastauthoriseddate")) { medicationRecord.LastAutorizedDate = (DateTime)record.Attributes["bcrm_lastauthoriseddate"]; }
+                    if (record.Attributes.Contains("bcrm_medicationcancelleddate")) { medicationRecord.Medicationcancelleddate = (DateTime)record.Attributes["bcrm_medicationcancelleddate"]; }
+
+                    if (medicationRecord.startDate.Year == 1)
+                    {
+                        if (record.Attributes.Contains("createdon")) { medicationRecord.startDate = (DateTime)record.Attributes["createdon"]; }
+                    }
+
+
+                    medicationRecord.ControlledDrug = record.Attributes.Contains("bcrm_controlleddrug") ? record["bcrm_controlleddrug"].ToString() : string.Empty;
 
                     medicationList.Add(medicationRecord);
                 }
@@ -3344,7 +3843,61 @@ namespace GP_Connect.Service.AccessRecordHTML
             var acuteMedicationDiv = "";
             foreach (var item in medicationList)
             {
-                if (item.startDate >= DateTime.Now.AddYears(-1) && item.startDate <= DateTime.Now && item.type.ToLower().ToString() == "acute")
+                if (item.ControlledDrug != "")
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> CONTROLLED DRUG : </b>" + item.ControlledDrug + " <br>";
+                }
+                if (item.type.ToString().ToLower() == "acute" && item.MedicationCancelledReason != "")
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> CANCELLED DATE : </b>" + item.Medicationcancelleddate.ToString("dd-MMM-yyyy") + " CANCELLED REASON : " + item.MedicationCancelledReason + " <br>";
+                }
+                if (item.ReasonForMedication != "")
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> Reason for Medication : </b>" + item.ReasonForMedication + " <br>";
+                }
+                if (item.linkedProblem != "")
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> Linked Problem : </b>" + item.linkedProblem + " <br>";
+                }
+                if (item.OtherSupportingInformation != "")
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> Other supporting information : </b>" + item.OtherSupportingInformation + " <br>";
+                }
+                if (item.type.ToString().ToLower().Contains("repeat") && item.LastAutorizedDate.Year != 1)
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> Last Authorised : </b>" + item.LastAutorizedDate.ToString("dd-MMM-yyyy") + " <br>";
+                }
+                if (item.type.ToString().ToLower().Contains("repeat") && item.NumberOfPrescriptionIsuued != "")
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> Number issues authorised : </b>" + item.NumberOfPrescriptionIsuued + " <br>";
+                }
+                if (item.type == "")
+                {
+                    if (item.PrescribingAgencyType.ToString().ToLower().Trim() == "acute")
+                    {
+                        item.type = "Acute – Unknown Prescriber";
+                    }
+                    else if (item.PrescribingAgencyType.ToString().ToLower().Trim() == "repeat")
+                    {
+                        item.type = "Repeat – Unknown Prescriber";
+                    }
+                    else if (item.PrescribingAgencyType.ToString().ToLower().Contains("acute"))
+                    {
+                        item.type = item.PrescribingAgencyType;
+                    }
+                    else if (item.PrescribingAgencyType.ToString().ToLower().Contains("repeat"))
+                    {
+                        item.type = item.PrescribingAgencyType;
+                    }
+                    else
+                    {
+                        item.type = "Acute – Unknown Prescriber";
+                    }
+                }
+            }
+            foreach (var item in medicationList)
+            {
+                if (item.startDate >= DateTime.Now.AddYears(-1) && item.startDate <= DateTime.Now && item.type.ToLower().ToString().Contains("acute"))
                 {
                     acuteMedicationDiv += "<tr>";
                     acuteMedicationDiv += "<td class=\"date-column\">" + item.type + "</td>";
@@ -3365,21 +3918,95 @@ namespace GP_Connect.Service.AccessRecordHTML
             var repeatMedicationDiv = "";
             foreach (var item in medicationList)
             {
-
-                if (item.type.ToLower().ToString() == "repeat" && item.DiscountinuedReason == string.Empty)
+                if (item.ControlledDrug != "")
                 {
-                    repeatMedicationDiv += "<tr>";
-                    repeatMedicationDiv += "<td >" + item.type + "</td>";
-                    repeatMedicationDiv += "<td class=\"date-column\">" + item.startDate.ToString("dd-MMM-yyyy") + "</td>";
-                    repeatMedicationDiv += "<td>" + item.MedicationItem + "</td>";
-                    repeatMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
-                    repeatMedicationDiv += "<td>" + item.Quantity + "</td>";
-                    repeatMedicationDiv += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
-                    repeatMedicationDiv += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
-                    repeatMedicationDiv += "<td>" + item.MaxIssues + "</td>";
-                    repeatMedicationDiv += "<td class=\"date-column\">" + (item.ReviewDate.Year == 1 ? item.startDate.AddDays(10).ToString("dd-MMM-yyyy") : item.ReviewDate.ToString("dd-MMM-yyyy")) + "</td>";
-                    repeatMedicationDiv += "<td>" + item.AdditionalInformation + "</td>";
-                    repeatMedicationDiv += "</tr>";
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> CONTROLLED DRUG : </b>" + item.ControlledDrug + " <br>";
+                }
+                if (item.type.ToString().ToLower() == "acute" && item.MedicationCancelledReason != "")
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> CANCELLED DATE : </b>" + item.Medicationcancelleddate.ToString("dd-MMM-yyyy") + " CANCELLED REASON : " + item.MedicationCancelledReason + " <br>";
+                }
+                if (item.ReasonForMedication != "")
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> Reason for Medication : </b>" + item.ReasonForMedication + " <br>";
+                }
+                if (item.linkedProblem != "")
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> Linked Problem : </b>" + item.linkedProblem + " <br>";
+                }
+                if (item.OtherSupportingInformation != "")
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> Other supporting information : </b>" + item.OtherSupportingInformation + " <br>";
+                }
+                if (item.type.ToString().ToLower().Contains("repeat") && item.LastAutorizedDate.Year != 1)
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> Last Authorised : </b>" + item.LastAutorizedDate.ToString("dd-MMM-yyyy") + " <br>";
+                }
+                if (item.type.ToString().ToLower().Contains("repeat") && item.NumberOfPrescriptionIsuued != "")
+                {
+                    item.AdditionalInformation = item.AdditionalInformation + "<b> Number issues authorised : </b>" + item.NumberOfPrescriptionIsuued + " <br>";
+                }
+                if (item.type == "")
+                {
+                    if (item.PrescribingAgencyType.ToString().ToLower().Trim() == "acute")
+                    {
+                        item.type = "Acute – Unknown Prescriber";
+                    }
+                    else if (item.PrescribingAgencyType.ToString().ToLower().Trim() == "repeat")
+                    {
+                        item.type = "Repeat – Unknown Prescriber";
+                    }
+                    else if (item.PrescribingAgencyType.ToString().ToLower().Contains("acute"))
+                    {
+                        item.type = item.PrescribingAgencyType;
+                    }
+                    else if (item.PrescribingAgencyType.ToString().ToLower().Contains("repeat"))
+                    {
+                        item.type = item.PrescribingAgencyType;
+                    }
+                    else
+                    {
+                        item.type = "Acute – Unknown Prescriber";
+                    }
+                }
+            }
+            foreach (var item in medicationList)
+            {
+                if (item.type.ToLower().ToString().Contains("repeat") && item.DiscountinuedReason == string.Empty)
+                {
+                    if (item.startDate.Year != 1)
+                    {
+                        if (item.endDate.Year == 1)
+                        {
+                            repeatMedicationDiv += "<tr>";
+                            repeatMedicationDiv += "<td>" + item.type + "</td>";
+                            repeatMedicationDiv += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            repeatMedicationDiv += "<td>" + item.MedicationItem + "</td>";
+                            repeatMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
+                            repeatMedicationDiv += "<td>" + item.Quantity + "</td>";
+                            repeatMedicationDiv += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            repeatMedicationDiv += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
+                            repeatMedicationDiv += "<td>" + item.MaxIssues + "</td>";
+                            repeatMedicationDiv += "<td class=\"date-column\">" + (item.ReviewDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.ReviewDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            repeatMedicationDiv += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                            repeatMedicationDiv += "</tr>";
+                        }
+                        else if (item.startDate <= DateTime.UtcNow && DateTime.UtcNow <= item.endDate)
+                        {
+                            repeatMedicationDiv += "<tr>";
+                            repeatMedicationDiv += "<td>" + item.type + "</td>";
+                            repeatMedicationDiv += "<td class=\"date-column\">" + (item.startDate.Year == 1 ? "" : item.startDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            repeatMedicationDiv += "<td>" + item.MedicationItem + "</td>";
+                            repeatMedicationDiv += "<td>" + item.DosageInstruction + "</td>";
+                            repeatMedicationDiv += "<td>" + item.Quantity + "</td>";
+                            repeatMedicationDiv += "<td class=\"date-column\">" + (item.LastIssuedDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.LastIssuedDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            repeatMedicationDiv += "<td>" + item.NumberOfPrescriptionIsuued + "</td>";
+                            repeatMedicationDiv += "<td>" + item.MaxIssues + "</td>";
+                            repeatMedicationDiv += "<td class=\"date-column\">" + (item.ReviewDate.Year == 1 ? item.startDate.ToString("dd-MMM-yyyy") : item.ReviewDate.ToString("dd-MMM-yyyy")) + "</td>";
+                            repeatMedicationDiv += "<td><b>" + item.AdditionalInformation + "</b></td>";
+                            repeatMedicationDiv += "</tr>";
+                        }
+                    }
                 }
             }
             return repeatMedicationDiv;
@@ -3401,13 +4028,36 @@ namespace GP_Connect.Service.AccessRecordHTML
                     }
                 }
             },
-            { "date", DateTime.UtcNow },
+            { "date", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:sszzz") },
+            { "type", new Dictionary<string, object>
+            {
+            { "coding", new List<Dictionary<string, string>>
+                {
+                    new Dictionary<string, string>
+                    {
+                        { "system", "http://snomed.info/sct" },
+                        { "code", "425173008" },
+                        { "display", "record extract" }
+                    }
+                }
+            },
+            { "text", "record extract" }
+            }
+            },
             { "title", "Patient Care Record" },
             { "status", "final" },
             { "subject", new Dictionary<string, string>
                 {
                     { "reference", "Patient/" + patinetSequenceNumber }
                 }
+            },
+            { "author", new List<Dictionary<string, string>>
+            {
+            new Dictionary<string, string>
+            {
+                { "reference", "Practitioner/" + authorSequenceNumber }
+            }
+            }
             },
             { "custodian", new Dictionary<string, string>
                 {
@@ -3516,7 +4166,7 @@ namespace GP_Connect.Service.AccessRecordHTML
                     case string s when s.Contains("solid"):
                         return "gram";
                     default:
-                        return ""; // Return the original name if no match is found
+                        return "items"; // Return the original name if no match is found
                 }
             }
             catch(Exception ex)
@@ -3650,9 +4300,9 @@ namespace GP_Connect.Service.AccessRecordHTML
                                          <attribute name='bcrm_activeproblemsandissuescontentbanner' />
                                          <order attribute='bcrm_name' descending='false' />
                                          <link-entity name='contact' from='contactid' to='bcrm_patient' link-type='inner' alias='patient'>
+                                         <attribute name='bcrm_gptransferbanner' />
                                            <filter type='and'>
                                              <condition attribute='bcrm_nhsnumber' operator='eq' value='" + nhsNumber + @"' />
-                                             <attribute name='bcrm_gptransferbanner' />
                                            </filter>
                                          </link-entity>
                                        </entity>
@@ -3661,12 +4311,17 @@ namespace GP_Connect.Service.AccessRecordHTML
                 if (AnswerCollection != null && AnswerCollection.Entities.Count > 0)
                 {
                     var record = AnswerCollection.Entities[0];
-                    bannerDTO.GpTransferBanner = record.Attributes.Contains("patient.bcrm_gptransferbanner") ? record["patient.bcrm_gptransferbanner"].ToString() : string.Empty;
-
+                    dynamic gptranData = record.Attributes.Contains("patient.bcrm_gptransferbanner") ? record["patient.bcrm_gptransferbanner"] : string.Empty;
+                    try
+                    {
+                        bannerDTO.GpTransferBanner = gptranData.Value;
+                    }
+                    catch (Exception) { }
+   
                     bannerDTO.EncounterContentBanner = record.Attributes.Contains("bcrm_encounterscontentbanner") ? record["bcrm_encounterscontentbanner"].ToString() : string.Empty;
                     bannerDTO.EncounterExclusiveBanner = record.Attributes.Contains("bcrm_encountersexclusionbanner") ? record["bcrm_encountersexclusionbanner"].ToString() : string.Empty;
-                    bannerDTO.ClinicalItemContentBanner = record.Attributes.Contains("bcrm_clinicalitemscontentbanner") ? record["bcrm_clinicalitemsexclusionbanner"].ToString() : string.Empty;
-                    bannerDTO.ClinicalItemExclusiveBanner = record.Attributes.Contains("bcrm_problemsandissuescontentbanner") ? record["bcrm_problemsandissuescontentbanner"].ToString() : string.Empty; bannerDTO.EncounterContentBanner = record.Attributes.Contains("bcrm_gptransferbanner") ? record.FormattedValues["bcrm_gptransferbanner"].ToString() : string.Empty;
+                    bannerDTO.ClinicalItemContentBanner = record.Attributes.Contains("bcrm_clinicalitemscontentbanner") ? record["bcrm_clinicalitemscontentbanner"].ToString() : string.Empty;
+                    bannerDTO.ClinicalItemExclusiveBanner = record.Attributes.Contains("bcrm_clinicalitemsexclusionbanner") ? record["bcrm_clinicalitemsexclusionbanner"].ToString() : string.Empty;
                     bannerDTO.ProblemsandIssuesContentBanner = record.Attributes.Contains("bcrm_activeproblemsandissuescontentbanner") ? record["bcrm_activeproblemsandissuescontentbanner"].ToString() : string.Empty;
                     bannerDTO.ActiveProblemsandIssuesContentBanner = record.Attributes.Contains("bcrm_activeproblemsandissuescontentbanner") ? record["bcrm_activeproblemsandissuescontentbanner"].ToString() : string.Empty;
                     bannerDTO.ActiveProblemsandIssuesExclusiveBanner = record.Attributes.Contains("bcrm_activeproblemsandissuesexclusionbanner") ? record["bcrm_activeproblemsandissuesexclusionbanner"].ToString() : string.Empty;
