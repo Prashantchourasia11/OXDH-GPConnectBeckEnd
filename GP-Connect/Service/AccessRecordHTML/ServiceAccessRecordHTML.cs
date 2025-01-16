@@ -790,11 +790,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                      {
                          { "system", "http://snomed.info/sct" },
                          { "code", "425173008" },
-                         { "display", "record extract" }
+                         { "display", "record extract (record artifact)" }
                      }
                  }
              },
-             { "text", "record extract" }
+             { "text", "record extract (record artifact)" }
              }
              },
             { "title", "Patient Care Record" },
@@ -1046,11 +1046,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         { "system", "http://snomed.info/sct" },
                         { "code", "425173008" },
-                        { "display", "record extract" }
+                        { "display", "record extract (record artifact)" }
                     }
                 }
             },
-            { "text", "record extract" }
+            { "text", "record extract (record artifact)" }
             }
             },
             { "title", "Patient Care Record" },
@@ -1444,11 +1444,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         { "system", "http://snomed.info/sct" },
                         { "code", "425173008" },
-                        { "display", "record extract" }
+                        { "display", "record extract (record artifact)" }
                     }
                 }
             },
-            { "text", "record extract" }
+            { "text", "record extract (record artifact)" }
             }
             },
             { "title", "Patient Care Record" },
@@ -1693,11 +1693,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         { "system", "http://snomed.info/sct" },
                         { "code", "425173008" },
-                        { "display", "record extract" }
+                        { "display", "record extract (record artifact)" }
                     }
                 }
             },
-            { "text", "record extract" }
+            { "text", "record extract (record artifact)" }
             }
             },
             { "title", "Patient Care Record" },
@@ -1930,11 +1930,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         { "system", "http://snomed.info/sct" },
                         { "code", "425173008" },
-                        { "display", "record extract" }
+                        { "display", "record extract (record artifact)" }
                     }
                 }
             },
-            { "text", "record extract" }
+            { "text", "record extract (record artifact)" }
             }
             },
             { "title", "Patient Care Record" },
@@ -2150,11 +2150,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         { "system", "http://snomed.info/sct" },
                         { "code", "425173008" },
-                        { "display", "record extract" }
+                        { "display", "record extract (record artifact)" }
                     }
                 }
             },
-            { "text", "record extract" }
+            { "text", "record extract (record artifact)" }
             }
             },
             { "title", "Patient Care Record" },
@@ -2380,11 +2380,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         { "system", "http://snomed.info/sct" },
                         { "code", "425173008" },
-                        { "display", "record extract" }
+                        { "display", "record extract (record artifact)" }
                     }
                 }
             },
-            { "text", "record extract" }
+            { "text", "record extract (record artifact)" }
             }
             },
             { "title", "Patient Care Record" },
@@ -2619,11 +2619,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         { "system", "http://snomed.info/sct" },
                         { "code", "425173008" },
-                        { "display", "record extract" }
+                        { "display", "record extract (record artifact)" }
                     }
                 }
             },
-            { "text", "record extract" }
+            { "text", "record extract (record artifact)" }
             }
             },
             { "title", "Patient Care Record" },
@@ -3341,11 +3341,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         { "system", "http://snomed.info/sct" },
                         { "code", "425173008" },
-                        { "display", "record extract" }
+                        { "display", "record extract (record artifact)" }
                     }
                 }
             },
-            { "text", "record extract" }
+            { "text", "record extract (record artifact)" }
             }
             },
             { "title", "Patient Care Record" },
@@ -4037,11 +4037,11 @@ namespace GP_Connect.Service.AccessRecordHTML
                     {
                         { "system", "http://snomed.info/sct" },
                         { "code", "425173008" },
-                        { "display", "record extract" }
+                        { "display", "record extract (record artifact)" }
                     }
                 }
             },
-            { "text", "record extract" }
+            { "text", "record extract (record artifact)" }
             }
             },
             { "title", "Patient Care Record" },
