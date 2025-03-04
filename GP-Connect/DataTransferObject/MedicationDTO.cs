@@ -36,7 +36,7 @@
         public string ReasonForMedication { get; set; }
         public string OtherSupportingInformation { get; set; }
 
-
+        public string confidentially { get; set; }
 
     }
 }

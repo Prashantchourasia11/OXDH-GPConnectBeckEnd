@@ -140,8 +140,6 @@ namespace GP_Connect.Service.CommonMethods
 
                     return finaljson;
 
-                    
-
                 }
 
                 return null;
@@ -160,6 +158,7 @@ namespace GP_Connect.Service.CommonMethods
                 var PatientSequenceNumber = "";
                 var PractitionerSequenceNumber = "";
                 var OrganizationSequenceNumber = "";
+                var LocationSequenceNumber = "";
 
 
                 var contXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
@@ -177,6 +176,9 @@ namespace GP_Connect.Service.CommonMethods
                                       </link-entity>
                                       <link-entity name='bcrm_clinic' from='bcrm_clinicid' to='bcrm_gpc_manangingorganisation' visible='false' link-type='outer' alias='organization'>
                                         <attribute name='bcrm_gpc_sequence_number' />
+                                      </link-entity>
+                                    <link-entity name='bcrm_gpclocation' from='bcrm_gpclocation' to='bcrm_gpc_preferredbarnchsurgery' visible='false' link-type='outer' alias='location'>
+                                        <attribute name='bcrm_gpcsequencenumber' />
                                       </link-entity>
                                 </entity>
                               </fetch>";
@@ -203,8 +205,15 @@ namespace GP_Connect.Service.CommonMethods
                         OrganizationSequenceNumber = OrganizatiomnDetails.Value;
 
                     }
-                   
-                    if(PatientSequenceNumber != "")
+
+                    if (record.Attributes.Contains("location.bcrm_gpc_preferredbarnchsurgery"))
+                    {
+                        dynamic LocationDetails = record["location.bcrm_gpc_preferredbarnchsurgery"];
+                        LocationSequenceNumber = LocationDetails.Value;
+                    }
+
+
+                    if (PatientSequenceNumber != "")
                     {
                         var patientJSON = foundation.ReadAPatient(PatientSequenceNumber,"", "Internal");
                         finalResponse.Add(patientJSON);
@@ -224,7 +233,12 @@ namespace GP_Connect.Service.CommonMethods
                         finalResponse.Add(organizationJSON);
                     }
 
-                   return finalResponse;
+                    if (LocationSequenceNumber != "")
+                    {
+                        var LocationSON = foundation.ReadALocation(LocationSequenceNumber, "", "Internal");
+                        finalResponse.Add(LocationSON);
+                    }
+                    return finalResponse;
 
                 }
 

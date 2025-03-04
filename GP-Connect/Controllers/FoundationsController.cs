@@ -26,6 +26,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Web.Http.Results;
 using System.Xml.Linq;
+using GP_Connect.Logger;
 
 namespace GP_Connect.Controllers
 {
@@ -46,6 +47,8 @@ namespace GP_Connect.Controllers
         #endregion
 
         #region Constructor
+
+        EventLogger logger = new EventLogger();
 
         #endregion
 
@@ -1386,6 +1389,8 @@ namespace GP_Connect.Controllers
                 }
                 var response = ServiceAccessRecordHTML.GetAccessHTMLRecord(bodyResponse);
 
+                Guid logId = logger.AuditEventType(bodyResponse, response[0], SspTraceId, Authorization, SspFrom, SspTo, SspInterctionId , response[2]);
+
                 if (response[2] == "400")
                 {
                     return new JsonResult(response[0])
@@ -1433,7 +1438,8 @@ namespace GP_Connect.Controllers
                     ContentType = "application/json+fhir",
                     StatusCode = 200
                 };
-              
+
+                
             }
             catch (Exception ex)
             {

@@ -2809,11 +2809,6 @@ namespace GP_Connect.Service.Foundation
                 return false;
             }
         }
-
-
-
-
-
         internal dynamic intNHSPractitionerRoleDTO(string practionerSequenceId)
         {
             try
@@ -2909,7 +2904,6 @@ namespace GP_Connect.Service.Foundation
                 return null;
             }
         }
-
         internal List<string> getPractitionerRoleCodes(string sdsUserId)
         {
             try
