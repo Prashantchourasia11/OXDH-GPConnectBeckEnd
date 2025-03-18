@@ -20,5 +20,7 @@
 
         public string recDateType { get; set; }
 
+        public string confidential { get; set; }
+
     }
 }

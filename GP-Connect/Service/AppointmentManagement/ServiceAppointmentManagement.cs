@@ -761,6 +761,7 @@ namespace GP_Connect.Service.AppointmentManagement
                 GPConnectAppointment["bcrm_preferredcontactmethod"] = new OptionSetValue(int.Parse(slotLookupId[1]));
 
                 var res1 = _crmServiceClient.Create(GPConnectAppointment);
+                var storeStatus = AddAppointmentInEncounterEntity(patientLookupId, bookAppointment);
                 Console.WriteLine(res1);
 
                 var appointmentLookup = res1.ToString();
@@ -3000,6 +3001,44 @@ namespace GP_Connect.Service.AppointmentManagement
             return "Invalid_date_format";
         }
 
+
+
+        #endregion
+
+
+        #region Add Appointment In Encounter Entity
+
+        internal bool AddAppointmentInEncounterEntity(string patientId, RequestBookAppointmentDTO bookAppointment)
+        {
+            try
+            {
+                Entity AddEncounter = new Entity("msemr_encounter");
+
+                AddEncounter["msemr_encounterpatientidentifier"] = new EntityReference("contact",new Guid(patientId));
+                if(bookAppointment.contained[0] != null)
+                {
+                    AddEncounter["msemr_name"] = bookAppointment.contained[0].name;
+                }
+                
+
+                AddEncounter["bcrm_details"] = "Description :" +bookAppointment.description + ", Comment's :" + bookAppointment.comment;
+
+                DateTime startDate = bookAppointment.start;
+
+                AddEncounter["bcrm_encounterday"] = startDate.Day;
+                AddEncounter["bcrm_encountermonth"] = startDate.Month;
+                AddEncounter["bcrm_encounteryear"] = startDate.Year;
+
+                _crmServiceClient.Create(AddEncounter);
+                return true;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+        }
 
 
         #endregion

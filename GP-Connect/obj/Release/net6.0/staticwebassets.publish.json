@@ -1,11 +1,12 @@
 {
   "Version": 1,
-  "Hash": "3Qj8tSErrnnEKyh8dv+ioUSSSC+08GWp/HovbwVoIYw=",
+  "Hash": "sopUNI95L+XInZum4ypQmvYLI5SO0Mprk/02+bXI/XU=",
   "Source": "GP-Connect",
   "BasePath": "_content/GP-Connect",
   "Mode": "Default",
   "ManifestType": "Publish",
   "ReferencedProjectsConfiguration": [],
   "DiscoveryPatterns": [],
-  "Assets": []
+  "Assets": [],
+  "Endpoints": []
 }

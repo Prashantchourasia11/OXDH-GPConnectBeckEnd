@@ -1,0 +1,2805 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "GP-Connect",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/AccessDocument/Metadata": {
+      "get": {
+        "tags": [
+          "AccessDocument"
+        ],
+        "summary": "Get the FHIR® conformance profile",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorizations",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/AccessDocument/Patient": {
+      "get": {
+        "tags": [
+          "AccessDocument"
+        ],
+        "summary": "Find a patient",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "https://fhir.nhs.uk/Id/nhs-number|9728338449"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/AccessDocument/DocumentReference": {
+      "get": {
+        "tags": [
+          "AccessDocument"
+        ],
+        "summary": "Search for a patient's documents",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:documents:fhir:rest:search:documentreference-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "id ",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "999"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "DocumentReference:subject:Patient"
+            }
+          },
+          {
+            "name": "_revinclude:recurse",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "PractitionerRole:practitioner"
+            }
+          },
+          {
+            "name": "Created-start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "ge2024-01-05"
+            }
+          },
+          {
+            "name": "Created-end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "ge2024-10-05"
+            }
+          },
+          {
+            "name": "author",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "docs"
+            }
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "docs"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/AccessDocument/Binary": {
+      "get": {
+        "tags": [
+          "AccessDocument"
+        ],
+        "summary": "Retrieve a document",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "id ",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "2"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/AccessDocument/MakeProperDate": {
+      "get": {
+        "tags": [
+          "AccessDocument"
+        ],
+        "parameters": [
+          {
+            "name": "inputDate",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/AccessRecordHTML/Metadata": {
+      "get": {
+        "tags": [
+          "AccessRecordHTML"
+        ],
+        "summary": "Get the FHIR® conformance profile",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorizations",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/Patient/$gpc.getcarerecord": {
+      "post": {
+        "tags": [
+          "AccessRecordHTML"
+        ],
+        "summary": "Retrieve a care record section",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorizations",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { }
+            },
+            "text/json": {
+              "schema": { }
+            },
+            "application/*+json": {
+              "schema": { }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/AccessStructureRecord/Metadata": {
+      "get": {
+        "tags": [
+          "AccessStructureRecord"
+        ],
+        "summary": "Get the FHIR® conformance profile",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorizations",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "https://fhir.nhs.uk/Id/nhs-number|9658218873"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/Patient/$gpc.getstructuredrecord": {
+      "post": {
+        "tags": [
+          "AccessStructureRecord"
+        ],
+        "summary": "Retrieve patient's structured record",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorizations",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { }
+            },
+            "text/json": {
+              "schema": { }
+            },
+            "application/*+json": {
+              "schema": { }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/Patient/$gpc.migratestructuredrecord": {
+      "post": {
+        "tags": [
+          "AccessStructureRecord"
+        ],
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorizations",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { }
+            },
+            "text/json": {
+              "schema": { }
+            },
+            "application/*+json": {
+              "schema": { }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Appointment_Management/Patient/Appointment": {
+      "get": {
+        "tags": [
+          "Appointment_Management"
+        ],
+        "summary": "Read Patient Appointment",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorizations",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1000"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "ge2024-05-01"
+            }
+          },
+          {
+            "name": "starts",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "le2024-05-10"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Appointment_Management/Slot": {
+      "get": {
+        "tags": [
+          "Appointment_Management"
+        ],
+        "summary": "Search for free slots",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorizations",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "Start ",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "ge2024-08-20"
+            }
+          },
+          {
+            "name": "End",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "le2024-08-30"
+            }
+          },
+          {
+            "name": "Status ",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "free"
+            }
+          },
+          {
+            "name": "_Include ",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Slot:schedule"
+            }
+          },
+          {
+            "name": "_include:recurse",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "--"
+            }
+          },
+          {
+            "name": "searchFilter",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "--"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Appointment_Management/BookAnAppointment": {
+      "post": {
+        "tags": [
+          "Appointment_Management"
+        ],
+        "summary": "Book an appointment",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorizations",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { }
+            },
+            "text/json": {
+              "schema": { }
+            },
+            "application/*+json": {
+              "schema": { }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Appointment_Management/ReadAnAppoinbtment": {
+      "get": {
+        "tags": [
+          "Appointment_Management"
+        ],
+        "summary": "Read an appointment",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorizations",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Appointment_Management/AmendOrCancelAppointment": {
+      "put": {
+        "tags": [
+          "Appointment_Management"
+        ],
+        "summary": "Amend or cancel appointment",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:update:appointment-1"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "W/1"
+            }
+          },
+          {
+            "name": "Authorizations",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1005"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { }
+            },
+            "text/json": {
+              "schema": { }
+            },
+            "application/*+json": {
+              "schema": { }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/metadata": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Get the FHIR® conformance profile",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Get the FHIR® conformance profile",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Get the FHIR® conformance profile",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Get the FHIR® conformance profile",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Get the FHIR® conformance profile",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "options": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Get the FHIR® conformance profile",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/{url}": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "url",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "url",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "url",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "url",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Patient": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Find a patient",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Patient/{id}": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Read a patient",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Practitioner": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Find a Practitioner",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Practitioner/{id}": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Read a Practitioner",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Organization": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Find a Organization",
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:organization-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Organization/{id}": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Read a Organization",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Location/{id}": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "summary": "Read a Location",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Patient/gpc.registerpatient": {
+      "post": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:operation:gpc.registerpatient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJpc3MiOiJodHRwczovL0NvbnN1bWVyU3lzdGVtVVJMIiwic3ViIjoiMSIsImF1ZCI6Imh0dHBzOi8vYXV0aG9yaXplLmZoaXIubmhzLm5ldC90b2tlbiIsImV4cCI6MTcyMjg2NTIyNSwiaWF0IjoxNzIyODY0OTI1LCJyZWFzb25fZm9yX3JlcXVlc3QiOiJkaXJlY3RjYXJlIiwicmVxdWVzdGluZ19kZXZpY2UiOnsicmVzb3VyY2VUeXBlIjoiRGV2aWNlIiwiaWRlbnRpZmllciI6W3sic3lzdGVtIjoiR1BDb25uZWN0VGVzdFN5c3RlbSIsInZhbHVlIjoiQ2xpZW50In1dLCJtb2RlbCI6InYxIiwidmVyc2lvbiI6IjEuMSJ9LCJyZXF1ZXN0aW5nX29yZ2FuaXphdGlvbiI6eyJyZXNvdXJjZVR5cGUiOiJPcmdhbml6YXRpb24iLCJpZGVudGlmaWVyIjpbeyJzeXN0ZW0iOiJodHRwczovL2ZoaXIubmhzLnVrL0lkL29kcy1vcmdhbml6YXRpb24tY29kZSIsInZhbHVlIjoiR1BDQTAwMDEifV0sIm5hbWUiOiJHUCBDb25uZWN0IEFzc3VyYW5jZSJ9LCJyZXF1ZXN0aW5nX3ByYWN0aXRpb25lciI6eyJyZXNvdXJjZVR5cGUiOiJQcmFjdGl0aW9uZXIiLCJpZCI6IjEiLCJpZGVudGlmaWVyIjpbeyJzeXN0ZW0iOiJodHRwczovL2ZoaXIubmhzLnVrL0lkL3Nkcy11c2VyLWlkIiwidmFsdWUiOiJHQ0FTRFMwMDAxIn0seyJzeXN0ZW0iOiJodHRwczovL2ZoaXIubmhzLnVrL0lkL3Nkcy1yb2xlLXByb2ZpbGUtaWQiLCJ2YWx1ZSI6IjExMjIzMzQ0NTU2NiJ9LHsic3lzdGVtIjoiaHR0cHM6Ly9jb25zdW1lcnN1cHBsaWVyLmNvbS9JZC91c2VyLWd1aWQiLCJ2YWx1ZSI6Ijk4ZWQ0Zjc4LTgxNGQtNDI2Ni04ZDViLWNkZTc0MmYzMDkzYyJ9XSwibmFtZSI6W3siZmFtaWx5IjoiQXNzdXJhbmNlUHJhY3RpdGlvbmVyIiwiZ2l2ZW4iOlsiQXNzdXJhbmNlVGVzdCJdLCJwcmVmaXgiOlsiTXIiXX1dfSwicmVxdWVzdGVkX3Njb3BlIjoicGF0aWVudC8qLndyaXRlIn0."
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { }
+            },
+            "text/json": {
+              "schema": { }
+            },
+            "application/*+json": {
+              "schema": { }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Patient/{operation}": {
+      "post": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "operation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Patient/{id}/DocumentReference": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:documents:fhir:rest:search:documentreference-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DocumentReference:subject:Patient"
+            }
+          },
+          {
+            "name": "_revinclude:recurse",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "PractitionerRole:practitioner"
+            }
+          },
+          {
+            "name": "Created-start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "ge2024-01-05"
+            }
+          },
+          {
+            "name": "Created-end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "ge2024-10-05"
+            }
+          },
+          {
+            "name": "author",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "docs"
+            }
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "docs"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Binary/{id}": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Slot": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "2024-08-20"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "2024-08-30"
+            }
+          },
+          {
+            "name": "status ",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "free"
+            }
+          },
+          {
+            "name": "_Include ",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "Slot:schedule"
+            }
+          },
+          {
+            "name": "_include:recurse",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "--"
+            }
+          },
+          {
+            "name": "searchFilter",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "--"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Appointment": {
+      "post": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "Prefer",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { }
+            },
+            "text/json": {
+              "schema": { }
+            },
+            "application/*+json": {
+              "schema": { }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Appointment/{id}": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:update:appointment-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { }
+            },
+            "text/json": {
+              "schema": { }
+            },
+            "application/*+json": {
+              "schema": { }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Patient/{id}/Appointment": {
+      "get": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "gl2024-05-01"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "lg2024-05-10"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/W7M0I/STU3/1/gpconnect/Patient/gpc.getcarerecord": {
+      "post": {
+        "tags": [
+          "Foundations"
+        ],
+        "parameters": [
+          {
+            "name": "Ssp-TraceID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "09a01679-2564-0fb4-5129-aecc81ea2706"
+            }
+          },
+          {
+            "name": "Ssp-From",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "200000000359"
+            }
+          },
+          {
+            "name": "Ssp-To",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "918999198993"
+            }
+          },
+          {
+            "name": "Ssp-InteractionID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer g1112R_ccQ1Ebbb4gtHBP1aaaNM"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { }
+            },
+            "text/json": {
+              "schema": { }
+            },
+            "application/*+json": {
+              "schema": { }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    }
+  },
+  "components": { }
+}

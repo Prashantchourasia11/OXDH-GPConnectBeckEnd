@@ -109,16 +109,6 @@
             Read a Location
             </summary>
         </member>
-        <member name="M:GP_Connect.Controllers.FoundationsController.registerAPatient(System.String,System.String,System.String,System.String,System.String,System.Object)">
-            <summary>
-            Register a patient
-            </summary>
-        </member>
-        <member name="M:GP_Connect.Controllers.FoundationsController.DocumentReference(System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String)">
-            <summary>
-            Find a patient
-            </summary>
-        </member>
         <member name="M:GP_Connect.PDS.PDSAPI.GetPatientByNHSNumber(System.String)">
             <summary>
             Get Patient By NHS Number

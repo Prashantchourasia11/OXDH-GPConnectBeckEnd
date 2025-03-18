@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GP-Connect")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8864ce871d46cfc5fb76818212dbb20d696df77a")]
 [assembly: System.Reflection.AssemblyProductAttribute("GP-Connect")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GP-Connect")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

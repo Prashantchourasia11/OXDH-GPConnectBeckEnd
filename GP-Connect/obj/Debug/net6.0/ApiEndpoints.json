@@ -1,0 +1,1694 @@
+[
+  {
+    "ContainingType": "GP_Connect.Controllers.AccessDocumentController",
+    "Method": "Binary",
+    "RelativePath": "api/AccessDocument/Binary",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "id ",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.AccessDocumentController",
+    "Method": "DocumentReference",
+    "RelativePath": "api/AccessDocument/DocumentReference",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "id ",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "_include",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "_revinclude:recurse",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Created-start",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Created-end",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "author",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "description",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.AccessDocumentController",
+    "Method": "MakeProperDate",
+    "RelativePath": "api/AccessDocument/MakeProperDate",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "inputDate",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "type",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.AccessDocumentController",
+    "Method": "Metadata",
+    "RelativePath": "api/AccessDocument/Metadata",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorizations",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.AccessDocumentController",
+    "Method": "Patient",
+    "RelativePath": "api/AccessDocument/Patient",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "identifier",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.AccessRecordHTMLController",
+    "Method": "Metadata",
+    "RelativePath": "api/AccessRecordHTML/Metadata",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorizations",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.AccessStructureRecordController",
+    "Method": "Metadata",
+    "RelativePath": "api/AccessStructureRecord/Metadata",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorizations",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "identifier",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.Appointment_ManagementController",
+    "Method": "AmendOrCancelAppointment",
+    "RelativePath": "api/Appointment_Management/AmendOrCancelAppointment",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "If-Match",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorizations",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "BookAppointmentDTO",
+        "Type": "System.Object",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.Appointment_ManagementController",
+    "Method": "BookAnAppointment",
+    "RelativePath": "api/Appointment_Management/BookAnAppointment",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorizations",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "BookAppointmentDTO",
+        "Type": "System.Object",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.Appointment_ManagementController",
+    "Method": "Patient",
+    "RelativePath": "api/Appointment_Management/Patient/Appointment",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorizations",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "identifier",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "start",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "starts",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.Appointment_ManagementController",
+    "Method": "ReadAnAppoinbtment",
+    "RelativePath": "api/Appointment_Management/ReadAnAppoinbtment",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorizations",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.Appointment_ManagementController",
+    "Method": "Slot",
+    "RelativePath": "api/Appointment_Management/Slot",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorizations",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Start ",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "End",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Status ",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "_Include ",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "_include:recurse",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "searchFilter",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.AccessRecordHTMLController",
+    "Method": "getcarerecord",
+    "RelativePath": "Patient/$gpc.getcarerecord",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorizations",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "body",
+        "Type": "System.Object",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.AccessStructureRecordController",
+    "Method": "getstructuredrecord",
+    "RelativePath": "Patient/$gpc.getstructuredrecord",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorizations",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "body",
+        "Type": "System.Object",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.AccessStructureRecordController",
+    "Method": "migratestructuredrecord",
+    "RelativePath": "Patient/$gpc.migratestructuredrecord",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorizations",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "body",
+        "Type": "System.Object",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "HandleNonMetaAction",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/{url}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "url",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "HandleNonMetaAction",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/{url}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "url",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "HandleNonMetaAction",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/{url}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "url",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "HandleNonMetaAction",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/{url}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "url",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "Appointment",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Appointment",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Prefer",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "BookAppointmentDTO",
+        "Type": "System.Object",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "ReadAnAppoinbtment",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Appointment/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "AmendOrCancelAppointment",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Appointment/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "If-Match",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "BookAppointmentDTO",
+        "Type": "System.Object",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "Binary",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Binary/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "LocationId",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Location/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "Metadata",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/metadata",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "Metadata",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/metadata",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "Metadata",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/metadata",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "Metadata",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/metadata",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "Metadata",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/metadata",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "Metadata",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/metadata",
+    "HttpMethod": "OPTIONS",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "Organization",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Organization",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "identifier",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "OrganizationId",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Organization/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "Patient",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Patient",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "identifier",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "PatientId",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Patient/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "PatientAppointment",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Patient/{id}/Appointment",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "start",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "end",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "DocumentReference",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Patient/{id}/DocumentReference",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "_include",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "_revinclude:recurse",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Created-start",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Created-end",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "author",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "description",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "HandleInvalidOperation",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Patient/{operation}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "operation",
+        "Type": "",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "getcarerecord",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Patient/gpc.getcarerecord",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "body",
+        "Type": "System.Object",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "registerAPatient",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Patient/gpc.registerpatient",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "RegisterPatientDTO",
+        "Type": "System.Object",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "Practitioner",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Practitioner",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "identifier",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "PractitionerId",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Practitioner/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GP_Connect.Controllers.FoundationsController",
+    "Method": "Slot",
+    "RelativePath": "W7M0I/STU3/1/gpconnect/Slot",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Ssp-TraceID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-To",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Ssp-InteractionID",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Authorization",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "start",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "end",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "status ",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "_Include ",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "_include:recurse",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "searchFilter",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
